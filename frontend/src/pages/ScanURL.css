@@ -1,0 +1,66 @@
+.scan-container {
+    text-align: center;
+    padding: 50px;
+    color: #d0eaff;
+    font-family: "Orbitron", sans-serif;
+  }
+  
+  .scan-container h2 {
+    font-size: 2rem;
+    color: #8f9dff;
+  }
+  
+  input {
+    width: 60%;
+    padding: 10px;
+    font-size: 1rem;
+    margin: 15px 0;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: #1b1f3b;
+    color: white;
+    box-shadow: 0px 0px 25px #4b538b;
+    text-align: center;
+  }
+  .scan-container .logo {
+    width: 100px;
+    margin-top: -50px;
+  }
+  button {
+    background: linear-gradient(90deg, #4b538b, #0a0f1a);
+    color: #cacbcf;
+    font-size: 1.2rem;
+    padding: 12px 24px;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 0px 25px #4b538b;
+    transition: all 0.3s ease-in-out;
+  }
+  .scan-tagline {
+    font-size: 1.2rem;
+    color: #9096c1;
+    margin-bottom: 20px;
+    animation: fadeIn 1s ease-in-out;
+}
+  
+  button:hover {
+    background: linear-gradient(90deg, #4b538b, #0a0f1a);
+    box-shadow: 0px 0px 25px #00e1ff;
+    transform: scale(1.05);
+  }
+  
+  .scan-result {
+    margin-top: 20px;
+    background: #1b1f3b;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px #00e1ff;
+    text-align: left;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  

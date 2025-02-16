@@ -1,0 +1,66 @@
+.home-container {
+    text-align: center;
+    padding: 50px;
+    color: #d0eaff;
+    font-family: "Orbitron", sans-serif;
+  }
+  .home-container p{
+    color: #cacbcf;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    text-shadow: 0px 0px 15px #1a1b1b;
+  }
+  
+  p {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  .security-banner {
+    background: linear-gradient(90deg, #4b538b, #0a0f1a);
+    color: #cacbcf;
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 10px;
+    max-width: 80%;
+    margin: 20px auto;
+    animation: fadeIn 1s ease-in-out;
+}
+
+  .logo {
+    width: 500px;
+    margin-top: -50px;
+  }
+  .slogan {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: hsl(187, 82%, 64%);
+  text-align: center;
+}
+  .home-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  button {
+    background: linear-gradient(90deg, #4b538b, #0a0f1a);
+    color: #cacbcf;
+    font-size: 1.2rem;
+    padding: 15px 30px;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    box-shadow: 0px 0px 25px #4b538b;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  button:hover {
+    background: linear-gradient(90deg, #4b538b, #0a0f1a);
+    box-shadow: 0px 0px 25px #00e1ff;
+    transform: scale(1.05);
+  }
+      

@@ -1,0 +1,95 @@
+/* App.css */
+:root {
+  --primary-color: #00d9ff;
+  --background-color: #0a0f1a;
+  --text-color: #ffffff;
+  --card-bg: rgba(0, 217, 255, 0.1);
+  --border-glow: 0 0 10px rgba(0, 217, 255, 0.8);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  background: url('C:\SafeNet\SafeNet-master\frontend\public\bg.png') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text-color);
+  overflow-x: hidden;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 50px;
+  background: rgba(10, 15, 26, 0.9);
+  border-bottom: 2px solid var(--primary-color);
+  box-shadow: var(--border-glow);
+}
+
+.navbar-logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #cacbcf;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover {
+  color: var(--primary-color);
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 100px 20px;
+}
+
+.hero-title {
+  font-size: 50px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #00d9ff, #00a3ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-description {
+  font-size: 18px;
+  max-width: 600px;
+  margin: auto;
+  opacity: 0.8;
+}
+
+/* Animated Cards */
+.card {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid var(--primary-color);
+  box-shadow: var(--border-glow);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 1);
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 20px;
+  background: rgba(10, 15, 26, 0.9);
+  border-top: 2px solid var(--primary-color);
+}
