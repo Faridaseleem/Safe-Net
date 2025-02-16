@@ -1,10 +1,72 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import React Router navigation
+import axios from "axios";
+import "./Signup.css";
 
 const Signup = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // Added loading state
+  const navigate = useNavigate(); // React Router navigation
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true); // Start loading
+
+    try {
+      const response = await axios.post("http://localhost:5000/api/auth/signup", {
+        name,
+        email,
+        password,
+      });
+
+      alert("Signup successful! Please log in.");
+      navigate("/login"); // Navigate to login page after successful signup
+    } catch (err) {
+      setError(err.response?.data?.message || "Signup failed. Try again.");
+    } finally {
+      setLoading(false); // Stop loading after request completes
+    }
+  };
+
   return (
-    <div>
-      <h1>Sign Up</h1>
-      <p>Create an account to start using SafeNetV4.0</p>
+    <div className="signup-wrapper">
+      <div className="signup-container">
+        <h2>Sign Up</h2>
+        <form className="signup-form" onSubmit={handleSignup}>
+          <input
+            className="signup-input"
+            type="text"
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <input
+            className="signup-input"
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            className="signup-input"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button className="signup-button" type="submit" disabled={loading}>
+            {loading ? "Signing Up..." : "Sign Up"} {/* Show loading text */}
+          </button>
+        </form>
+        {error && <p className="signup-error">{error}</p>}
+      </div>
     </div>
   );
 };
