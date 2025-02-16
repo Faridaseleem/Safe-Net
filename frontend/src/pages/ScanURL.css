@@ -28,7 +28,7 @@
     margin-top: -50px;
   }
   button {
-    background: linear-gradient(90deg, #4b538b, #0a0f1a);
+    background: linear-gradient(90deg, #4b538b, #020918);
     color: #cacbcf;
     font-size: 1.2rem;
     padding: 12px 24px;
@@ -47,7 +47,7 @@
 }
   
   button:hover {
-    background: linear-gradient(90deg, #4b538b, #0a0f1a);
+    background: linear-gradient(90deg, #4b538b, #020918);
     box-shadow: 0px 0px 25px #00e1ff;
     transform: scale(1.05);
   }
