@@ -60,9 +60,9 @@ router.post("/scan-url", async (req, res) => {
 
         // Step 4: Generate a user-friendly verdict
         let verdict;
-        if (detectionPercentage > 50) {
+        if (detectionPercentage > 2) {
             verdict = "🔴 High Risk (Likely Malicious)";
-        } else if (detectionPercentage > 20) {
+        } else if (detectionPercentage > 1) {
             verdict = "🟠 Medium Risk (Potentially Unsafe)";
         } else {
             verdict = "🟢 Low Risk (Likely Safe)";
