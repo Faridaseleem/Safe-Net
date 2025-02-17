@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+/*const mysql = require('mysql2');
 
 // Create a connection to MySQL
 const db = mysql.createConnection({
@@ -17,4 +17,22 @@ db.connect((err) => {
   }
 });
 
-module.exports = db;
+module.exports = db;*/
+require("dotenv").config();
+const mongoose = require("mongoose");
+
+
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB Connected");
+  } catch (error) {
+    console.error("❌ MongoDB Connection Failed:", error);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
+
+
