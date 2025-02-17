@@ -23,7 +23,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 15px 50px;
-  background: rgba(10, 15, 26, 0.9);
+  background: rgba(10, 15, 26, 0.72);
   border-bottom: 2px solid var(--primary-color);
   box-shadow: var(--border-glow);
 }
