@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
-app.use("/api/scans", scanRoutes); // Updated route for better structure
+app.use("/api", scanRoutes); // Updated route for better structure
 app.use("/api/auth", authRoutes);
 
 // Root Route
@@ -35,3 +35,15 @@ app.use((req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+
+
+
+
+
+
+
+
+
+
+
