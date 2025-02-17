@@ -8,6 +8,7 @@ import Education from "./pages/Education";  // Education page
 import Login from "./pages/Login";  // Login page
 import Signup from "./pages/Signup";  // Signup page
 import ChangePlan from "./pages/ChangePlan";  // Subscription page
+import Verify from "./pages/Verify";
 import "./App.css";
 
 const App = () => {
@@ -22,6 +23,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/change-plan" element={<ChangePlan />} />
+        <Route path="/verify" element={<Verify />}/>
       </Routes>
     </Router>
   );

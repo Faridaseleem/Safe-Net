@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import React Router navigation
+import { useNavigate } from "react-router-dom"; // React Router for navigation
 import axios from "axios";
 import "./Signup.css";
 
@@ -8,13 +8,13 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // Added loading state
-  const navigate = useNavigate(); // React Router navigation
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true); // Start loading
+    setLoading(true);
 
     try {
       const response = await axios.post("http://localhost:5000/api/auth/signup", {
@@ -23,12 +23,12 @@ const Signup = () => {
         password,
       });
 
-      alert("Signup successful! Please log in.");
-      navigate("/login"); // Navigate to login page after successful signup
+      alert("Signup successful! A verification code has been sent to your email.");
+      navigate(`/verify?email=${email}`); // Redirect to verification page
     } catch (err) {
       setError(err.response?.data?.message || "Signup failed. Try again.");
     } finally {
-      setLoading(false); // Stop loading after request completes
+      setLoading(false);
     }
   };
 
@@ -62,7 +62,7 @@ const Signup = () => {
             required
           />
           <button className="signup-button" type="submit" disabled={loading}>
-            {loading ? "Signing Up..." : "Sign Up"} {/* Show loading text */}
+            {loading ? "Signing Up..." : "Sign Up"}
           </button>
         </form>
         {error && <p className="signup-error">{error}</p>}
