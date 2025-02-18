@@ -73,3 +73,21 @@
     color: red;
   }
   
+  .login-link {
+    margin-top: 10px;
+    font-size: 19px;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+}
+
+.login-link a {
+    color: #8f9dff; /* Updated color */
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+}
+
+.login-link a:hover {
+    color: #6c7bd9; /* Slightly darker shade on hover */
+    text-decoration: underline;
+}
