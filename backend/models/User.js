@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true } // Automatically adds 'updatedAt' field
 );
 
-// Pre-save hook to hash the password before saving the user
+/*// Pre-save hook to hash the password before saving the user
 UserSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     // Hash the password if it's being modified or created
@@ -21,7 +21,7 @@ UserSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, salt);  // Hash the password
   }
   next();
-});
+});*/
 
 // Method to compare hashed password during login
 UserSchema.methods.comparePassword = async function (password) {

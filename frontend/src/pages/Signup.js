@@ -19,8 +19,8 @@ const Signup = () => {
     try {
       const response = await axios.post("http://localhost:5000/api/auth/signup", {
         name,
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
       });
 
       alert("Signup successful! A verification code has been sent to your email.");
