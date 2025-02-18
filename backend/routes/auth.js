@@ -6,6 +6,7 @@ const sendVerificationEmail = require("../config/mailer"); // Import mailer
 
 const router = express.Router();
 
+
 // Sign Up Route with Email Verification
 router.post("/signup", async (req, res) => {
     const { name, email, password } = req.body;
@@ -21,8 +22,15 @@ router.post("/signup", async (req, res) => {
             return res.status(400).json({ message: "User already exists" });
         }
 
+         // Check if password is already hashed (Avoid double hashing)
+        if (password.startsWith("$2b$")) {
+        return res.status(400).json({ message: "Password is already hashed!" });
+        }
+
+
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
+        console.log("Hashed Password Before Saving:", hashedPassword);  // Debugging
 
         // Generate a 6-digit verification code
         const verificationCode = crypto.randomInt(100000, 999999);
@@ -40,9 +48,11 @@ router.post("/signup", async (req, res) => {
 
         // Send verification email
         await sendVerificationEmail(email, verificationCode);
+        console.log("User saved with hashed password.");
 
         res.status(201).json({ message: "User created. Verification code sent to email." });
     } catch (error) {
+        console.error("Signup Error:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
@@ -72,5 +82,43 @@ router.post("/verify", async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
+
+
+
+
+// Login Route
+router.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+
+        
+
+
+        // Compare the password
+        const isMatch = await bcrypt.compare(password.trim(), user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+
+        res.status(200).json({ message: "Login successful" });
+    } catch (error) {
+        console.error("Login Error:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+
+
 
 module.exports = router;
