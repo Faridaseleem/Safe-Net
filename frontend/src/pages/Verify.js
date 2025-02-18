@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -18,8 +19,8 @@ const Verify = () => {
 
     try {
       await axios.post("http://localhost:5000/api/auth/verify", { email, code });
-      alert("Email verified successfully! You can now log in.");
-      navigate("/login");
+      alert("Email verified successfully! Please select your plan.");
+      navigate("/select-plan"); // Redirect to plan selection page
     } catch (err) {
       setError(err.response?.data?.message || "Verification failed. Try again.");
     } finally {

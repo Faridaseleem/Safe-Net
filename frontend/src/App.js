@@ -1,20 +1,21 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Navbar from "./components/Navbar";  // Navigation bar at the top
-import Home from "./pages/Home";  // Main page
-import ScanURL from "./pages/ScanURL";  // URL Scanning page
-import ScanEmail from "./pages/ScanEmail";  // Email Scanning page
-import Education from "./pages/Education";  // Education page
-import Login from "./pages/Login";  // Login page
-import Signup from "./pages/Signup";  // Signup page
-import ChangePlan from "./pages/ChangePlan";  // Subscription page
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import ScanURL from "./pages/ScanURL";
+import ScanEmail from "./pages/ScanEmail";
+import Education from "./pages/Education";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ChangePlan from "./pages/ChangePlan";
 import Verify from "./pages/Verify";
+import SelectPlan from "./pages/SelectPlan"; // ✅ Import the missing component
 import "./App.css";
 
 const App = () => {
   return (
     <Router>
-      <Navbar /> {/* Top Menu */}
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/scan-url" element={<ScanURL />} />
@@ -23,7 +24,8 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/change-plan" element={<ChangePlan />} />
-        <Route path="/verify" element={<Verify />}/>
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/select-plan" element={<SelectPlan />} /> {/* ✅ Added this */}
       </Routes>
     </Router>
   );
