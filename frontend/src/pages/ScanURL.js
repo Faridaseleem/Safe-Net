@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom"; // Import for navigation
 import "./ScanURL.css";
 import logo from "../assets/logo.png";
 import html2canvas from "html2canvas";
@@ -8,6 +9,7 @@ const Scan = () => {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const reportRef = useRef(null);
+  const navigate = useNavigate(); // Hook for navigation
 
   const handleScan = async () => {
     if (!url) return alert("Please enter a URL to scan.");
@@ -33,23 +35,25 @@ const Scan = () => {
 
   const downloadReport = () => {
     if (!reportRef.current) {
-        console.error("❌ Scan report element not found!");
-        return;
+      console.error("❌ Scan report element not found!");
+      return;
     }
 
     html2canvas(reportRef.current, {
-        backgroundColor: "#1b1f3b",
-        scale: 2,
-        useCORS: true
-    }).then((canvas) => {
+      backgroundColor: "#1b1f3b",
+      scale: 2,
+      useCORS: true,
+    })
+      .then((canvas) => {
         const link = document.createElement("a");
         link.href = canvas.toDataURL("image/png");
         link.download = "Scan_Report.png";
         link.click();
-    }).catch((error) => {
+      })
+      .catch((error) => {
         console.error("❌ html2canvas error:", error);
-    });
-};
+      });
+  };
 
   return (
     <div className="scan-container">
@@ -76,6 +80,12 @@ const Scan = () => {
           <p><strong>🚨 Malicious Detections:</strong> {result.malicious_detections}</p>
           <p><strong>📈 Detection Percentage:</strong> {result.detection_percentage}</p>
           <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p>
+
+          {/* Learn More Button for Education Page */}
+          <button className="learn-more-btn" onClick={() => navigate("/education")}>
+            📖 Learn More About Phishing Protection
+          </button>
+
           <button className="download-btn" onClick={downloadReport} disabled={!result}>
             📥 Download Report (Image)
           </button>
