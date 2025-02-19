@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "./ScanURL.css";
 import logo from "../assets/logo.png";
+import html2canvas from "html2canvas";
 
 const Scan = () => {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const reportRef = useRef(null);
 
   const handleScan = async () => {
     if (!url) return alert("Please enter a URL to scan.");
-
     setLoading(true);
     setResult(null);
 
@@ -21,7 +22,7 @@ const Scan = () => {
       });
 
       const data = await response.json();
-      setResult(data);
+      setResult({ ...data, timestamp: new Date().toLocaleString() });
     } catch (error) {
       console.error("Error scanning URL:", error);
       setResult({ error: "Failed to scan URL. Please try again." });
@@ -30,12 +31,32 @@ const Scan = () => {
     setLoading(false);
   };
 
+  const downloadReport = () => {
+    if (!reportRef.current) {
+        console.error("❌ Scan report element not found!");
+        return;
+    }
+
+    html2canvas(reportRef.current, {
+        backgroundColor: "#1b1f3b",
+        scale: 2,
+        useCORS: true
+    }).then((canvas) => {
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "Scan_Report.png";
+        link.click();
+    }).catch((error) => {
+        console.error("❌ html2canvas error:", error);
+    });
+};
+
   return (
     <div className="scan-container">
       <h2>Scan a URL</h2>
       <p className="scan-tagline">
-      "🔍 Stay Safe, Surf Smart! Scan Your URL Now to Detect Phishing & Threats Instantly! 🛡️"
-            </p>
+        "🔍 Stay Safe, Surf Smart! Scan Your URL Now to Detect Phishing & Threats Instantly! 🛡️"
+      </p>
       <input
         type="text"
         placeholder="Enter URL..."
@@ -47,9 +68,17 @@ const Scan = () => {
       </button>
 
       {result && (
-        <div className="scan-result">
-          <h3>Scan Result</h3>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+        <div ref={reportRef} className="scan-result">
+          <h3>📄 Scan Report</h3>
+          <p><strong>🔗 URL:</strong> {result.url}</p>
+          <p><strong>🕒 Scan Time:</strong> {result.timestamp}</p>
+          <p><strong>📊 Total Sources Checked:</strong> {result.total_sources}</p>
+          <p><strong>🚨 Malicious Detections:</strong> {result.malicious_detections}</p>
+          <p><strong>📈 Detection Percentage:</strong> {result.detection_percentage}</p>
+          <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p>
+          <button className="download-btn" onClick={downloadReport} disabled={!result}>
+            📥 Download Report (Image)
+          </button>
         </div>
       )}
     </div>

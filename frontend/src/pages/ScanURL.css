@@ -51,16 +51,78 @@
     box-shadow: 0px 0px 25px #00e1ff;
     transform: scale(1.05);
   }
-  
-  .scan-result {
-    margin-top: 20px;
-    background: #1b1f3b;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px #00e1ff;
-    text-align: left;
-    max-width: 80%;
-    margin-left: auto;
-    margin-right: auto;
+/* Scan Result Card */
+.scan-result {
+  background: #1b1f3b;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 30px;
+  display: inline-block;
+  text-align: left;
+  box-shadow: 0px 0px 20px #4b538b;
+  width: 60%;
+  animation: fadeIn 0.8s ease-in-out;
+  opacity: 1 !important;
+  color: #d0eaff !important;
+  filter: none !important; /* Removes unwanted effects */
+}
+
+.scan-result h3 {
+  color: #8f9dff;
+  border-bottom: 2px solid #8f9dff;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+/* Report Text */
+.scan-result p {
+  font-size: 1.2rem;
+  margin: 8px 0;
+  color: #d0eaff;
+}
+
+/* Final Verdict Styling */
+.final-verdict {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ff4f4f;
+}
+
+.final-verdict span {
+  font-size: 1.5rem;
+}
+
+/* Download Report Button */
+.download-btn {
+  background: linear-gradient(45deg, #4b538b, #020918);
+  color: #d0eaff;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+  width: fit-content;
+  margin: 15px auto;
+  box-shadow: 0px 0px 25px #4b538b;
+  transition: all 0.3s ease-in-out;
+}
+
+.download-btn:hover {
+  background: linear-gradient(45deg, #00e1ff, #4b538b);
+  box-shadow: 0px 0px 25px #00e1ff;
+  transform: scale(1.05);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+      transform: translateY(-10px);
   }
-  
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}

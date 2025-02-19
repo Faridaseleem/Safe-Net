@@ -116,7 +116,10 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        
+        if (!user.verified) {
+            console.log("❌ User not verified");
+            return res.status(403).json({ message: "Please verify your email first" });
+        }
 
 
         // Compare the password
