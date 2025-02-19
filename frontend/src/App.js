@@ -11,7 +11,6 @@ import ChangePlan from "./pages/ChangePlan";
 import Verify from "./pages/Verify";
 import SelectPlan from "./pages/SelectPlan";
 import RootPage from "./pages/RootPage";
-import ReportURL from "./pages/ReportURL";
 import "./App.css";
 
 const App = () => {
@@ -20,8 +19,10 @@ const App = () => {
       <Routes>
         {/* RootPage (No Navbar) */}
         <Route path="/" element={<RootPage />} />
-        
-
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/select-plan" element={<SelectPlan />} />
         {/* Other Pages (With Navbar) */}
         <Route
           path="/*"
@@ -31,14 +32,10 @@ const App = () => {
               <Routes>
                 <Route path="/home" element={<Home />} />
                 <Route path="/scan-url" element={<ScanURL />} />
-                <Route path="/report-url" element={<ReportURL />} />
                 <Route path="/scan-email" element={<ScanEmail />} />
                 <Route path="/education" element={<Education />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
                 <Route path="/change-plan" element={<ChangePlan />} />
-                <Route path="/verify" element={<Verify />} />
-                <Route path="/select-plan" element={<SelectPlan />} />
+
               </Routes>
             </>
           }
