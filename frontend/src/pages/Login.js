@@ -23,7 +23,7 @@ const Login = () => {
 
       alert("Login successful!");
       localStorage.setItem("token", response.data.token);
-      navigate("/"); // Redirect after login
+      navigate("/home"); // Redirect after login
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Try again.");
     } finally {

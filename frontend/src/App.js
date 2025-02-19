@@ -9,23 +9,37 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ChangePlan from "./pages/ChangePlan";
 import Verify from "./pages/Verify";
-import SelectPlan from "./pages/SelectPlan"; // ✅ Import the missing component
+import SelectPlan from "./pages/SelectPlan";
+import RootPage from "./pages/RootPage";
 import "./App.css";
 
 const App = () => {
   return (
     <Router>
-      <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/scan-url" element={<ScanURL />} />
-        <Route path="/scan-email" element={<ScanEmail />} />
-        <Route path="/education" element={<Education />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/change-plan" element={<ChangePlan />} />
-        <Route path="/verify" element={<Verify />} />
-        <Route path="/select-plan" element={<SelectPlan />} /> {/* ✅ Added this */}
+        {/* RootPage (No Navbar) */}
+        <Route path="/" element={<RootPage />} />
+
+        {/* Other Pages (With Navbar) */}
+        <Route
+          path="/*"
+          element={
+            <>
+              <Navbar />
+              <Routes>
+                <Route path="/home" element={<Home />} />
+                <Route path="/scan-url" element={<ScanURL />} />
+                <Route path="/scan-email" element={<ScanEmail />} />
+                <Route path="/education" element={<Education />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/change-plan" element={<ChangePlan />} />
+                <Route path="/verify" element={<Verify />} />
+                <Route path="/select-plan" element={<SelectPlan />} />
+              </Routes>
+            </>
+          }
+        />
       </Routes>
     </Router>
   );
