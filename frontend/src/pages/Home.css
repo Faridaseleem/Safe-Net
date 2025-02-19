@@ -18,7 +18,7 @@
     margin-bottom: 20px;
   }
   .security-banner {
-    background: linear-gradient(90deg, #4b538b, #020918);
+    background: rgba(255, 255, 255, 0.055);
     color: #cacbcf;
     text-align: center;
     padding: 20px;
