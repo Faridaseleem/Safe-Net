@@ -21,6 +21,8 @@ const App = () => {
         <Route path="/" element={<RootPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/select-plan" element={<SelectPlan />} />
         {/* Other Pages (With Navbar) */}
         <Route
           path="/*"
