@@ -101,7 +101,6 @@ router.post("/select-plan", async (req, res) => {
 
 
 
-// Login Route
 router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -117,10 +116,8 @@ router.post("/login", async (req, res) => {
         }
 
         if (!user.verified) {
-            console.log("❌ User not verified");
             return res.status(403).json({ message: "Please verify your email first" });
         }
-
 
         // Compare the password
         const isMatch = await bcrypt.compare(password.trim(), user.password);
@@ -129,12 +126,47 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        res.status(200).json({ message: "Login successful" });
+        // ✅ Store user info in session
+        req.session.user = {
+            id: user._id,
+            name: user.name,
+            email: user.email
+        };
+
+        console.log("🔐 User logged in:", req.session.user);
+
+        res.status(200).json({
+            message: "Login successful",
+            user: req.session.user
+        });
+
     } catch (error) {
         console.error("Login Error:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 });
+
+
+
+
+router.post("/logout", (req, res) => {
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("Logout error:", err);
+                return res.status(500).json({ message: "Logout failed" });
+            }
+            res.clearCookie("connect.sid"); // Clear session cookie
+            return res.json({ message: "Logout successful" });
+        });
+    } else {
+        return res.status(400).json({ message: "No active session" });
+    }
+});
+
+module.exports = router;
+
+
 
 
 

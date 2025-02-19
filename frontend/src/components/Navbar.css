@@ -1,40 +1,52 @@
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    
-    padding: 20px;
-    box-shadow: 0px 0px 15px #4b538b;
-    font-family: "Orbitron", sans-serif;
-  }
-  
-  .logo1 img {
-    width: 150px; /* Increase width */
-    height: auto; /* Maintain aspect ratio */
-    
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px; /* More balanced spacing */
+  box-shadow: 0px 0px 15px #4b538b;
+  font-family: "Orbitron", sans-serif;
+  background: rgba(0, 0, 0, 0.8); /* Slight transparency for depth */
+}
+
+.logo1 img {
+  width: 160px; /* Slightly larger for better visibility */
+  height: auto;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  align-items: center;
+}
+
+.nav-links li {
+  margin-left: 25px; /* More spacing for better readability */
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #cacbcf;
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+}
+
+.nav-links a:hover {
+  color: #00e1ff;
+  text-shadow: 0px 0px 12px #00e1ff;
+}
+.nav-links logout-btn {
+  background: linear-gradient(90deg, #4b538b, #020918);
+  color: #cacbcf;
+  font-size: 1.2rem;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  box-shadow: 0px 0px 25px #4b538b;
+  transition: all 0.3s ease-in-out;
 }
 
 
-  
-  .nav-links {
-    list-style: none;
-    display: flex;
-  }
-  
-  .nav-links li {
-    margin-left: 20px;
-    color: #cacbcf;
-  }
-  
-  .nav-links a {
-    text-decoration: none;
-    color: #cacbcf;
-    font-size: 1.2rem;
-    transition: all 0.3s ease-in-out;
-  }
-  
-  .nav-links a:hover {
-    color: #00e1ff;
-    text-shadow: 0px 0px 10px #00e1ff;
-  }
-  
+
+
