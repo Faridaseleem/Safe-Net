@@ -30,7 +30,7 @@ router.post("/signup", async (req, res) => {
 
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log("Hashed Password Before Saving:", hashedPassword);  // Debugging
+    
 
         // Generate a 6-digit verification code
         const verificationCode = crypto.randomInt(100000, 999999);
