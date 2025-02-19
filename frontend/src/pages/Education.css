@@ -1,0 +1,70 @@
+.education-container {
+    text-align: center;
+    padding: 50px;
+    color: #d0eaff;
+    font-family: "Orbitron", sans-serif;
+}
+
+.education-title {
+    font-size: 2.5rem;
+    text-shadow: 0px 0px 15px #1a1b1b;
+}
+
+.education-intro {
+    font-size: 1.5rem;
+    color: #cacbcf;
+    margin-bottom: 20px;
+}
+
+.education-content {
+    background: rgba(255, 255, 255, 0.055);
+    color: #cacbcf;
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 10px;
+    max-width: 80%;
+    margin: 20px auto;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Styled list items with hover effect */
+.education-content ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.education-content li {
+    font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.055);
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: bold;
+    border: 2px solid transparent;
+}
+
+.education-content li:hover {
+    border: 2px solid #00e1ff;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 0px 15px #00e1ff;
+    transform: scale(1.05);
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
