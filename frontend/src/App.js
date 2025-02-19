@@ -19,7 +19,8 @@ const App = () => {
       <Routes>
         {/* RootPage (No Navbar) */}
         <Route path="/" element={<RootPage />} />
-
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         {/* Other Pages (With Navbar) */}
         <Route
           path="/*"
@@ -31,11 +32,8 @@ const App = () => {
                 <Route path="/scan-url" element={<ScanURL />} />
                 <Route path="/scan-email" element={<ScanEmail />} />
                 <Route path="/education" element={<Education />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
                 <Route path="/change-plan" element={<ChangePlan />} />
-                <Route path="/verify" element={<Verify />} />
-                <Route path="/select-plan" element={<SelectPlan />} />
+
               </Routes>
             </>
           }
