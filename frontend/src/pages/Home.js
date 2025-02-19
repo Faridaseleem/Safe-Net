@@ -21,6 +21,7 @@ const Home = () => {
       <div className="home-buttons">
         <button onClick={() => navigate("/scan-url")}>🔍 Scan a URL</button>
         <button onClick={() => navigate("/scan-email")}>📧 Scan an Email</button>
+        <button onClick={() => navigate("/report-url")}>🚨 Report a URL</button>
         <button onClick={() => navigate("/education")}>🌐 Education</button>
       </div>
     </div>
