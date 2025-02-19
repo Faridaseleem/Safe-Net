@@ -89,12 +89,16 @@ router.post("/scan-url", async (req, res) => {
             verdict = "🟢 Low Risk (Likely Safe)";
         }
 
+        // Adding the education link
+        const educationLink = "/education"; // Adjust this if necessary
+
         res.json({
             url: url,
             total_sources: totalSources,
             malicious_detections: detectedCount,
             detection_percentage: `${detectionPercentage}%`,
             verdict: verdict,
+            more_info: `If you want to learn more about phishing awareness and protection, visit our education page: ${educationLink}`,
         });
 
     } catch (error) {
