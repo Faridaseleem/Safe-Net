@@ -78,7 +78,7 @@ const Scan = () => {
           <p><strong>🕒 Scan Time:</strong> {result.timestamp}</p>
           <p><strong>📊 Total Sources Checked:</strong> {result.total_sources}</p>
           <p><strong>🚨 Malicious Detections:</strong> {result.malicious_detections}</p>
-          <p><strong>📈 Detection Percentage:</strong> {result.detection_percentage}</p>
+          {/*<p><strong>📈 Detection Percentage:</strong> {result.detection_percentage}</p>*/}
           <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p>
 
           {/* Learn More Button for Education Page */}

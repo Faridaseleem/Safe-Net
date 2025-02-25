@@ -44,12 +44,12 @@ const RootPage = () => {
         <div className="feature">
           <img src={icon1} alt="Threat Detection" className="feature-icon" />
           <h2>Threat Detection</h2>
-          <p>Scan URLs and email files to identify phishing and other cyber threats in real-time.</p>
+          <p>Scan URLs and email files to identify phishing and cyber threats in real-time.</p>
         </div>
         <div className="feature">
           <img src={icon2} alt="Security Awareness" className="feature-icon" />
           <h2>Security Awareness</h2>
-          <p>Learn about cyber threats with interactive alerts and educational content.</p>
+          <p>Learn to spot and avoid phishing threats with educational content.</p>
         </div>
         <div className="feature">
           <img src={icon3} alt="API Integration" className="feature-icon" />
@@ -59,7 +59,7 @@ const RootPage = () => {
         <div className="feature">
           <img src={icon4} alt="Chatbot Assistance" className="feature-icon" />
           <h2>Chatbot Assistance</h2>
-          <p>Get instant cybersecurity awareness tips and threat analysis with our    chatbot.  </p>
+          <p>Get instant security awareness tips and scan URLs with our   Chatbot. </p>
         </div>
       </div>
     </div>
