@@ -99,8 +99,6 @@ router.post("/select-plan", async (req, res) => {
 });
 
 
-
-
 router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -119,7 +117,7 @@ router.post("/login", async (req, res) => {
             return res.status(403).json({ message: "Please verify your email first" });
         }
 
-        // Compare the password
+        // Compare password
         const isMatch = await bcrypt.compare(password.trim(), user.password);
 
         if (!isMatch) {
@@ -133,11 +131,20 @@ router.post("/login", async (req, res) => {
             email: user.email
         };
 
-        console.log("🔐 User logged in:", req.session.user);
+        console.log("✅ Storing user in session:", req.session.user);
 
-        res.status(200).json({
-            message: "Login successful",
-            user: req.session.user
+        // 🔥 Force session save before responding
+        req.session.save((err) => {
+            if (err) {
+                console.error("Session save error:", err);
+                return res.status(500).json({ message: "Session save failed" });
+            }
+
+            console.log("✅ Session successfully saved:", req.session);
+            res.status(200).json({
+                message: "Login successful",
+                user: req.session.user
+            });
         });
 
     } catch (error) {
@@ -146,25 +153,35 @@ router.post("/login", async (req, res) => {
     }
 });
 
+router.get("/debug-session", (req, res) => {
+    console.log("🔍 Debugging Session:", req.session);
+    res.json({ session: req.session });
+});
 
 
 
 router.post("/logout", (req, res) => {
+    console.log("🔍 Current Session Before Logout:", req.session);
+
     if (req.session) {
+        console.log("🛑 Logging out. Current session:", req.session);
+        
         req.session.destroy((err) => {
             if (err) {
-                console.error("Logout error:", err);
+                console.error("❌ Logout error:", err);
                 return res.status(500).json({ message: "Logout failed" });
             }
+
             res.clearCookie("connect.sid"); // Clear session cookie
+            console.log("✅ Session destroyed successfully!");
             return res.json({ message: "Logout successful" });
         });
     } else {
+        console.log("⚠️ No active session found.");
         return res.status(400).json({ message: "No active session" });
     }
 });
 
-module.exports = router;
 
 
 
@@ -172,3 +189,9 @@ module.exports = router;
 
 
 module.exports = router;
+
+
+
+
+
+
