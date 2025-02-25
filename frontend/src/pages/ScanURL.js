@@ -79,7 +79,7 @@ const Scan = () => {
           <p><strong>📊 Total Sources Checked:</strong> {result.total_sources}</p>
           <p><strong>🚨 Malicious Detections:</strong> {result.malicious_detections}</p>
           {/*<p><strong>📈 Detection Percentage:</strong> {result.detection_percentage}</p>*/}
-          <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p>
+          <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p> <br></br>
 
           {/* Learn More Button for Education Page */}
           <button className="learn-more-btn" onClick={() => navigate("/education")}>
