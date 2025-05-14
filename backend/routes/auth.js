@@ -159,27 +159,45 @@ router.get("/debug-session", (req, res) => {
 });
 
 
+const mongoose = require("mongoose");
 
-router.post("/logout", (req, res) => {
+router.post("/logout", async (req, res) => {
     console.log("🔍 Current Session Before Logout:", req.session);
 
-    if (req.session) {
-        console.log("🛑 Logging out. Current session:", req.session);
-        
-        req.session.destroy((err) => {
-            if (err) {
-                console.error("❌ Logout error:", err);
-                return res.status(500).json({ message: "Logout failed" });
-            }
-
-            res.clearCookie("connect.sid"); // Clear session cookie
-            console.log("✅ Session destroyed successfully!");
-            return res.json({ message: "Logout successful" });
-        });
-    } else {
+    if (!req.session) {
         console.log("⚠️ No active session found.");
         return res.status(400).json({ message: "No active session" });
     }
+
+    const sessionID = req.sessionID; // Get the current session ID
+
+    req.session.destroy(async (err) => {
+        if (err) {
+            console.error("❌ Logout error:", err);
+            return res.status(500).json({ message: "Logout failed" });
+        }
+
+        try {
+            // ✅ Manually delete session from MongoDB
+            await mongoose.connection.db.collection("sessions").deleteOne({ _id: sessionID });
+
+            console.log("✅ Session removed from database!");
+
+            res.clearCookie("connect.sid", {
+                path: "/",
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict"
+            });
+
+            console.log("✅ Session destroyed successfully!");
+            return res.json({ message: "Logout successful" });
+
+        } catch (dbError) {
+            console.error("❌ Error deleting session from DB:", dbError);
+            return res.status(500).json({ message: "Session removal failed" });
+        }
+    });
 });
 
 

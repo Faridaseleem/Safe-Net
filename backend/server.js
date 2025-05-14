@@ -27,17 +27,20 @@ app.use(
         secret: process.env.SESSION_SECRET,  
         resave: false,
         saveUninitialized: false,
+        
         store: MongoStore.create({
             mongoUrl: process.env.MONGO_URI,
             collectionName: "sessions",
             stringify: false,  // ✅ Ensure proper object storage
             autoRemove: "interval",
-            autoRemoveInterval: 10 // Remove expired sessions every 10 minutes
+            autoRemoveInterval: 1 // Remove expired sessions every 1 minutes
         }),
         cookie: { 
-            secure: false, // Set to `true` if using HTTPS
+            secure: process.env.NODE_ENV === "production", // Only true in production
             httpOnly: true, 
-            maxAge: 1000 * 60 * 60 * 24 // 1 day
+            sameSite: 'Lax',  
+            maxAge: 10 * 60 * 1000 // 10 minutes
+            
         }
     })
 );
