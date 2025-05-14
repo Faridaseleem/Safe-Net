@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 
+
 dotenv.config();
 connectDB();
 
@@ -61,6 +62,9 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api", scanRoutes);
 app.use("/api/auth", authRoutes);
+
+
+
 
 app.get("/", (req, res) => {
     res.send("✅ Server is running and connected to MongoDB!");
