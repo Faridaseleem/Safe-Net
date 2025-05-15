@@ -1,0 +1,23 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Test Email with Attachment
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="simple-boundary"
+
+--simple-boundary
+Content-Type: text/plain; charset="UTF-8"
+
+Hello,
+
+Please visit https://universegloballinethreat.weebly.com/ for more info.
+
+Best regards,
+Sender
+
+--simple-boundary
+Content-Type: text/plain; name="testfile.txt"
+Content-Disposition: attachment; filename="testfile.txt"
+Content-Transfer-Encoding: base64
+
+VGhpcyBpcyBhIHRlc3QgYXR0YWNobWVudCBjb250ZW50Lg==
+--simple-boundary--

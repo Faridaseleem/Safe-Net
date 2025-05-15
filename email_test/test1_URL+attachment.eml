@@ -1,0 +1,26 @@
+From: attacker@example.com
+To: victim@example.com
+Subject: Urgent: Account Verification Needed
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="ABC123"
+
+--ABC123
+Content-Type: text/plain; charset="UTF-8"
+
+Dear user,
+
+Please verify your account immediately by clicking the link below:
+
+https://delivery.helpet.xin/
+
+Also, see the attached file for instructions.
+
+--ABC123
+Content-Type: application/octet-stream; name="eicar.com"
+Content-Disposition: attachment; filename="eicar.com"
+Content-Transfer-Encoding: base64
+
+WDVPIVAlQEFQWzRcUFpaNTRQXl4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNUMi1GSUxF
+ISRIK0gq
+
+--ABC123--
