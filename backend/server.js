@@ -4,9 +4,9 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const scanRoutes = require("./routes/scanRoutes");
 const authRoutes = require("./routes/auth");
+const reportRoutes = require("./routes/reportRoutes"); // <-- Import reportRoutes
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
-
 
 dotenv.config();
 connectDB();
@@ -14,67 +14,61 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Fix CORS for Sessions
-app.use(cors({
+// CORS setup with credentials
+app.use(
+  cors({
     origin: "http://localhost:3000",
-    credentials: true  // Ensure cookies & session persistence
-}));
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
-
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET,  
-        resave: false,
-        saveUninitialized: false,
-        
-        store: MongoStore.create({
-            mongoUrl: process.env.MONGO_URI,
-            collectionName: "sessions",
-            stringify: false,  // ✅ Ensure proper object storage
-            autoRemove: "interval",
-            autoRemoveInterval: 1 // Remove expired sessions every 1 minutes
-        }),
-        cookie: { 
-            secure: process.env.NODE_ENV === "production", // Only true in production
-            httpOnly: true, 
-            sameSite: 'Lax',  
-            maxAge: 10 * 60 * 1000 // 10 minutes
-            
-        }
-    })
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+      stringify: false,
+      autoRemove: "interval",
+      autoRemoveInterval: 1,
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "Lax",
+      maxAge: 10 * 60 * 1000,
+    },
+  })
 );
 
-
-
-// ✅ Debug Route: Check Session
+// Debug route for session info
 app.get("/session-status", (req, res) => {
-    res.json({ session: req.session });
+  res.json({ session: req.session });
 });
 
 app.use((req, res, next) => {
-    console.log("🔍 Current Session:", req.session);
-    next();
+  console.log("🔍 Current Session:", req.session);
+  next();
 });
-
 
 // Routes
 app.use("/api", scanRoutes);
 app.use("/api/auth", authRoutes);
-
-
-
+app.use("/api", reportRoutes); // <-- Register report routes
 
 app.get("/", (req, res) => {
-    res.send("✅ Server is running and connected to MongoDB!");
+  res.send("✅ Server is running and connected to MongoDB!");
 });
 
-// 404 Handler
+// 404 handler
 app.use((req, res) => {
-    res.status(404).json({ error: "404 Not Found - Invalid Route" });
+  res.status(404).json({ error: "404 Not Found - Invalid Route" });
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

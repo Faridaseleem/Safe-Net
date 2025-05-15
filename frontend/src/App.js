@@ -11,6 +11,7 @@ import ChangePlan from "./pages/ChangePlan";
 import Verify from "./pages/Verify";
 import SelectPlan from "./pages/SelectPlan";
 import RootPage from "./pages/RootPage";
+import ReportURL from "./pages/ReportURL";  // <-- Import the new ReportURL page
 import "./App.css";
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify" element={<Verify />} />
         <Route path="/select-plan" element={<SelectPlan />} />
+
         {/* Other Pages (With Navbar) */}
         <Route
           path="/*"
@@ -35,7 +37,7 @@ const App = () => {
                 <Route path="/scan-email" element={<ScanEmail />} />
                 <Route path="/education" element={<Education />} />
                 <Route path="/change-plan" element={<ChangePlan />} />
-
+                <Route path="/report-url" element={<ReportURL />} />  {/* <-- New route */}
               </Routes>
             </>
           }

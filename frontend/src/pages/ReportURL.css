@@ -1,0 +1,77 @@
+.report-container {
+  text-align: center;
+  padding: 50px;
+  font-family: "Orbitron", sans-serif;
+  color: #d0eaff;
+  max-width: 600px;
+  margin: auto;
+}
+
+.report-container h2 {
+  font-size: 2rem;
+  color: #8f9dff;
+  margin-bottom: 20px;
+}
+
+.report-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.report-form input[type="text"] {
+  width: 80%;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  background: #1b1f3b;
+  color: white;
+  box-shadow: 0 0 25px #4b538b;
+  text-align: center;
+  outline: none;
+  transition: box-shadow 0.3s ease;
+}
+
+.report-form input[type="text"]:focus {
+  box-shadow: 0 0 35px #00e1ff;
+}
+
+.report-form button {
+  background: linear-gradient(90deg, #4b538b, #020918);
+  color: #cacbcf;
+  font-size: 1.2rem;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  box-shadow: 0 0 25px #4b538b;
+  transition: all 0.3s ease-in-out;
+  width: 50%;
+}
+
+.report-form button:hover:not(:disabled) {
+  background: linear-gradient(90deg, #00e1ff, #4b538b);
+  box-shadow: 0 0 30px #00e1ff;
+  transform: scale(1.05);
+}
+
+.report-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message {
+  margin-top: 20px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.message.error {
+  color: #ff4f4f;
+}
+
+.message.success {
+  color: #8fffbf;
+}

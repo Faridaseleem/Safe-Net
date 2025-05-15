@@ -4,6 +4,7 @@ const multer = require("multer");
 const { simpleParser } = require("mailparser");
 const axios = require("axios");
 const FormData = require("form-data");
+const BlockedUrl = require("../models/BlockedUrl"); // <-- Import BlockedUrl model
 require("dotenv").config();
 
 const upload = multer(); // Multer memory storage (no disk save)
@@ -161,10 +162,8 @@ async function scanFileVT(filename, fileBuffer) {
   }
 }
 
-// POST /api/scan-url — Scan a single URL
+// POST /api/scan-url — Scan a single URL with blocked URL check
 router.post("/scan-url", async (req, res) => {
-  console.log("Received Request Body:", req.body);
-
   if (!req.body || !req.body.url) {
     console.error("❌ Error: URL is missing from request body.");
     return res.status(400).json({ error: "URL is required." });
@@ -173,6 +172,19 @@ router.post("/scan-url", async (req, res) => {
   const { url } = req.body;
 
   try {
+    // Check blocked URLs first
+    const blocked = await BlockedUrl.findOne({ url });
+    if (blocked && blocked.status === "malicious") {
+      return res.json({
+        url,
+        verdict: "🔴 Malicious (Blocked by admin)",
+        total_sources: 0,
+        malicious_detections: 1,
+        more_info: "This URL is blocked as malicious by an admin.",
+      });
+    }
+
+    // Submit URL to VirusTotal for scanning
     const scanResponse = await axios.post(
       "https://www.virustotal.com/api/v3/urls",
       new URLSearchParams({ url }),
