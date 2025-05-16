@@ -1,0 +1,92 @@
+.admin-report-container {
+  max-width: 900px;
+  margin: 40px auto;
+  font-family: "Orbitron", sans-serif;
+  color: #d0eaff;
+  background: #1b1f3b;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 25px #4b538b;
+}
+
+.admin-report-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #8f9dff;
+}
+
+.admin-report-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-report-table th,
+.admin-report-table td {
+  border: 1px solid #4b538b;
+  padding: 12px 15px;
+  text-align: center;
+}
+
+.admin-report-table th {
+  background-color: #4b538b;
+}
+
+.admin-report-table a {
+  color: #00e1ff;
+  text-decoration: none;
+}
+
+.admin-report-table a:hover {
+  text-decoration: underline;
+}
+
+.status {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.status.pending {
+  color: #ffbc42;
+}
+
+.status.malicious {
+  color: #ff4f4f;
+}
+
+.status.safe {
+  color: #8fffbf;
+}
+
+.btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.btn-danger {
+  background-color: #ff4f4f;
+  color: white;
+  margin-right: 10px;
+}
+
+.btn-danger:hover {
+  background-color: #cc3c3c;
+}
+
+.btn-safe {
+  background-color: #8fffbf;
+  color: #1b1f3b;
+}
+
+.btn-safe:hover {
+  background-color: #65d38d;
+}
+
+.error {
+  color: #ff4f4f;
+  text-align: center;
+  margin-top: 20px;
+}

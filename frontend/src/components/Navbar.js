@@ -5,43 +5,34 @@ import "./Navbar.css";
 import logo from "../assets/navlogo.png";
 
 const Navbar = () => {
-    const navigate = useNavigate(); // Hook for redirection
+  const navigate = useNavigate();
 
-    const handleLogout = async () => {
-      try {
-          const response = await axios.post("http://localhost:5000/api/auth/logout", {}, { 
-              withCredentials: true 
-          });
-  
-          console.log("Response Status:", response.status);
-          console.log("Response Data:", response.data);
-  
-          if (response.status === 200) {
-              alert("You have been logged out!");
-              navigate("/login");
-          } else {
-              alert("Logout failed: " + response.data.message);
-          }
-      } catch (error) {
-          console.error("⚠️ Logout Error:", error.response ? error.response.data : error.message);
-          alert("An error occurred during logout.");
+  const handleLogout = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
+      if (response.status === 200) {
+        alert("You have been logged out!");
+        navigate("/login");
+      } else {
+        alert("Logout failed: " + response.data.message);
       }
+    } catch (error) {
+      alert("An error occurred during logout.");
+    }
   };
-  
 
-    return (
-        <nav className="navbar">
-            <div className="logo1">
-                <img src={logo} alt="SafeNet Logo" className="logo1" />
-            </div>
-            <ul className="nav-links">
-                <li><Link to="/home"><strong>HOME</strong></Link></li>
-                <li><button className="logout-btn" onClick={handleLogout}><strong>Logout</strong></button></li>
-            </ul>
-        </nav>
-    );
+  return (
+    <nav className="navbar">
+      <div className="logo1">
+        <img src={logo} alt="SafeNet Logo" className="logo1" />
+      </div>
+      <ul className="nav-links">
+        <li><Link to="/home"><strong>HOME</strong></Link></li>
+        {/* Removed Scan URL, Scan Email, Report URL, Education links */}
+        <li><button className="logout-btn" onClick={handleLogout}><strong>Logout</strong></button></li>
+      </ul>
+    </nav>
+  );
 };
 
-export default Navbar;    
-
-
+export default Navbar;

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useUser } from "../contexts/UserContext";
 import "./Login.css";
 
 const Login = () => {
@@ -9,6 +10,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useUser();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -16,14 +18,25 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
-        email: email.trim(),
-        password: password.trim(),
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        {
+          email: email.trim(),
+          password: password.trim(),
+        }
+      );
 
-      alert("Login successful!");
-      localStorage.setItem("token", response.data.token);
-      navigate("/home"); // Redirect after login
+      const { token, user } = response.data;
+
+      localStorage.setItem("token", token);
+      login(user); // Save user info (including role) in context
+
+      // Redirect based on role
+      if (user.role === "admin") {
+        navigate("/admin/reports");
+      } else {
+        navigate("/home");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Try again.");
     } finally {

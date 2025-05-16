@@ -11,7 +11,8 @@ import ChangePlan from "./pages/ChangePlan";
 import Verify from "./pages/Verify";
 import SelectPlan from "./pages/SelectPlan";
 import RootPage from "./pages/RootPage";
-import ReportURL from "./pages/ReportURL";  // <-- Import the new ReportURL page
+import ReportURL from "./pages/ReportURL";  // User URL report page
+import AdminReportURLs from "./pages/AdminReportedURLs"; // Admin report management page
 import "./App.css";
 
 const App = () => {
@@ -37,7 +38,8 @@ const App = () => {
                 <Route path="/scan-email" element={<ScanEmail />} />
                 <Route path="/education" element={<Education />} />
                 <Route path="/change-plan" element={<ChangePlan />} />
-                <Route path="/report-url" element={<ReportURL />} />  {/* <-- New route */}
+                <Route path="/report-url" element={<ReportURL />} />  {/* User report */}
+                <Route path="/admin/reports" element={<AdminReportURLs />} /> {/* Admin manage */}
               </Routes>
             </>
           }

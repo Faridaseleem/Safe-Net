@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { useUser } from "../contexts/UserContext"; // your user context hook
 import "./ReportURL.css";
 
 const ReportURL = () => {
   const [url, setUrl] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const { user } = useUser(); // get logged-in user info
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,10 +23,11 @@ const ReportURL = () => {
     try {
       const res = await fetch("http://localhost:5000/api/report-url", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          reportedBy: user?.email || "anonymous",  // send reporter email or fallback
+        }),
       });
 
       const data = await res.json();
