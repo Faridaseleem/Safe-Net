@@ -1,56 +1,59 @@
 .scan-container {
-    text-align: center;
-    padding: 50px;
-    color: #d0eaff;
-    font-family: "Orbitron", sans-serif;
-  }
-  
-  .scan-container h2 {
-    font-size: 2rem;
-    color: #8f9dff;
-  }
-  
-  input {
-    width: 60%;
-    padding: 10px;
-    font-size: 1rem;
-    margin: 15px 0;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-    background: #1b1f3b;
-    color: white;
-    box-shadow: 0px 0px 25px #4b538b;
-    text-align: center;
-  }
-  .scan-container .logo {
-    width: 100px;
-    margin-top: -50px;
-  }
-  button {
-    background: linear-gradient(90deg, #4b538b, #020918);
-    color: #cacbcf;
-    font-size: 1.2rem;
-    padding: 12px 24px;
-    border: none;
-    cursor: pointer;
-   
-    border-radius: 8px;
-    box-shadow: 0px 0px 25px #4b538b;
-    transition: all 0.3s ease-in-out;
-  }
-  .scan-tagline {
-    font-size: 1.2rem;
-    color: #9096c1;
-    margin-bottom: 20px;
-    animation: fadeIn 1s ease-in-out;
+  text-align: center;
+  padding: 50px;
+  color: #d0eaff;
+  font-family: "Orbitron", sans-serif;
 }
-  
-  button:hover {
-    background: linear-gradient(90deg, #4b538b, #020918);
-    box-shadow: 0px 0px 25px #00e1ff;
-    transform: scale(1.05);
-  }
+
+.scan-container h2 {
+  font-size: 2rem;
+  color: #8f9dff;
+}
+
+input {
+  width: 60%;
+  padding: 10px;
+  font-size: 1rem;
+  margin: 15px 0;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #1b1f3b;
+  color: white;
+  box-shadow: 0px 0px 25px #4b538b;
+  text-align: center;
+}
+
+.scan-container .logo {
+  width: 100px;
+  margin-top: -50px;
+}
+
+button {
+  background: linear-gradient(90deg, #4b538b, #020918);
+  color: #cacbcf;
+  font-size: 1.2rem;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  box-shadow: 0px 0px 25px #4b538b;
+  transition: all 0.3s ease-in-out;
+}
+
+.scan-tagline {
+  font-size: 1.2rem;
+  color: #9096c1;
+  margin-bottom: 20px;
+  animation: fadeIn 1s ease-in-out;
+}
+
+button:hover {
+  background: linear-gradient(90deg, #4b538b, #020918);
+  box-shadow: 0px 0px 25px #00e1ff;
+  transform: scale(1.05);
+}
+
 /* Scan Result Card */
 .scan-result {
   background: #1b1f3b;
@@ -93,8 +96,81 @@
   font-size: 1.5rem;
 }
 
-/* Download Report Button */
-.download-btn {
+/* Details Toggle Buttons Container */
+.details-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin: 25px 0 15px;
+  justify-content: center;
+}
+
+/* Details Toggle Button Styling */
+.details-toggle {
+  background: linear-gradient(90deg, #2a2f5a, #1b1f3b);
+  color: #8f9dff;
+  font-size: 1rem;
+  padding: 10px 16px;
+  border: 1px solid #4b538b;
+  cursor: pointer;
+  border-radius: 8px;
+  box-shadow: 0px 0px 15px rgba(75, 83, 139, 0.5);
+  transition: all 0.3s ease-in-out;
+}
+
+.details-toggle:hover {
+  box-shadow: 0px 0px 15px rgba(0, 225, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.details-toggle.active {
+  background: linear-gradient(90deg, #4b538b, #2a2f5a);
+  color: #d0eaff;
+  box-shadow: 0px 0px 15px rgba(0, 225, 255, 0.7);
+}
+
+/* API Details Sections */
+.api-details {
+  background: rgba(30, 35, 70, 0.7);
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin: 10px 0 25px;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+  border-left: 4px solid;
+  animation: slideDown 0.4s ease-out;
+  transition: all 0.3s ease;
+}
+
+.vt-details {
+  border-left-color: #00e1ff;
+}
+
+.ipqs-details {
+  border-left-color: #8f9dff;
+}
+
+.api-details h4 {
+  color: #8f9dff;
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.3rem;
+  border-bottom: 1px solid rgba(143, 157, 255, 0.3);
+  padding-bottom: 8px;
+}
+
+.api-details p {
+  font-size: 1.1rem;
+  margin: 6px 0;
+  color: #d0eaff;
+}
+
+.api-details p strong {
+  color: #9096c1;
+  margin-right: 8px;
+}
+
+/* Download Report and Learn More Buttons */
+.download-btn, .learn-more-btn {
   background: linear-gradient(45deg, #4b538b, #020918);
   color: #d0eaff;
   border: none;
@@ -109,13 +185,34 @@
   transition: all 0.3s ease-in-out;
 }
 
-.download-btn:hover {
+.download-btn:hover, .learn-more-btn:hover {
   background: linear-gradient(45deg, #00e1ff, #4b538b);
   box-shadow: 0px 0px 25px #00e1ff;
   transform: scale(1.05);
 }
 
-/* Fade-in animation */
+.learn-more-btn {
+  margin-top: 30px;
+}
+
+/* Error display */
+.scan-error {
+  background: rgba(255, 79, 79, 0.1);
+  border-left: 4px solid #ff4f4f;
+  border-radius: 8px;
+  padding: 15px 20px;
+  margin: 20px auto;
+  width: 60%;
+  animation: fadeIn 0.8s ease-in-out;
+  box-shadow: 0px 0px 20px rgba(255, 79, 79, 0.3);
+}
+
+.scan-error h3 {
+  color: #ff4f4f;
+  margin-top: 0;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from {
       opacity: 0;
@@ -124,5 +221,33 @@
   to {
       opacity: 1;
       transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+      opacity: 0;
+      transform: translateY(-15px);
+      max-height: 0;
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 500px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .scan-result, .scan-error {
+      width: 90%;
+  }
+  
+  input {
+      width: 90%;
+  }
+  
+  .scan-result p, .api-details p {
+      font-size: 1rem;
   }
 }
