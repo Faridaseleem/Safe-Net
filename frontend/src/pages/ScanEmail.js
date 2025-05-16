@@ -8,7 +8,12 @@ const ScanEmail = () => {
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
   const [scanResults, setScanResults] = useState(null);
+  const [error, setError] = useState(null);
   const reportRef = useRef(null);
+
+  // Using booleans like ScanURL.js
+  const [showVTDetails, setShowVTDetails] = useState(false);
+  const [showIPQSDetails, setShowIPQSDetails] = useState(false);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -24,6 +29,9 @@ const ScanEmail = () => {
     setScanResults(null);
     setEmailBody("");
     setFileName("");
+    setError(null);
+    setShowVTDetails(false);
+    setShowIPQSDetails(false);
 
     const formData = new FormData();
     formData.append("emlFile", file);
@@ -37,79 +45,66 @@ const ScanEmail = () => {
         return res.json();
       })
       .then((data) => {
-        if (data.emailBody) setEmailBody(data.emailBody);
+        setEmailBody(data.emailBody || "");
         setScanResults(data);
         setFileName(file.name);
         setLoading(false);
       })
       .catch((err) => {
-        alert("Error scanning file: " + err.message);
+        setError(err.message);
         setLoading(false);
       });
   };
 
   const downloadReport = () => {
-    if (!reportRef.current) {
-      console.error("Scan report element not found!");
-      return;
-    }
+    if (!reportRef.current) return;
 
-    html2canvas(reportRef.current, {
-      backgroundColor: "#121629",
-      scale: 2,
-      useCORS: true,
-    })
-      .then((canvas) => {
-        const link = document.createElement("a");
-        link.href = canvas.toDataURL("image/png");
-        link.download = "Email_Scan_Report.png";
-        link.click();
+    // Hide details for clean screenshot
+    const vtWasOpen = showVTDetails;
+    const ipqsWasOpen = showIPQSDetails;
+    setShowVTDetails(false);
+    setShowIPQSDetails(false);
+
+    setTimeout(() => {
+      html2canvas(reportRef.current, {
+        backgroundColor: "#121629",
+        scale: 2,
+        useCORS: true,
       })
-      .catch((error) => {
-        console.error("html2canvas error:", error);
-      });
+        .then((canvas) => {
+          const link = document.createElement("a");
+          link.href = canvas.toDataURL("image/png");
+          link.download = "Email_Scan_Report.png";
+          link.click();
+
+          // Restore detail toggles
+          setShowVTDetails(vtWasOpen);
+          setShowIPQSDetails(ipqsWasOpen);
+        })
+        .catch((err) => {
+          console.error("html2canvas error:", err);
+          setShowVTDetails(vtWasOpen);
+          setShowIPQSDetails(ipqsWasOpen);
+        });
+    }, 100);
   };
 
-  const formatScanTime = () => {
-    const now = new Date();
-    return now.toLocaleString();
-  };
-
-  const totalAttachments = scanResults?.attachmentScanResults?.length || 0;
-  const totalURLs = scanResults?.urlScanResults?.length || 0;
-  const totalMalicious =
-    (scanResults?.urlScanResults?.reduce(
-      (sum, u) => sum + (u.malicious_detections || 0),
-      0
-    ) || 0) +
-    (scanResults?.attachmentScanResults?.reduce(
-      (sum, a) => sum + (a.malicious_detections || 0),
-      0
-    ) || 0);
-
+  // Improved final verdict prioritizing highest risk found
   const finalVerdict = (() => {
     const urlVerdicts = scanResults?.urlScanResults?.map((u) => u.verdict) || [];
-    const attVerdicts =
-      scanResults?.attachmentScanResults?.map((a) => a.verdict) || [];
-    const allVerdicts = [...urlVerdicts, ...attVerdicts];
-    if (
-      allVerdicts.some(
-        (v) =>
-          v &&
-          (v.toLowerCase().includes("high risk") ||
-            v.toLowerCase().includes("malicious"))
-      )
-    ) {
+    const attVerdicts = scanResults?.attachmentScanResults?.map((a) => a.verdict) || [];
+    const allVerdicts = [...urlVerdicts, ...attVerdicts].filter(Boolean).map(v => v.toLowerCase());
+
+    if (allVerdicts.some(v => v.includes("high risk") || v.includes("malicious"))) {
       return "🔴 High Risk (Likely Malicious)";
     }
-    if (
-      allVerdicts.some(
-        (v) =>
-          v &&
-          (v.toLowerCase().includes("clean") ||
-            v.toLowerCase().includes("no threat"))
-      )
-    ) {
+    if (allVerdicts.some(v => v.includes("medium risk"))) {
+      return "🟠 Medium Risk (Potentially Unsafe)";
+    }
+    if (allVerdicts.some(v => v.includes("low risk"))) {
+      return "🟡 Low Risk (Exercise Caution)";
+    }
+    if (allVerdicts.some(v => v.includes("clean") || v.includes("no threat"))) {
       return "🟢 Clean";
     }
     return "⚪ Unknown";
@@ -137,11 +132,12 @@ const ScanEmail = () => {
       </div>
 
       {fileName && <p className="uploaded-file">Selected file: {fileName}</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       {emailBody && (
         <section className="email-preview" aria-label="Email body preview">
           <h4>Email Body Preview:</h4>
-          <p>{emailBody}</p>
+          <pre style={{ whiteSpace: "pre-wrap" }}>{emailBody}</pre>
         </section>
       )}
 
@@ -155,76 +151,133 @@ const ScanEmail = () => {
             aria-atomic="true"
           >
             <h3>📄 Scan Report</h3>
-            <div><strong>🕒 Scan Time:</strong> {formatScanTime()}</div>
-            <div><strong>📊 Total Attachments:</strong>{totalAttachments}</div>
             <div>
-              <strong>🔗 URLs:</strong>{" "}
-              {totalURLs > 0 ? (
+              <strong>🕒 Scan Time:</strong> {new Date().toLocaleString()}
+            </div>
+            <div>
+              <strong>📊 Total Attachments:</strong> {scanResults.attachmentScanResults?.length || 0}
+            </div>
+            <div>
+              <strong>🔗 URLs:</strong>
+              {scanResults.urlScanResults?.length > 0 ? (
                 <ul className="summary-url-list">
-                  {scanResults.urlScanResults.map((url, i) => (
-                    <li key={i}>{url.url}</li>
+                  {scanResults.urlScanResults.map((urlObj) => (
+                    <li key={urlObj.url}>{urlObj.url}</li>
                   ))}
                 </ul>
               ) : (
-                "None"
+                " None"
               )}
             </div>
-            <div><strong>⚠️ Final Verdict: </strong>{finalVerdict}</div>
+
+            <div>
+              <strong>⚠️ Final Verdict: </strong> {finalVerdict}
+            </div>
 
             <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
 
-            {totalURLs > 0 ? (
-              <>
-                <h4>URL Scan Results:</h4>
-                <ul>
-                  {scanResults.urlScanResults.map((res, idx) => (
-                    <li key={idx} style={{ marginBottom: 16 }}>
-                      <strong>{res.url}</strong>:{" "}
-                      {res.error ? (
-                        <span style={{ color: "#e74c3c" }}>Error: {res.error}</span>
-                      ) : (
-                        <>
-                          <div>Total Sources Checked: {res.total_sources}</div>
-                          <div>Malicious Detections: {res.malicious_detections}</div>
-                          <div>Verdict: {res.verdict}</div>
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p>No URLs found or scanned.</p>
-            )}
+            <h4>URL Scan Results:</h4>
+            <ul>
+              {scanResults.urlScanResults.map((res, idx) => (
+                <li key={idx} style={{ marginBottom: 16 }}>
+                  <strong>{res.url}</strong>:<br />
+                  <div>Aggregated Verdict: {res.verdict}</div>
+                  <div>Aggregated Risk Score: {res.aggregated_risk_score}</div>
 
-            {scanResults.attachmentScanResults &&
-            scanResults.attachmentScanResults.length > 0 ? (
-              <>
-                <h4>Attachment Scan Results:</h4>
-                <ul>
-                  {scanResults.attachmentScanResults.map((att, idx) => (
-                    <li key={idx} style={{ marginBottom: 12 }}>
-                      <strong>{att.filename}</strong>:{" "}
-                      {att.error ? (
-                        <span style={{ color: "red" }}>Error: {att.error}</span>
-                      ) : (
-                        <span>
-                          {att.verdict ||
-                            "Scan submitted, check VirusTotal dashboard for results."}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
+                  <div className="details-buttons">
+                    {res.vt_results && (
+                      <button
+                        className={`details-toggle ${
+                          showVTDetails ? "active" : ""
+                        }`}
+                        onClick={() => setShowVTDetails(!showVTDetails)}
+                      >
+                        {showVTDetails
+                          ? "🔼 Hide VirusTotal Details"
+                          : "🔽 Show VirusTotal Details"}
+                      </button>
+                    )}
+
+                    {res.ipqs_results && (
+                      <button
+                        className={`details-toggle ${
+                          showIPQSDetails ? "active" : ""
+                        }`}
+                        onClick={() => setShowIPQSDetails(!showIPQSDetails)}
+                      >
+                        {showIPQSDetails
+                          ? "🔼 Hide IPQS Details"
+                          : "🔽 Show IPQS Details"}
+                      </button>
+                    )}
+                  </div>
+
+                  {showVTDetails && res.vt_results && (
+                    <div className="api-details vt-details">
+                      <h4>VirusTotal Results</h4>
+                      <p>
+                        <strong>Total Sources:</strong>{" "}
+                        {res.vt_results.total_sources}
+                      </p>
+                      <p>
+                        <strong>Malicious Detections:</strong>{" "}
+                        {res.vt_results.malicious_detections}
+                      </p>
+                      <p>
+                        <strong>Risk Score:</strong>{" "}
+                        {Math.round(res.vt_results.risk_score)}/100
+                      </p>
+                    </div>
+                  )}
+
+                  {showIPQSDetails && res.ipqs_results && (
+                    <div className="api-details ipqs-details">
+                      <h4>IPQS Results</h4>
+                      <p>
+                        <strong>Risk Score:</strong> {res.ipqs_results.risk_score}
+                        /100
+                      </p>
+                      <p>
+                        <strong>Phishing:</strong>{" "}
+                        {res.ipqs_results.is_phishing ? "Yes" : "No"}
+                      </p>
+                      <p>
+                        <strong>Malware:</strong>{" "}
+                        {res.ipqs_results.is_malware ? "Yes" : "No"}
+                      </p>
+                      <p>
+                        <strong>Suspicious:</strong>{" "}
+                        {res.ipqs_results.is_suspicious ? "Yes" : "No"}
+                      </p>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <h4>Attachment Scan Results:</h4>
+            {scanResults.attachmentScanResults?.length === 0 && (
               <p>No attachments found or scanned.</p>
             )}
+            <ul>
+              {scanResults.attachmentScanResults?.map((att, idx) => (
+                <li key={idx}>
+                  <strong>{att.filename}</strong>:{" "}
+                  {att.error ? (
+                    <span style={{ color: "red" }}>Error: {att.error}</span>
+                  ) : (
+                    <span>
+                      {att.verdict ||
+                        "Scan submitted, check VirusTotal dashboard for results."}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
 
-            {/* Learn More button AFTER attachments */}
             <button
               type="button"
-              className="action-btn"
+              className="learn-more-btn"
               onClick={() => navigate("/education")}
               aria-label="Learn More About Phishing Protection"
             >

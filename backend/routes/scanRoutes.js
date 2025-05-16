@@ -419,45 +419,54 @@ router.post("/scan-url", async (req, res) => {
   }
 });
 
-// POST /api/scan-eml-file — Upload .eml, parse and scan URLs + attachments
-router.post(
-  "/scan-eml-file",
-  upload.single("emlFile"),
-  async (req, res) => {
-    if (!req.file)
-      return res.status(400).json({ error: "No file uploaded" });
+router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
+  if (!req.file)
+    return res.status(400).json({ error: "No file uploaded" });
 
-    try {
-      const parsedEmail = await simpleParser(req.file.buffer);
+  try {
+    const parsedEmail = await simpleParser(req.file.buffer);
 
-      // Extract URLs
-      const urls = [];
-      if (parsedEmail.text)
-        urls.push(...(parsedEmail.text.match(/https?:\/\/[^\s]+/g) || []));
-      if (parsedEmail.html)
-        urls.push(...(parsedEmail.html.match(/https?:\/\/[^\s]+/g) || []));
-      const uniqueUrls = [...new Set(urls)];
+    // Extract URLs from text and html
+    const urls = [];
+    if (parsedEmail.text)
+      urls.push(...(parsedEmail.text.match(/https?:\/\/[^\s]+/g) || []));
+    if (parsedEmail.html)
+      urls.push(...(parsedEmail.html.match(/https?:\/\/[^\s]+/g) || []));
+    const uniqueUrls = [...new Set(urls)];
 
-      // Scan URLs concurrently
-      const urlScanResults = await Promise.all(uniqueUrls.map(scanUrlVT));
+    // Scan URLs concurrently with VirusTotal + IPQS
+    const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
+      const [vtRes, ipqsRes] = await Promise.all([scanUrlVT(u), scanUrlIPQS(u)]);
+      const vtRisk = vtRes?.risk_score || 0;
+      const ipqsRisk = ipqsRes?.risk_score || 0;
+      const agg = calculateAggregatedRiskScore(vtRisk, ipqsRisk);
+      
+      return {
+        url: u,
+        vt_results: vtRes,
+        ipqs_results: ipqsRes,
+        aggregated_risk_score: agg.score,
+        verdict: agg.verdict,
+      };
+    }));
 
-      // Scan attachments concurrently
-      const attachments = parsedEmail.attachments || [];
-      const attachmentScanResults = [];
-      for (const att of attachments) {
-        const scanRes = await scanFileVT(att.filename, att.content);
-        attachmentScanResults.push(scanRes);
-      }
-
-      res.json({
-        urlScanResults,
-        attachmentScanResults,
-      });
-    } catch (err) {
-      console.error("Error parsing or scanning .eml file:", err);
-      res.status(500).json({ error: "Failed to parse or scan .eml file." });
+    // Scan attachments concurrently (VirusTotal only)
+    const attachments = parsedEmail.attachments || [];
+    const attachmentScanResults = [];
+    for (const att of attachments) {
+      const scanRes = await scanFileVT(att.filename, att.content);
+      attachmentScanResults.push(scanRes);
     }
+
+    res.json({
+      urlScanResults,
+      attachmentScanResults,
+      emailBody: parsedEmail.text || parsedEmail.html || "",
+    });
+  } catch (err) {
+    console.error("Error parsing or scanning .eml file:", err);
+    res.status(500).json({ error: "Failed to parse or scan .eml file." });
   }
-);
+});
 
 module.exports = router;
