@@ -173,7 +173,53 @@ async function scanUrlIPQS(url) {
     };
   }
 }
+// Scan an email header (sender domain) via IPQS Email Validation API
+async function scanEmailHeaderWithIPQS(email) {
+  try {
+    const response = await axios.get(`https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(email)}`, {
+      params: {
+        timeout: 5,
+        fast: "true",
+        abuse_strictness: 1,
+      }
+    });
 
+    const data = response.data;
+    return {
+      email,
+      valid: data.valid,
+      recent_abuse: data.recent_abuse,
+      reputation_score: data.spam_score,
+      is_suspect: !data.valid || data.recent_abuse || data.spam_score > 70,
+      verdict: data.spam_score > 85
+        ? "🔴 High Risk"
+        : data.spam_score > 50
+        ? "🟠 Medium Risk"
+        : data.spam_score > 20
+        ? "🟡 Low Risk"
+        : "🟢 Clean"
+    };
+  } catch (error) {
+    console.error("Error scanning email header with IPQS:", error.message);
+    return {
+      email,
+      error: error.message || "IPQS email header scan failed"
+    };
+  }
+}
+function mapIPQSEmailVerdict(scanData) {
+  if (!scanData) return "N/A";
+  if (scanData.fraud_score && scanData.fraud_score > 80)
+    return "🔴 High Risk (Likely Malicious)";
+  if (
+    scanData.deliverability === "low" ||
+    scanData.suspect ||
+    scanData.spam_trap_score !== "none"
+  )
+    return "🟠 Medium Risk (Potentially Unsafe)";
+  if (scanData.deliverability === "high") return "🟢 Low Risk (Likely Safe)";
+  return "⚪ Unknown";
+}
 // Scan a file attachment via VirusTotal File Scan API
 async function scanFileVT(filename, fileBuffer) {
   try {
@@ -440,7 +486,7 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       const vtRisk = vtRes?.risk_score || 0;
       const ipqsRisk = ipqsRes?.risk_score || 0;
       const agg = calculateAggregatedRiskScore(vtRisk, ipqsRisk);
-      
+
       return {
         url: u,
         vt_results: vtRes,
@@ -458,11 +504,45 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       attachmentScanResults.push(scanRes);
     }
 
+    // Extract raw headers + sender email
+    const rawHeaders = parsedEmail.headerLines.map(h => h.line).join("\r\n");
+    const senderEmail = parsedEmail.from?.value?.[0]?.address || "";
+
+    // IPQS Email Header Scan
+    let emailHeaderScanResult = null;
+    if (senderEmail && rawHeaders) {
+      console.log("Sender Email:", senderEmail);
+      console.log("Raw Headers:", rawHeaders);
+
+      try {
+        const response = await axios.post(
+          `https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(senderEmail)}`,
+          {
+            email_header: rawHeaders,
+            strictness: 2,
+            fast: true
+          },
+          {
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }
+        );
+        console.log("IPQS Email Header Scan Response:", response.data);
+        emailHeaderScanResult = response.data;
+      } catch (error) {
+        console.error("Error scanning email headers with IPQS:", error.response?.data || error.message);
+        emailHeaderScanResult = { error: error.response?.data || error.message };
+      }
+    }
+
     res.json({
+      emailBody: parsedEmail.text || parsedEmail.html || "",
       urlScanResults,
       attachmentScanResults,
-      emailBody: parsedEmail.text || parsedEmail.html || "",
+      emailHeaderScanResult
     });
+
   } catch (err) {
     console.error("Error parsing or scanning .eml file:", err);
     res.status(500).json({ error: "Failed to parse or scan .eml file." });

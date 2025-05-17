@@ -11,14 +11,13 @@ const ScanEmail = () => {
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
 
-  // Using booleans like ScanURL.js
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
+  const [showHeaderDetails, setShowHeaderDetails] = useState(false);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (!file.name.toLowerCase().endsWith(".eml")) {
       alert("Please upload a valid .eml file.");
       e.target.value = "";
@@ -32,6 +31,7 @@ const ScanEmail = () => {
     setError(null);
     setShowVTDetails(false);
     setShowIPQSDetails(false);
+    setShowHeaderDetails(false);
 
     const formData = new FormData();
     formData.append("emlFile", file);
@@ -59,11 +59,12 @@ const ScanEmail = () => {
   const downloadReport = () => {
     if (!reportRef.current) return;
 
-    // Hide details for clean screenshot
-    const vtWasOpen = showVTDetails;
-    const ipqsWasOpen = showIPQSDetails;
+    const prevVT = showVTDetails;
+    const prevIPQS = showIPQSDetails;
+    const prevHeader = showHeaderDetails;
     setShowVTDetails(false);
     setShowIPQSDetails(false);
+    setShowHeaderDetails(false);
 
     setTimeout(() => {
       html2canvas(reportRef.current, {
@@ -77,14 +78,15 @@ const ScanEmail = () => {
           link.download = "Email_Scan_Report.png";
           link.click();
 
-          // Restore detail toggles
-          setShowVTDetails(vtWasOpen);
-          setShowIPQSDetails(ipqsWasOpen);
+          setShowVTDetails(prevVT);
+          setShowIPQSDetails(prevIPQS);
+          setShowHeaderDetails(prevHeader);
         })
         .catch((err) => {
           console.error("html2canvas error:", err);
-          setShowVTDetails(vtWasOpen);
-          setShowIPQSDetails(ipqsWasOpen);
+          setShowVTDetails(prevVT);
+          setShowIPQSDetails(prevIPQS);
+          setShowHeaderDetails(prevHeader);
         });
     }, 100);
   };
@@ -170,6 +172,29 @@ const ScanEmail = () => {
               )}
             </div>
 
+            {/* Email Header Scan Section */}
+            {scanResults.emailHeaderScanResult && (
+              <>
+                <button
+                  className={`details-toggle ${showHeaderDetails ? "active" : ""}`}
+                  onClick={() => setShowHeaderDetails(!showHeaderDetails)}
+                >
+                  {showHeaderDetails ? "🔼 Hide Header Scan" : "🔽 Show Header Scan"}
+                </button>
+                {showHeaderDetails && (
+                  <div className="api-details header-details">
+                    <h4>Email Header Scan Results</h4>
+                    <p><strong>Sender:</strong> {scanResults.emailHeaderScanResult.sanitized_email || "Unknown"}</p>
+                    <p><strong>Deliverability:</strong> {scanResults.emailHeaderScanResult.deliverability || "N/A"}</p>
+                    <p><strong>Spam Trap Score:</strong> {scanResults.emailHeaderScanResult.spam_trap_score || "N/A"}</p>
+                    <p><strong>Suspicious:</strong> {scanResults.emailHeaderScanResult.suspect ? "Yes" : "No"}</p>
+                    <p><strong>Fraud Score:</strong> {scanResults.emailHeaderScanResult.fraud_score ?? "N/A"}</p>
+                    <p><strong>Verdict:</strong> {scanResults.emailHeaderScanResult.mapped_verdict || "N/A"}</p>
+                  </div>
+                )}
+              </>
+            )}
+
             <div>
               <strong>⚠️ Final Verdict: </strong> {finalVerdict}
             </div>
@@ -187,27 +212,19 @@ const ScanEmail = () => {
                   <div className="details-buttons">
                     {res.vt_results && (
                       <button
-                        className={`details-toggle ${
-                          showVTDetails ? "active" : ""
-                        }`}
+                        className={`details-toggle ${showVTDetails ? "active" : ""}`}
                         onClick={() => setShowVTDetails(!showVTDetails)}
                       >
-                        {showVTDetails
-                          ? "🔼 Hide VirusTotal Details"
-                          : "🔽 Show VirusTotal Details"}
+                        {showVTDetails ? "🔼 Hide VirusTotal Details" : "🔽 Show VirusTotal Details"}
                       </button>
                     )}
 
                     {res.ipqs_results && (
                       <button
-                        className={`details-toggle ${
-                          showIPQSDetails ? "active" : ""
-                        }`}
+                        className={`details-toggle ${showIPQSDetails ? "active" : ""}`}
                         onClick={() => setShowIPQSDetails(!showIPQSDetails)}
                       >
-                        {showIPQSDetails
-                          ? "🔼 Hide IPQS Details"
-                          : "🔽 Show IPQS Details"}
+                        {showIPQSDetails ? "🔼 Hide IPQS Details" : "🔽 Show IPQS Details"}
                       </button>
                     )}
                   </div>
@@ -215,40 +232,20 @@ const ScanEmail = () => {
                   {showVTDetails && res.vt_results && (
                     <div className="api-details vt-details">
                       <h4>VirusTotal Results</h4>
-                      <p>
-                        <strong>Total Sources:</strong>{" "}
-                        {res.vt_results.total_sources}
-                      </p>
-                      <p>
-                        <strong>Malicious Detections:</strong>{" "}
-                        {res.vt_results.malicious_detections}
-                      </p>
-                      <p>
-                        <strong>Risk Score:</strong>{" "}
-                        {Math.round(res.vt_results.risk_score)}/100
-                      </p>
+                      <p><strong>Total Sources:</strong> {res.vt_results.total_sources}</p>
+                      <p><strong>Malicious Detections:</strong> {res.vt_results.malicious_detections}</p>
+                      <p><strong>Risk Score:</strong> {Math.round(res.vt_results.risk_score)}/100</p>
                     </div>
                   )}
 
                   {showIPQSDetails && res.ipqs_results && (
                     <div className="api-details ipqs-details">
                       <h4>IPQS Results</h4>
-                      <p>
-                        <strong>Risk Score:</strong> {res.ipqs_results.risk_score}
-                        /100
-                      </p>
-                      <p>
-                        <strong>Phishing:</strong>{" "}
-                        {res.ipqs_results.is_phishing ? "Yes" : "No"}
-                      </p>
-                      <p>
-                        <strong>Malware:</strong>{" "}
-                        {res.ipqs_results.is_malware ? "Yes" : "No"}
-                      </p>
-                      <p>
-                        <strong>Suspicious:</strong>{" "}
-                        {res.ipqs_results.is_suspicious ? "Yes" : "No"}
-                      </p>
+                      <p><strong>Risk Score:</strong> {res.ipqs_results.risk_score}/100</p>
+                      <p><strong>Phishing:</strong> {res.ipqs_results.is_phishing ? "Yes" : "No"}</p>
+                      <p><strong>Malware:</strong> {res.ipqs_results.is_malware ? "Yes" : "No"}</p>
+                      <p><strong>Suspicious:</strong> {res.ipqs_results.is_suspicious ? "Yes" : "No"}</p>
+                      <p><strong>Verdict:</strong> {res.ipqs_results.verdict}</p>
                     </div>
                   )}
                 </li>

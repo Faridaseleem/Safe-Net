@@ -1,0 +1,23 @@
+Return-Path: <paypal@secure-paypal-login.com>
+Received: from unknown ([45.134.20.123])
+    by victimmail.com with ESMTP;
+    Fri, 17 May 2025 12:00:00 +0000
+Received-SPF: fail (domain of secure-paypal-login.com does not designate 45.134.20.123 as permitted sender)
+From: "PayPal Security" <paypal@secure-paypal-login.com>
+To: victim@example.com
+Subject: Urgent: Your PayPal Account is Suspended
+Date: Fri, 17 May 2025 12:00:00 +0000
+X-Mailer: Outlook 16.0
+X-Fraud-Score: 9.9
+X-Spoofed: Yes
+Message-ID: <spoofed001@secure-paypal-login.com>
+MIME-Version: 1.0
+Content-Type: text/html
+
+<html>
+<body>
+<h2>Dear Customer,</h2>
+<p>We detected unusual activity in your account. Please verify immediately:</p>
+<p><a href="http://paypal.secure-access.com/verify">Verify Now</a></p>
+</body>
+</html>

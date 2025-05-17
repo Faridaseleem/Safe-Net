@@ -11,7 +11,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Poppins", sans-serif;
-  background: url('C:\Users\User\OneDrive\Documents\GitHub\Safe-Net\frontend\public\bg4.png') no-repeat center center fixed;
+  background: url('C:\SafeNet\Safe-Net\frontend\public\bg4.png') no-repeat center center fixed;
   background-size: cover;
   color: var(--text-color);
   overflow-x: hidden;
