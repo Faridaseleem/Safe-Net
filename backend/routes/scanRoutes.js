@@ -9,10 +9,10 @@ require("dotenv").config();
 
 const upload = multer(); // Multer memory storage (no disk save)
 const VIRUSTOTAL_API_KEY = process.env.VIRUSTOTAL_API_KEY;
-const IPQS_API_KEY = process.env.IPQS_API_KEY; // Add IPQS API key from .env
+const IPQS_API_KEY = process.env.IPQS_API_KEY;
 const SCAMALYTICS_API_KEY = process.env.SCAMALYTICS_API_KEY;
 const SCAMALYTICS_ACCOUNT = process.env.SCAMALYTICS_ACCOUNT || 'mostafaheshamsheref';
- // Add Scamalytics API key from .env
+const HYBRID_ANALYSIS_API_KEY = process.env.HYBRID_ANALYSIS_API_KEY;
 
 // Helper: VirusTotal URL-safe base64 encoding
 const base64UrlEncode = (str) =>
@@ -22,7 +22,6 @@ const base64UrlEncode = (str) =>
     .replace(/\//g, "_")
     .replace(/=+$/, "");
 
-// Helper function to fetch VirusTotal analysis results
 // Helper function to fetch VirusTotal analysis results
 async function fetchAnalysisResults(analysisId, maxRetries = 10, waitTime = 5000) {
   console.log(`🔍 Fetching VT analysis results for ID: ${analysisId}`);
@@ -81,7 +80,6 @@ async function extractIpFromUrl(url) {
 }
 
 // Scan with Scamalytics API - Accepts URL or IP
-// Scan with Scamalytics API - Accepts URL or IP
 async function scanWithScamalytics(input) {
   try {
     let ip = input;
@@ -134,6 +132,107 @@ async function scanWithScamalytics(input) {
       console.error(`Response data:`, error.response.data);
     }
     return { success: false, risk_score: 0 };
+  }
+}
+
+// Submit a file to Hybrid Analysis
+async function submitFileToHybridAnalysis(fileBuffer, filename) {
+  try {
+    console.log(`🔍 Submitting file to Hybrid Analysis: ${filename}`);
+    
+    const formData = new FormData();
+    formData.append('file', fileBuffer, filename);
+    formData.append('environment_id', '110'); // Windows 7 64-bit environment
+    
+    const response = await axios.post(
+      'https://www.hybrid-analysis.com/api/v2/submit/file',
+      formData,
+      {
+        headers: {
+          'api-key': HYBRID_ANALYSIS_API_KEY,
+          'User-Agent': 'Falcon Sandbox',
+          ...formData.getHeaders()
+        }
+      }
+    );
+    
+    if (response.data && response.data.sha256) {
+      console.log(`✅ File submitted successfully to Hybrid Analysis, SHA256: ${response.data.sha256}`);
+      return {
+        success: true,
+        sha256: response.data.sha256,
+        job_id: response.data.job_id
+      };
+    } else {
+      console.error("❌ Hybrid Analysis submission failed:", response.data);
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("❌ Error submitting file to Hybrid Analysis:", error.message);
+    if (error.response) {
+      console.error("Response status:", error.response.status);
+      console.error("Response data:", error.response.data);
+    }
+    return { success: false, error: error.message };
+  }
+}
+
+// Get analysis results from Hybrid Analysis
+// Simplified function to get Hybrid Analysis results
+async function getHybridAnalysisResults(sha256) {
+  try {
+    console.log(`🔍 Retrieving Hybrid Analysis results for: ${sha256}`);
+    
+    const response = await axios.get(
+      `https://www.hybrid-analysis.com/api/v2/overview/${sha256}`,
+      {
+        headers: {
+          'api-key': HYBRID_ANALYSIS_API_KEY,
+          'User-Agent': 'Falcon Sandbox'
+        }
+      }
+    );
+    
+    // Log the full response for debugging
+    console.log(`Hybrid Analysis API response for ${sha256}:`, JSON.stringify(response.data, null, 2));
+    
+    if (response.data) {
+      // Extract the threat score (0-100)
+      const threatScore = response.data.threat_score || 0;
+      
+      // Determine verdict based on threat score
+      let verdict;
+      if (threatScore >= 80) {
+        verdict = "🔴 High Risk (Likely Malicious)";
+      } else if (threatScore >= 50) {
+        verdict = "🟠 Medium Risk (Potentially Unsafe)";
+      } else if (threatScore >= 20) {
+        verdict = "🟡 Low Risk (Exercise Caution)";
+      } else {
+        verdict = "🟢 Very Low Risk (Likely Safe)";
+      }
+      
+      return {
+        success: true,
+        sha256: sha256,
+        risk_score: threatScore,
+        verdict: verdict,
+        malware_family: response.data.vx_family || "None detected",
+        threat_level: response.data.threat_level || "unknown",
+        environment: response.data.environment_description || "",
+        analysis_url: `https://www.hybrid-analysis.com/sample/${sha256}`
+      };
+    } else {
+      console.error("Invalid or empty response from Hybrid Analysis API");
+      return { success: false, error: "Invalid response" };
+    }
+  } catch (error) {
+    console.error(`❌ Error retrieving Hybrid Analysis results:`, error.message);
+    if (error.response) {
+      console.error("Response status:", error.response.status);
+      console.error("Response data:", error.response.data);
+    }
+    return { success: false, error: error.message };
   }
 }
 // Poll VirusTotal for file scan results by scan ID
@@ -213,7 +312,7 @@ async function scanUrlVT(url) {
   }
 }
 
-// Scan a URL via IPQS API (new function)
+// Scan a URL via IPQS API
 async function scanUrlIPQS(url) {
   try {
     const response = await axios.get(
@@ -262,6 +361,7 @@ async function scanUrlIPQS(url) {
     };
   }
 }
+
 // Scan an email header (sender domain) via IPQS Email Validation API
 async function scanEmailHeaderWithIPQS(email) {
   try {
@@ -296,6 +396,7 @@ async function scanEmailHeaderWithIPQS(email) {
     };
   }
 }
+
 function mapIPQSEmailVerdict(scanData) {
   if (!scanData) return "N/A";
   if (scanData.fraud_score && scanData.fraud_score > 80)
@@ -309,6 +410,7 @@ function mapIPQSEmailVerdict(scanData) {
   if (scanData.deliverability === "high") return "🟢 Low Risk (Likely Safe)";
   return "⚪ Unknown";
 }
+
 // Scan a file attachment via VirusTotal File Scan API
 async function scanFileVT(filename, fileBuffer) {
   try {
@@ -351,7 +453,7 @@ async function scanFileVT(filename, fileBuffer) {
   }
 }
 
-// Calculate aggregated risk score from both scanning engines
+// Calculate aggregated risk score from scanning engines
 function calculateAggregatedRiskScore(vtRiskScore, ipqsRiskScore, scamalyticsRiskScore = 0) {
   // Convert all risk scores to a 0-100 scale if needed
   const normalizedVtScore = vtRiskScore;
@@ -386,6 +488,18 @@ function calculateAggregatedRiskScore(vtRiskScore, ipqsRiskScore, scamalyticsRis
     score: Math.round(aggregatedScore),
     verdict: getVerdictFromScore(aggregatedScore)
   };
+}
+
+// Calculate aggregated risk score for file attachments
+function calculateFileRiskScore(vtScore, hybridScore) {
+  // If only one scanner provided results, use that score
+  if (vtScore > 0 && hybridScore === 0) return vtScore;
+  if (hybridScore > 0 && vtScore === 0) return hybridScore;
+  if (vtScore === 0 && hybridScore === 0) return 0;
+  
+  // Calculate weighted average (equal weights for both scanners)
+  const aggregatedScore = (vtScore * 0.5) + (hybridScore * 0.5);
+  return Math.round(aggregatedScore);
 }
 
 // Helper to determine verdict based on aggregated score
@@ -588,10 +702,7 @@ router.post("/scan-url", async (req, res) => {
       scamalytics_results: scamalyticsResults.success ? {
         ip: scamalyticsResults.ip,
         risk_score: scamalyticsRiskScore,
-        is_proxy: scamalyticsResults.is_proxy,
-        is_vpn: scamalyticsResults.is_vpn,
-        is_tor: scamalyticsResults.is_tor,
-        country_code: scamalyticsResults.country_code
+        verdict: scamalyticsResults.verdict
       } : null,
       // Aggregated results
       aggregated_risk_score: aggregatedResult.score,
@@ -605,6 +716,7 @@ router.post("/scan-url", async (req, res) => {
   }
 });
 
+// POST /api/scan-eml-file — Scan an email file with attachments
 router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
   if (!req.file)
     return res.status(400).json({ error: "No file uploaded" });
@@ -645,12 +757,45 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       };
     }));
 
-    // Scan attachments concurrently (VirusTotal only)
+    // Scan attachments with both VirusTotal and Hybrid Analysis
     const attachments = parsedEmail.attachments || [];
     const attachmentScanResults = [];
+    
     for (const att of attachments) {
-      const scanRes = await scanFileVT(att.filename, att.content);
-      attachmentScanResults.push(scanRes);
+      console.log(`📎 Scanning attachment: ${att.filename}`);
+      
+      // Run both scans in parallel
+      const [vtScanRes, hybridSubmitRes] = await Promise.all([
+        scanFileVT(att.filename, att.content),
+        submitFileToHybridAnalysis(att.content, att.filename)
+      ]);
+      
+      // Get VirusTotal risk score (if available)
+      let vtRiskScore = 0;
+      if (vtScanRes.verdict && vtScanRes.verdict.includes("Malicious")) {
+        // Extract number from "🔴 Malicious (X detections)"
+        const detections = parseInt(vtScanRes.verdict.match(/$$(\d+) detections$$/)?.[1] || "0");
+        vtRiskScore = detections > 0 ? Math.min(100, detections * 10) : 0;
+      }
+      
+      // Process Hybrid Analysis results if submission succeeded
+      let hybridResults = { success: false, risk_score: 0 };
+      if (hybridSubmitRes.success && hybridSubmitRes.sha256) {
+        hybridResults = await getHybridAnalysisResults(hybridSubmitRes.sha256);
+      }
+      
+      // Calculate aggregated risk score
+      const hybridRiskScore = hybridResults.success ? hybridResults.risk_score : 0;
+      const aggregatedScore = calculateFileRiskScore(vtRiskScore, hybridRiskScore);
+      const aggregatedVerdict = getVerdictFromScore(aggregatedScore);
+      
+      attachmentScanResults.push({
+        filename: att.filename,
+        vt_results: vtScanRes,
+        hybrid_analysis_results: hybridResults.success ? hybridResults : null,
+        aggregated_risk_score: aggregatedScore,
+        verdict: aggregatedVerdict
+      });
     }
 
     // Extract raw headers + sender email
@@ -661,8 +806,7 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
     let emailHeaderScanResult = null;
     if (senderEmail && rawHeaders) {
       console.log("Sender Email:", senderEmail);
-      console.log("Raw Headers:", rawHeaders);
-
+      
       try {
         const response = await axios.post(
           `https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(senderEmail)}`,
