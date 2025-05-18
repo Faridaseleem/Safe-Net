@@ -10,6 +10,9 @@ require("dotenv").config();
 const upload = multer(); // Multer memory storage (no disk save)
 const VIRUSTOTAL_API_KEY = process.env.VIRUSTOTAL_API_KEY;
 const IPQS_API_KEY = process.env.IPQS_API_KEY; // Add IPQS API key from .env
+const SCAMALYTICS_API_KEY = process.env.SCAMALYTICS_API_KEY;
+const SCAMALYTICS_ACCOUNT = process.env.SCAMALYTICS_ACCOUNT || 'mostafaheshamsheref';
+ // Add Scamalytics API key from .env
 
 // Helper: VirusTotal URL-safe base64 encoding
 const base64UrlEncode = (str) =>
@@ -19,34 +22,120 @@ const base64UrlEncode = (str) =>
     .replace(/\//g, "_")
     .replace(/=+$/, "");
 
-// Helper function to retry fetching URL analysis results
-const fetchAnalysisResults = async (analysisId, retries = 15, delay = 7000) => {
-  for (let i = 0; i < retries; i++) {
+// Helper function to fetch VirusTotal analysis results
+// Helper function to fetch VirusTotal analysis results
+async function fetchAnalysisResults(analysisId, maxRetries = 10, waitTime = 5000) {
+  console.log(`🔍 Fetching VT analysis results for ID: ${analysisId}`);
+  
+  for (let retry = 0; retry < maxRetries; retry++) {
     try {
-      const resultResponse = await axios.get(
+      console.log(`Attempt ${retry + 1}/${maxRetries} to fetch VT results...`);
+      
+      const response = await axios.get(
         `https://www.virustotal.com/api/v3/analyses/${analysisId}`,
-        {
-          headers: { "x-apikey": VIRUSTOTAL_API_KEY },
-        }
+        { headers: { "x-apikey": VIRUSTOTAL_API_KEY } }
       );
-
-      const status = resultResponse.data.data.attributes.status;
-
-      if (status === "completed") {
-        return resultResponse.data.data.attributes.results;
+      
+      const status = response.data.data.attributes.status;
+      console.log(`VT analysis status: ${status}`);
+      
+      if (status === 'completed') {
+        console.log(`✅ VT analysis completed! Sources found: ${Object.keys(response.data.data.attributes.results).length}`);
+        return response.data.data.attributes.results;
+      } else if (retry < maxRetries - 1) {
+        console.log(`⏳ Analysis not ready, waiting ${waitTime/1000} seconds...`);
+        // Wait longer between retries
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       }
-
-      console.log(`🔄 Waiting for scan to complete... (${i + 1}/${retries})`);
     } catch (error) {
-      console.error("❌ Error fetching scan results:", error.message);
+      console.error(`❌ Error fetching analysis results (attempt ${retry + 1}):`, error.message);
+      if (retry < maxRetries - 1) {
+        // Wait between retries
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
     }
-
-    await new Promise((resolve) => setTimeout(resolve, delay));
   }
+  
+  console.warn("⚠️ All retries failed for VT analysis");
+  return {}; // Return empty object if all retries failed
+}
 
-  throw new Error("Scan results not available after multiple retries.");
-};
+// Extract IP from a URL
+async function extractIpFromUrl(url) {
+  try {
+    // First get hostname from URL
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+    
+    // Use DNS lookup to get IP (using a Promise-based wrapper for dns.lookup)
+    const dns = require('dns');
+    const { promisify } = require('util');
+    const lookup = promisify(dns.lookup);
+    
+    const { address } = await lookup(hostname);
+    return address;
+  } catch (error) {
+    console.error(`Error extracting IP from URL ${url}:`, error.message);
+    return null;
+  }
+}
 
+// Scan with Scamalytics API - Accepts URL or IP
+// Scan with Scamalytics API - Accepts URL or IP
+async function scanWithScamalytics(input) {
+  try {
+    let ip = input;
+    
+    // If input appears to be a URL, extract IP
+    if (input.startsWith('http') || input.includes('://')) {
+      ip = await extractIpFromUrl(input);
+      if (!ip) return { success: false, risk_score: 0, error: "Could not extract IP from URL" };
+    }
+    
+    console.log(`🔍 Scamalytics scanning IP: ${ip}`);
+    
+    // Use the correct endpoint structure
+    const response = await axios.get(
+      `https://api12.scamalytics.com/v3/${SCAMALYTICS_ACCOUNT}/`, {
+        params: {
+          key: SCAMALYTICS_API_KEY,
+          ip: ip
+        }
+      }
+    );
+    
+    // Log complete response for debugging
+    console.log("Full Scamalytics response:", JSON.stringify(response.data, null, 2));
+    
+    // Check if we got valid data - accessing the correct nested structure
+    if (response.data && response.data.scamalytics) {
+      const scamalyticsData = response.data.scamalytics;
+      
+      // Extract the specific fields we want
+      const score = scamalyticsData.scamalytics_score || 0;
+      const risk = scamalyticsData.scamalytics_risk || 'Unknown';
+      
+      console.log(`✅ Extracted Scamalytics score: ${score}, risk: ${risk}`);
+      
+      return {
+        success: true,
+        ip: ip,
+        risk_score: score,
+        verdict: risk
+      };
+    } else {
+      console.error("Invalid or empty response from Scamalytics API");
+      return { success: false, risk_score: 0 };
+    }
+  } catch (error) {
+    console.error(`Error scanning with Scamalytics: ${error.message}`);
+    if (error.response) {
+      console.error(`Response status: ${error.response.status}`);
+      console.error(`Response data:`, error.response.data);
+    }
+    return { success: false, risk_score: 0 };
+  }
+}
 // Poll VirusTotal for file scan results by scan ID
 async function pollFileScanResult(scanId, retries = 15, delay = 5000) {
   for (let i = 0; i < retries; i++) {
@@ -263,16 +352,35 @@ async function scanFileVT(filename, fileBuffer) {
 }
 
 // Calculate aggregated risk score from both scanning engines
-function calculateAggregatedRiskScore(vtRiskScore, ipqsRiskScore) {
-  // Convert VT risk score to a 0-100 scale if it's not already
+function calculateAggregatedRiskScore(vtRiskScore, ipqsRiskScore, scamalyticsRiskScore = 0) {
+  // Convert all risk scores to a 0-100 scale if needed
   const normalizedVtScore = vtRiskScore;
+  const normalizedIpqsScore = ipqsRiskScore;
+  const normalizedScamalyticsScore = scamalyticsRiskScore;
   
-  // Weight the scores (adjust weights as needed)
-  const vtWeight = 0.4;  // 40% weight to VirusTotal
-  const ipqsWeight = 0.6;  // 60% weight to IPQS (generally more accurate for phishing)
+  // Determine if Scamalytics data is available
+  const hasScamalytics = normalizedScamalyticsScore > 0;
+  
+  // Adjust weights based on available data
+  let vtWeight, ipqsWeight, scamalyticsWeight;
+  
+  if (hasScamalytics) {
+    // All three sources available
+    vtWeight = 0.3;           // 30% weight to VirusTotal
+    ipqsWeight = 0.4;         // 40% weight to IPQS
+    scamalyticsWeight = 0.3;  // 30% weight to Scamalytics
+  } else {
+    // Only VT and IPQS available
+    vtWeight = 0.4;   // 40% weight to VirusTotal
+    ipqsWeight = 0.6; // 60% weight to IPQS
+    scamalyticsWeight = 0;
+  }
   
   // Calculate weighted average
-  const aggregatedScore = (normalizedVtScore * vtWeight) + (ipqsRiskScore * ipqsWeight);
+  const aggregatedScore = 
+    (normalizedVtScore * vtWeight) + 
+    (normalizedIpqsScore * ipqsWeight) + 
+    (normalizedScamalyticsScore * scamalyticsWeight);
   
   return {
     score: Math.round(aggregatedScore),
@@ -307,14 +415,13 @@ function formatDateForReport(date) {
 }
 
 // Format scan report with risk score instead of malicious detections
-// Format scan report with risk score instead of malicious detections
 function formatScanReport(url, scanTime, successfulAPIs, aggregatedRiskScore, verdict) {
   return `📄 Scan Report
 🔗 URL: ${url}
 
 🕒 Scan Time: ${formatDateForReport(scanTime)}
 
-📊 API Sources: ${successfulAPIs}/2
+📊 API Sources: ${successfulAPIs}/3
 
 🎯 Risk Score: ${aggregatedRiskScore}/100
 
@@ -356,8 +463,8 @@ router.post("/scan-url", async (req, res) => {
       });
     }
 
-    // Run both scans in parallel for efficiency
-    const [vtResults, ipqsResults] = await Promise.all([
+    // Run all scans in parallel for efficiency
+    const [vtResults, ipqsResults, scamalyticsResults] = await Promise.all([
       // Submit URL to VirusTotal for scanning
       (async () => {
         try {
@@ -413,24 +520,48 @@ router.post("/scan-url", async (req, res) => {
           console.error("❌ Error with IPQS scan:", error.message);
           return { success: false, error: error.message };
         }
+      })(),
+      
+      // Scan URL with Scamalytics
+      (async () => {
+        try {
+          const scamalyticsResult = await scanWithScamalytics(url);
+          console.log("✅ Scamalytics Scan Results Received");
+          return {
+            ...scamalyticsResult,
+            success: scamalyticsResult.success
+          };
+        } catch (error) {
+          console.error("❌ Error with Scamalytics scan:", error.message);
+          return { success: false, error: error.message };
+        }
       })()
     ]);
-
-    // Calculate aggregated risk score only if both scans succeeded
+      
+    // Calculate aggregated risk score
     const vtRiskScore = vtResults.success ? vtResults.risk_score : 0;
     const ipqsRiskScore = ipqsResults.success ? ipqsResults.risk_score : 0;
+    const scamalyticsRiskScore = scamalyticsResults.success ? scamalyticsResults.risk_score : 0;
     
-    // If one service failed, we'll rely more heavily on the other
+    // Calculate aggregated score with all available data
     const aggregatedResult = calculateAggregatedRiskScore(
       vtRiskScore, 
-      ipqsRiskScore
+      ipqsRiskScore,
+      scamalyticsRiskScore
     );
+
+    // Update the count of successful APIs for the report
+    const successfulAPIs = [
+      vtResults.success, 
+      ipqsResults.success, 
+      scamalyticsResults.success
+    ].filter(Boolean).length;
 
     // Create the scan report with risk score instead of malicious detections
     const scanReport = formatScanReport(
       url,
       scanTime,
-      vtResults.total_sources || 0,
+      successfulAPIs,
       aggregatedResult.score,
       aggregatedResult.verdict
     );
@@ -453,6 +584,15 @@ router.post("/scan-url", async (req, res) => {
         is_malware: ipqsResults.is_malware,
         is_suspicious: ipqsResults.is_suspicious,
       },
+      // Scamalytics results (if available)
+      scamalytics_results: scamalyticsResults.success ? {
+        ip: scamalyticsResults.ip,
+        risk_score: scamalyticsRiskScore,
+        is_proxy: scamalyticsResults.is_proxy,
+        is_vpn: scamalyticsResults.is_vpn,
+        is_tor: scamalyticsResults.is_tor,
+        country_code: scamalyticsResults.country_code
+      } : null,
       // Aggregated results
       aggregated_risk_score: aggregatedResult.score,
       verdict: aggregatedResult.verdict,
@@ -480,17 +620,26 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       urls.push(...(parsedEmail.html.match(/https?:\/\/[^\s]+/g) || []));
     const uniqueUrls = [...new Set(urls)];
 
-    // Scan URLs concurrently with VirusTotal + IPQS
+    // Scan URLs concurrently with VirusTotal + IPQS + Scamalytics
     const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
-      const [vtRes, ipqsRes] = await Promise.all([scanUrlVT(u), scanUrlIPQS(u)]);
+      // Run all three scans in parallel
+      const [vtRes, ipqsRes, scamalyticsRes] = await Promise.all([
+        scanUrlVT(u), 
+        scanUrlIPQS(u),
+        scanWithScamalytics(u)
+      ]);
+      
       const vtRisk = vtRes?.risk_score || 0;
       const ipqsRisk = ipqsRes?.risk_score || 0;
-      const agg = calculateAggregatedRiskScore(vtRisk, ipqsRisk);
+      const scamalyticsRisk = scamalyticsRes?.risk_score || 0;
+      
+      const agg = calculateAggregatedRiskScore(vtRisk, ipqsRisk, scamalyticsRisk);
 
       return {
         url: u,
         vt_results: vtRes,
         ipqs_results: ipqsRes,
+        scamalytics_results: scamalyticsRes.success ? scamalyticsRes : null,
         aggregated_risk_score: agg.score,
         verdict: agg.verdict,
       };

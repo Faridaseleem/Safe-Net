@@ -14,6 +14,7 @@ const Scan = () => {
   // State to track which details are expanded
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
+  const [showScamalyticsDetails, setShowScamalyticsDetails] = useState(false); // Renamed to Scamalytics
 
   const handleScan = async () => {
     if (!url) return alert("Please enter a URL to scan.");
@@ -23,6 +24,7 @@ const Scan = () => {
     // Reset expanded states when starting a new scan
     setShowVTDetails(false);
     setShowIPQSDetails(false);
+    setShowScamalyticsDetails(false); // Reset Scamalytics state
 
     try {
       const response = await fetch("http://localhost:5000/api/scan-url", {
@@ -50,10 +52,12 @@ const Scan = () => {
     // Hide details before capturing if they're open
     const vtWasOpen = showVTDetails;
     const ipqsWasOpen = showIPQSDetails;
+    const scamalyticsWasOpen = showScamalyticsDetails; // Track Scamalytics state
     
     // Close details for clean screenshot
     setShowVTDetails(false);
     setShowIPQSDetails(false);
+    setShowScamalyticsDetails(false); // Hide Scamalytics details
     
     // Wait for state update to reflect in DOM
     setTimeout(() => {
@@ -71,24 +75,29 @@ const Scan = () => {
           // Restore previous state
           setShowVTDetails(vtWasOpen);
           setShowIPQSDetails(ipqsWasOpen);
+          setShowScamalyticsDetails(scamalyticsWasOpen); // Restore Scamalytics state
         })
         .catch((error) => {
           console.error("❌ html2canvas error:", error);
           // Restore previous state
           setShowVTDetails(vtWasOpen);
           setShowIPQSDetails(ipqsWasOpen);
+          setShowScamalyticsDetails(scamalyticsWasOpen); // Restore Scamalytics state
         });
     }, 100);
   };
 
-  // Calculate number of successful API scans
+  // Calculate number of successful API scans (updated to include Scamalytics)
   const getSuccessfulAPIs = (result) => {
     if (!result) return 0;
     
     let count = 0;
     if (result.vt_results && !result.vt_results.error) count++;
     if (result.ipqs_results && !result.ipqs_results.error) count++;
-    return count;
+    if (result.scamalytics_results) count++; // Check for Scamalytics results
+    
+    // If we have successful_apis direct from backend, use that instead
+    return result.successful_apis || count;
   };
 
   return (
@@ -112,7 +121,7 @@ const Scan = () => {
           <h3>📄 Scan Report</h3>
           <p><strong>🔗 URL:</strong> {result.url}</p>
           <p><strong>🕒 Scan Time:</strong> {result.timestamp}</p>
-          <p><strong>📊 API Sources:</strong> {getSuccessfulAPIs(result)}/2</p>
+          <p><strong>📊 API Sources:</strong> {getSuccessfulAPIs(result)}/3</p>
           <p><strong>🎯 Risk Score:</strong> {result.aggregated_risk_score}/100</p>
           <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p>
 
@@ -135,6 +144,16 @@ const Scan = () => {
                 {showIPQSDetails ? '🔼 Hide IPQS Details' : '🔽 Show IPQS Details'}
               </button>
             )}
+
+            {/* Scamalytics details button */}
+            {result.scamalytics_results && (
+              <button 
+                className={`details-toggle ${showScamalyticsDetails ? 'active' : ''}`}
+                onClick={() => setShowScamalyticsDetails(!showScamalyticsDetails)}
+              >
+                {showScamalyticsDetails ? '🔼 Hide Scamalytics Details' : '🔽 Show Scamalytics Details'}
+              </button>
+            )}
           </div>
 
           {/* Collapsible VirusTotal details */}
@@ -155,6 +174,36 @@ const Scan = () => {
               <p><strong>Phishing:</strong> {result.ipqs_results.is_phishing ? "Yes" : "No"}</p>
               <p><strong>Malware:</strong> {result.ipqs_results.is_malware ? "Yes" : "No"}</p>
               <p><strong>Suspicious:</strong> {result.ipqs_results.is_suspicious ? "Yes" : "No"}</p>
+            </div>
+          )}
+          
+          {/* Collapsible Scamalytics details */}
+          {showScamalyticsDetails && result.scamalytics_results && (
+            <div className="api-details scamalytics-details">
+              <h4>Scamalytics IP Analysis</h4>
+              <p><strong>IP Address:</strong> {result.scamalytics_results.ip}</p>
+              <p><strong>Risk Score:</strong> {result.scamalytics_results.risk_score}/100</p>
+              <p><strong>Fraud Risk:</strong> {result.scamalytics_results.fraud_risk || "Unknown"}</p>
+              <p><strong>Location:</strong> {result.scamalytics_results.country_name} ({result.scamalytics_results.country_code})</p>
+              
+              {/* Show network type indicators */}
+              <div className="network-indicators">
+                <span className={result.scamalytics_results.is_proxy ? "alert" : "normal"}>
+                  {result.scamalytics_results.is_proxy ? "⚠️ Proxy Detected" : "✅ Not a Proxy"}
+                </span>
+                <span className={result.scamalytics_results.is_vpn ? "alert" : "normal"}>
+                  {result.scamalytics_results.is_vpn ? "⚠️ VPN Detected" : "✅ Not a VPN"}
+                </span>
+                <span className={result.scamalytics_results.is_tor ? "alert" : "normal"}>
+                  {result.scamalytics_results.is_tor ? "⚠️ Tor Exit Node" : "✅ Not Tor"}
+                </span>
+                <span className={result.scamalytics_results.is_datacenter ? "alert" : "normal"}>
+                  {result.scamalytics_results.is_datacenter ? "⚠️ Datacenter IP" : "✅ Residential IP"}
+                </span>
+                <span className={result.scamalytics_results.is_bot ? "alert" : "normal"}>
+                  {result.scamalytics_results.is_bot ? "⚠️ Bot Detected" : "✅ Not a Bot"}
+                </span>
+              </div>
             </div>
           )}
 
