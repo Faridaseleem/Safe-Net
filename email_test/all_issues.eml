@@ -1,0 +1,29 @@
+From: attacker@example.com
+Return-Path: no-reply@malicious-domain.com
+To: victim@example.com
+Subject: Immediate Action Required: Account Verification
+Date: Wed, 2 May 2025 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="ABC123"
+SPF-Result: fail
+DKIM-Result: fail
+DMARC-Result: fail
+Received: from unknown ([192.168.1.100]) by mail.example.com with ESMTP; Wed, 2 May 2025 10:00:00 +0000
+
+--ABC123
+Content-Type: text/plain; charset="UTF-8"
+
+Dear user,
+
+Please click the link below to verify your account:
+
+https://phishing-site.com/verify
+
+--ABC123
+Content-Type: application/octet-stream; name="malicious_attachment.exe"
+Content-Disposition: attachment; filename="malicious_attachment.exe"
+Content-Transfer-Encoding: base64
+
+UEsDBBQAAAAIAIHaI7+IB3l1c2BzghJ4V++zYzYhHRFTj2uWh5lfdf97yF0vqBOlq+XyA6o4c1g9ah3zoLgAiBwV5I+soSA0djvch6EB34+XlViHR0WrjRIxFcbh5xuDaHBu9kxHYNz5zS6S5D96P6VeYP5odgX6fEw7RzgBqBdQPRu0LhzM8gkBpVYqS7X29qqA2P2PrrEYt0nQ9sb+KbA8o19ZoMfcAhMj1nM5rCiwWUtJlPwm0fITkxRJnUKCsgYbp/eivg97LQ==
+
+--ABC123--

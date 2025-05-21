@@ -1,0 +1,21 @@
+Return-Path: <no-reply@malicious-domain.com>
+Received: from unknown (HELO attacker.com) (127.0.0.1)
+Received: from attacker.com (192.168.1.100)
+From: attacker@example.com
+To: victim@example.com
+Subject: Urgent - Action Needed
+Date: Wed, 1 May 2025 10:00:00 +0000
+SPF-Result: fail
+DKIM-Result: fail
+DMARC-Result: fail
+
+
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="boundary42"
+
+--boundary42
+Content-Type: text/plain
+
+This is a test email that triggers all heuristic issues.
+
+--boundary42--

@@ -544,6 +544,96 @@ function formatScanReport(url, scanTime, successfulAPIs, aggregatedRiskScore, ve
 📖 Learn More About Phishing Protection`;
 }
 
+function analyzeHeadersHeuristically(headers) {
+  const reasons = [];
+  let score = 0;
+
+  // Normalize keys
+  const normalizedHeaders = {};
+  for (const key in headers) {
+    normalizedHeaders[key.toLowerCase()] = headers[key];
+  }
+
+  if (normalizedHeaders['spf-result'] && !normalizedHeaders['spf-result'].toLowerCase().includes('pass')) {
+    score += 20;
+    reasons.push('SPF check failed or not present: sender verification may be compromised');
+  }
+  if (normalizedHeaders['dkim-result'] && !normalizedHeaders['dkim-result'].toLowerCase().includes('pass')) {
+    score += 20;
+    reasons.push('DKIM check failed or not present: email integrity could not be verified');
+  }
+  if (normalizedHeaders['dmarc-result'] && !normalizedHeaders['dmarc-result'].toLowerCase().includes('pass')) {
+    score += 20;
+    reasons.push('DMARC check failed or not present: domain policy enforcement failed');
+  }
+
+  if (normalizedHeaders['from'] && normalizedHeaders['return-path']) {
+    const fromDomain = extractDomain(normalizedHeaders['from']);
+    const returnPathDomain = extractDomain(normalizedHeaders['return-path']);
+    if (fromDomain && returnPathDomain && fromDomain !== returnPathDomain) {
+      score += 20;
+      reasons.push(`Mismatch between 'From' domain (${fromDomain}) and 'Return-Path' domain (${returnPathDomain}): possible spoofing`);
+    }
+  }
+
+  if (normalizedHeaders['received']) {
+    const receivedHeaders = Array.isArray(normalizedHeaders['received']) 
+      ? normalizedHeaders['received'] 
+      : [normalizedHeaders['received']];
+    let suspiciousReceivedCount = 0;
+    receivedHeaders.forEach((received, idx) => {
+      if (/unknown/i.test(received) || /127\.0\.0\.1/.test(received)) {
+        suspiciousReceivedCount++;
+        reasons.push(`Suspicious "Received" header at position ${idx + 1}: contains "unknown" host or localhost IP`);
+      }
+    });
+    // Cap received headers suspicious score at 10 points max
+    score += Math.min(suspiciousReceivedCount * 5, 10);
+  }
+
+  if (!normalizedHeaders['message-id']) {
+    score += 5;
+    reasons.push('Missing "Message-ID" header: may indicate a forged or improperly formed email');
+  } else if (/^\s*<.*@\d+\.\d+\.\d+\.\d+>/.test(normalizedHeaders['message-id'])) {
+    score += 5;
+    reasons.push('Suspicious "Message-ID" format: appears to use an IP address instead of domain');
+  }
+
+  // Cap score at 100 max
+  if (score > 100) score = 100;
+
+  return { 
+    suspicious: score >= 40,  // threshold remains 40
+    score,
+    reasons
+  };
+}
+
+function extractDomain(value) {
+  if (!value) return null;
+
+  if (typeof value === 'object' && value.value && Array.isArray(value.value)) {
+    const addrObj = value.value.find(v => v.address);
+    if (addrObj && addrObj.address) {
+      value = addrObj.address;
+    } else {
+      value = value.value[0].toString();
+    }
+  } else if (typeof value === 'object' && value.address) {
+    value = value.address;
+  } else if (Array.isArray(value)) {
+    value = value[0];
+  }
+
+  value = value.toString().trim().replace(/^<|>$/g, "");
+  const match = value.match(/@([\w.-]+)/);
+  return match ? match[1].toLowerCase() : null;
+}
+
+
+
+// === END heuristic email header analysis functions ===
+
 // POST /api/scan-url — Scan a single URL with multiple engines
 router.post("/scan-url", async (req, res) => {
   if (!req.body || !req.body.url) {
@@ -774,7 +864,7 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       let vtRiskScore = 0;
       if (vtScanRes.verdict && vtScanRes.verdict.includes("Malicious")) {
         // Extract number from "🔴 Malicious (X detections)"
-        const detections = parseInt(vtScanRes.verdict.match(/$$(\d+) detections$$/)?.[1] || "0");
+        const detections = parseInt(vtScanRes.verdict.match(/(\d+) detections/)?.[1] || "0");
         vtRiskScore = detections > 0 ? Math.min(100, detections * 10) : 0;
       }
       
@@ -829,11 +919,24 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       }
     }
 
+    // --- Added heuristic phishing detection ---
+
+    // Convert parsedEmail.headers (Map) to a plain object
+    const headersObject = {};
+    for (const [key, value] of parsedEmail.headers) {
+      headersObject[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : value;
+    }
+
+    const heuristicResult = analyzeHeadersHeuristically(headersObject);
+
+    // --- End heuristic addition ---
+
     res.json({
       emailBody: parsedEmail.text || parsedEmail.html || "",
       urlScanResults,
       attachmentScanResults,
-      emailHeaderScanResult
+      emailHeaderScanResult,
+      heuristicResult  // New field with phishing heuristic info
     });
 
   } catch (err) {

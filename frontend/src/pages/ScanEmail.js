@@ -16,10 +16,13 @@ const ScanEmail = () => {
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
   const [showScamalyticsDetails, setShowScamalyticsDetails] = useState(false);
   const [showHeaderDetails, setShowHeaderDetails] = useState(false);
-  
-  // NEW: Attachment detail toggles - using separate objects to track per attachment
+
+  // Attachment detail toggles - track per attachment
   const [showAttachmentVTDetails, setShowAttachmentVTDetails] = useState({});
   const [showAttachmentHybridDetails, setShowAttachmentHybridDetails] = useState({});
+
+  // NEW: Heuristic scan toggle
+  const [showHeuristicDetails, setShowHeuristicDetails] = useState(false);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -41,6 +44,7 @@ const ScanEmail = () => {
     setShowHeaderDetails(false);
     setShowAttachmentVTDetails({});
     setShowAttachmentHybridDetails({});
+    setShowHeuristicDetails(false);
 
     const formData = new FormData();
     formData.append("emlFile", file);
@@ -68,14 +72,14 @@ const ScanEmail = () => {
   const downloadReport = () => {
     if (!reportRef.current) return;
 
-    // Save current states
     const prevVT = showVTDetails;
     const prevIPQS = showIPQSDetails;
     const prevScamalytics = showScamalyticsDetails;
     const prevHeader = showHeaderDetails;
-    const prevAttVT = {...showAttachmentVTDetails};
-    const prevAttHybrid = {...showAttachmentHybridDetails};
-    
+    const prevAttVT = { ...showAttachmentVTDetails };
+    const prevAttHybrid = { ...showAttachmentHybridDetails };
+    const prevHeuristic = showHeuristicDetails;
+
     // Hide all details for clean screenshot
     setShowVTDetails(false);
     setShowIPQSDetails(false);
@@ -83,6 +87,7 @@ const ScanEmail = () => {
     setShowHeaderDetails(false);
     setShowAttachmentVTDetails({});
     setShowAttachmentHybridDetails({});
+    setShowHeuristicDetails(false);
 
     setTimeout(() => {
       html2canvas(reportRef.current, {
@@ -96,58 +101,62 @@ const ScanEmail = () => {
           link.download = "Email_Scan_Report.png";
           link.click();
 
-          // Restore states
+          // Restore toggles
           setShowVTDetails(prevVT);
           setShowIPQSDetails(prevIPQS);
           setShowScamalyticsDetails(prevScamalytics);
           setShowHeaderDetails(prevHeader);
           setShowAttachmentVTDetails(prevAttVT);
           setShowAttachmentHybridDetails(prevAttHybrid);
+          setShowHeuristicDetails(prevHeuristic);
         })
         .catch((err) => {
           console.error("html2canvas error:", err);
-          // Restore states on error too
           setShowVTDetails(prevVT);
           setShowIPQSDetails(prevIPQS);
           setShowScamalyticsDetails(prevScamalytics);
           setShowHeaderDetails(prevHeader);
           setShowAttachmentVTDetails(prevAttVT);
           setShowAttachmentHybridDetails(prevAttHybrid);
+          setShowHeuristicDetails(prevHeuristic);
         });
     }, 100);
   };
 
-  // Toggle handlers for attachment details
   const toggleAttachmentVTDetails = (idx) => {
-    setShowAttachmentVTDetails(prev => ({
+    setShowAttachmentVTDetails((prev) => ({
       ...prev,
-      [idx]: !prev[idx]
-    }));
-  };
-  
-  const toggleAttachmentHybridDetails = (idx) => {
-    setShowAttachmentHybridDetails(prev => ({
-      ...prev,
-      [idx]: !prev[idx]
+      [idx]: !prev[idx],
     }));
   };
 
-  // Improved final verdict prioritizing highest risk found
+  const toggleAttachmentHybridDetails = (idx) => {
+    setShowAttachmentHybridDetails((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }));
+  };
+
+  const toggleHeuristicDetails = () => {
+    setShowHeuristicDetails(!showHeuristicDetails);
+  };
+
+  // Compute final verdict prioritizing highest risk
   const finalVerdict = (() => {
     const urlVerdicts = scanResults?.urlScanResults?.map((u) => u.verdict) || [];
     const attVerdicts = scanResults?.attachmentScanResults?.map((a) => a.verdict) || [];
-    const allVerdicts = [...urlVerdicts, ...attVerdicts].filter(Boolean).map(v => v.toLowerCase());
+    const allVerdicts = [...urlVerdicts, ...attVerdicts].filter(Boolean).map((v) => v.toLowerCase());
 
-    if (allVerdicts.some(v => v.includes("high risk") || v.includes("malicious"))) {
+    if (allVerdicts.some((v) => v.includes("high risk") || v.includes("malicious"))) {
       return "🔴 High Risk (Likely Malicious)";
     }
-    if (allVerdicts.some(v => v.includes("medium risk"))) {
+    if (allVerdicts.some((v) => v.includes("medium risk"))) {
       return "🟠 Medium Risk (Potentially Unsafe)";
     }
-    if (allVerdicts.some(v => v.includes("low risk"))) {
+    if (allVerdicts.some((v) => v.includes("low risk"))) {
       return "🟡 Low Risk (Exercise Caution)";
     }
-    if (allVerdicts.some(v => v.includes("clean") || v.includes("no threat"))) {
+    if (allVerdicts.some((v) => v.includes("clean") || v.includes("no threat"))) {
       return "🟢 Clean";
     }
     return "⚪ Unknown";
@@ -225,12 +234,62 @@ const ScanEmail = () => {
                 {showHeaderDetails && (
                   <div className="api-details header-details">
                     <h4>Email Header Scan Results</h4>
-                    <p><strong>Sender:</strong> {scanResults.emailHeaderScanResult.sanitized_email || "Unknown"}</p>
-                    <p><strong>Deliverability:</strong> {scanResults.emailHeaderScanResult.deliverability || "N/A"}</p>
-                    <p><strong>Spam Trap Score:</strong> {scanResults.emailHeaderScanResult.spam_trap_score || "N/A"}</p>
-                    <p><strong>Suspicious:</strong> {scanResults.emailHeaderScanResult.suspect ? "Yes" : "No"}</p>
-                    <p><strong>Fraud Score:</strong> {scanResults.emailHeaderScanResult.fraud_score ?? "N/A"}</p>
-                    <p><strong>Verdict:</strong> {scanResults.emailHeaderScanResult.mapped_verdict || "N/A"}</p>
+                    <p>
+                      <strong>Sender:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.sanitized_email || "Unknown"}
+                    </p>
+                    <p>
+                      <strong>Deliverability:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.deliverability || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Spam Trap Score:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.spam_trap_score || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Suspicious:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.suspect ? "Yes" : "No"}
+                    </p>
+                    <p>
+                      <strong>Fraud Score:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.fraud_score ?? "N/A"}
+                    </p>
+                    <p>
+                      <strong>Verdict:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.mapped_verdict || "N/A"}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* NEW: Heuristic Scan Section */}
+            {scanResults.heuristicResult && (
+              <>
+                <button
+                  className={`details-toggle ${showHeuristicDetails ? "active" : ""}`}
+                  onClick={toggleHeuristicDetails}
+                >
+                  {showHeuristicDetails ? "🔼 Hide Heuristic Scan" : "🔽 Show Heuristic Scan"}
+                </button>
+                {showHeuristicDetails && (
+                  <div className="api-details heuristic-details">
+                    <h4>Heuristic Scan Results</h4>
+                    <p>
+                      <strong>Suspicious:</strong>{" "}
+                      {scanResults.heuristicResult.suspicious ? "Yes" : "No"}
+                    </p>
+                    <p>
+                      <strong>Score:</strong> {scanResults.heuristicResult.score}
+                    </p>
+                    <p>
+                      <strong>Reasons:</strong>
+                    </p>
+                    <ul>
+                      {scanResults.heuristicResult.reasons.map((reason, idx) => (
+                        <li key={idx}>{reason}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </>
@@ -268,7 +327,7 @@ const ScanEmail = () => {
                         {showIPQSDetails ? "🔼 Hide IPQS Details" : "🔽 Show IPQS Details"}
                       </button>
                     )}
-                    
+
                     {res.scamalytics_results && (
                       <button
                         className={`details-toggle ${showScamalyticsDetails ? "active" : ""}`}
@@ -298,7 +357,7 @@ const ScanEmail = () => {
                       <p><strong>Verdict:</strong> {res.ipqs_results.verdict}</p>
                     </div>
                   )}
-                  
+
                   {showScamalyticsDetails && res.scamalytics_results && (
                     <div className="api-details scamalytics-details">
                       <h4>Scamalytics Results</h4>
@@ -334,7 +393,6 @@ const ScanEmail = () => {
 
                   {!att.error && (
                     <div className="details-buttons">
-                      {/* VirusTotal Details Button */}
                       {att.vt_results && (
                         <button
                           className={`details-toggle ${showAttachmentVTDetails[idx] ? "active" : ""}`}
@@ -343,8 +401,7 @@ const ScanEmail = () => {
                           {showAttachmentVTDetails[idx] ? "🔼 Hide VirusTotal Details" : "🔽 Show VirusTotal Details"}
                         </button>
                       )}
-                      
-                      {/* Hybrid Analysis Details Button */}
+
                       {att.hybrid_analysis_results && (
                         <button
                           className={`details-toggle ${showAttachmentHybridDetails[idx] ? "active" : ""}`}
@@ -356,7 +413,6 @@ const ScanEmail = () => {
                     </div>
                   )}
 
-                  {/* VirusTotal Details Panel */}
                   {showAttachmentVTDetails[idx] && att.vt_results && (
                     <div className="api-details vt-details">
                       <h4>VirusTotal Results</h4>
@@ -369,27 +425,26 @@ const ScanEmail = () => {
                       )}
                     </div>
                   )}
-                  
-                  {/* Hybrid Analysis Details Panel */}
+
                   {showAttachmentHybridDetails[idx] && att.hybrid_analysis_results && (
                     <div className="api-details hybrid-details">
                       <h4>Hybrid Analysis Results</h4>
                       <p><strong>Risk Score:</strong> {att.hybrid_analysis_results.risk_score}/100</p>
                       <p><strong>Verdict:</strong> {att.hybrid_analysis_results.verdict}</p>
-                      
+
                       {att.hybrid_analysis_results.malware_family !== "None detected" && (
                         <p><strong>Malware Family:</strong> {att.hybrid_analysis_results.malware_family}</p>
                       )}
-                      
+
                       {att.hybrid_analysis_results.threat_level && (
                         <p><strong>Threat Level:</strong> {att.hybrid_analysis_results.threat_level}</p>
                       )}
-                      
+
                       {att.hybrid_analysis_results.analysis_url && (
                         <p>
-                          <a 
-                            href={att.hybrid_analysis_results.analysis_url} 
-                            target="_blank" 
+                          <a
+                            href={att.hybrid_analysis_results.analysis_url}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="analysis-link"
                           >

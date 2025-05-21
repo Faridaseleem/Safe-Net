@@ -1,0 +1,18 @@
+From: user@example.com
+Return-Path: noreply@anotherdomain.com
+Date: Wed, 21 May 2025 10:00:00 +0000
+Subject: Urgent: Account Issue
+Date: Wed, 21 May 2025 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="ABC123"
+
+--ABC123
+Content-Type: text/plain; charset="UTF-8"
+
+Dear user,
+
+Please click the link below to verify your account:
+
+https://phishing-site.com/verify
+
+--ABC123--

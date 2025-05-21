@@ -1,0 +1,17 @@
+From: attacker@example.com
+To: victim@example.com
+Subject: Urgent Action Needed
+Date: Wed, 21 May 2025 10:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="ABC123"
+
+--ABC123
+Content-Type: text/plain; charset="UTF-8"
+
+Dear user,
+
+Please verify your account by clicking the link below:
+
+https://suspicious-link.com/verify
+
+--ABC123--
