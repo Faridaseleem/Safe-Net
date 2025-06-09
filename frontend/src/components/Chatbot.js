@@ -1,5 +1,5 @@
 // src/components/Chatbot.js
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "./Chatbot.css";
 import chatbotIcon from "./chatbot.png"; // Ensure chatbot.png is in the same folder or adjust the path
@@ -17,11 +17,38 @@ const Chatbot = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [result, setResult] = useState(null);
 
+  // New states for Ask AI chat functionality
+  const [chatMessages, setChatMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const chatContainerRef = useRef(null);
+
+  // Load chat history from localStorage when component mounts
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('cybersecurityChatHistory');
+    if (savedMessages) {
+      setChatMessages(JSON.parse(savedMessages));
+    }
+  }, []);
+
+  // Save chat messages to localStorage whenever they change
+  useEffect(() => {
+    if (chatMessages.length > 0) {
+      localStorage.setItem('cybersecurityChatHistory', JSON.stringify(chatMessages));
+    }
+  }, [chatMessages]);
+
+  // Scroll to bottom when new messages are added
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
   // Toggle the chatbot window open/close.
   const toggleChatbot = () => {
     setIsOpen((prev) => !prev);
     if (!isOpen) {
-      // If opening, reset to main menu and clear all inputs.
+      // If opening, reset to main menu and clear service inputs (but keep chat history).
       setChatMode("main");
       setSelectedService(null);
       setUserText("");
@@ -47,26 +74,58 @@ const Chatbot = () => {
     setSelectedFile(null);
   };
 
+  // Add message to chat history
+  const addMessage = (type, content) => {
+    const newMessage = {
+      type,
+      content,
+      timestamp: new Date().toISOString()
+    };
+    setChatMessages(prev => [...prev, newMessage]);
+  };
+
+  // Handle Ask AI submission
+  const handleAskAISubmit = async () => {
+    if (!userText.trim()) return;
+    
+    const question = userText.trim();
+    setUserText("");
+    addMessage('user', question);
+    setIsLoading(true);
+
+    try {
+      // Get conversation context (last 10 messages)
+      const conversationHistory = chatMessages.slice(-10).map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
+      const response = await axios.post(
+        "http://localhost:5000/api/ask-ai",
+        { 
+          question,
+          conversationHistory 
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data.answer) {
+        addMessage('bot', response.data.answer);
+      } else {
+        addMessage('bot', 'Sorry, I couldn\'t process your request. Please try again.');
+      }
+    } catch (err) {
+      console.error("Failed to get AI answer:", err);
+      addMessage('bot', 'Sorry, I encountered an error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // The submit handler now distinguishes between Ask AI and Services.
   const handleSubmit = () => {
     if (chatMode === "askai") {
-      // In Ask AI mode, userText contains the question.
-      if (!userText) return;
-      console.log("Submitting Ask AI request:", userText);
-      axios
-        .post(
-          "http://localhost:5000/api/ask-ai",
-          { question: userText },
-          { withCredentials: true }
-        )
-        .then((res) => {
-          console.log("Response from ask-ai:", res.data);
-          setResult(res.data);
-        })
-        .catch((err) => {
-          console.error("Failed to get AI answer:", err);
-          setResult({ error: "Failed to get answer from AI." });
-        });
+      handleAskAISubmit();
     } else if (chatMode === "services") {
       if (!selectedService) return;
       console.log("Submitting service call for:", selectedService.type);
@@ -145,6 +204,14 @@ const Chatbot = () => {
     if (e.key === "Enter") handleSubmit();
   };
 
+  // Clear chat history
+  const clearChatHistory = () => {
+    if (window.confirm('Are you sure you want to clear the chat history?')) {
+      setChatMessages([]);
+      localStorage.removeItem('cybersecurityChatHistory');
+    }
+  };
+
   // Render the main menu with two buttons: "Choose from our services." and "Ask AI".
   const renderMainMenu = () => {
     return (
@@ -157,7 +224,13 @@ const Chatbot = () => {
         </button>
         <button
           className="main-menu-button"
-          onClick={() => setChatMode("askai")}
+          onClick={() => {
+            setChatMode("askai");
+            // Add welcome message if chat is empty
+            if (chatMessages.length === 0) {
+              addMessage('bot', 'Hello! I\'m your cybersecurity assistant. I can help you with questions about network security, encryption, vulnerabilities, ethical hacking, and other cybersecurity topics. How can I assist you today?');
+            }
+          }}
         >
           Ask AI
         </button>
@@ -165,27 +238,67 @@ const Chatbot = () => {
     );
   };
 
-  // Render the Ask AI interface.
+  // Render the Ask AI interface with chat history.
   const renderAskAIMode = () => {
     return (
       <div className="ask-ai-container">
-        <h4>Ask AI</h4>
-        <input
-          type="text"
-          value={userText}
-          placeholder="Enter your question"
-          onChange={(e) => setUserText(e.target.value)}
-          onKeyDown={handleTextKeyDown}
-          className="ask-ai-input"
-        />
-        <button onClick={handleSubmit} className="submit-button">
-          Ask
-        </button>
+        <div className="ask-ai-header">
+          <h4>Ask AI - Cybersecurity Assistant</h4>
+          <button 
+            className="clear-chat-button"
+            onClick={clearChatHistory}
+            title="Clear chat history"
+          >
+            Clear
+          </button>
+        </div>
+        
+        <div className="chat-messages" ref={chatContainerRef}>
+          {chatMessages.map((message, index) => (
+            <div key={index} className={`chat-message ${message.type}-message`}>
+              <div className="message-icon">
+                {message.type === 'user' ? '👤' : '🤖'}
+              </div>
+              <div className="message-content">
+                {message.content}
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="chat-message bot-message">
+              <div className="message-icon">🤖</div>
+              <div className="message-content typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="ask-ai-input-container">
+          <input
+            type="text"
+            value={userText}
+            placeholder="Ask a cybersecurity question..."
+            onChange={(e) => setUserText(e.target.value)}
+            onKeyDown={handleTextKeyDown}
+            className="ask-ai-input"
+            disabled={isLoading}
+          />
+          <button 
+            onClick={handleSubmit} 
+            className="submit-button"
+            disabled={isLoading || !userText.trim()}
+          >
+            Send
+          </button>
+        </div>
+        
         <button
           className="back-button"
           onClick={() => {
             setChatMode("main");
-            setResult(null);
             setUserText("");
           }}
         >
@@ -296,8 +409,6 @@ const Chatbot = () => {
       reportText = JSON.stringify(resultCopy, null, 2);
     } else if (selectedService && selectedService.type === "education") {
       reportText = JSON.stringify(result, null, 2);
-    } else if (chatMode === "askai") {
-      reportText = JSON.stringify(result, null, 2);
     } else {
       reportText = JSON.stringify(result, null, 2);
     }
@@ -331,7 +442,9 @@ const Chatbot = () => {
       ? renderServiceSelection()
       : renderServiceInput();
   }
-  if (resultContent) {
+  
+  // For services mode, show results below the content
+  if (chatMode === "services" && resultContent) {
     chatbotContent = (
       <div>
         {chatbotContent}
