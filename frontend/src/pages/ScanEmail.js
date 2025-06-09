@@ -21,7 +21,7 @@ const ScanEmail = () => {
   const [showAttachmentVTDetails, setShowAttachmentVTDetails] = useState({});
   const [showAttachmentHybridDetails, setShowAttachmentHybridDetails] = useState({});
 
-  // NEW: Heuristic scan toggle
+  // Heuristic scan toggle
   const [showHeuristicDetails, setShowHeuristicDetails] = useState(false);
 
   const handleFileUpload = (e) => {
@@ -80,7 +80,6 @@ const ScanEmail = () => {
     const prevAttHybrid = { ...showAttachmentHybridDetails };
     const prevHeuristic = showHeuristicDetails;
 
-    // Hide all details for clean screenshot
     setShowVTDetails(false);
     setShowIPQSDetails(false);
     setShowScamalyticsDetails(false);
@@ -101,7 +100,6 @@ const ScanEmail = () => {
           link.download = "Email_Scan_Report.png";
           link.click();
 
-          // Restore toggles
           setShowVTDetails(prevVT);
           setShowIPQSDetails(prevIPQS);
           setShowScamalyticsDetails(prevScamalytics);
@@ -141,7 +139,6 @@ const ScanEmail = () => {
     setShowHeuristicDetails(!showHeuristicDetails);
   };
 
-  // Compute final verdict prioritizing highest risk
   const finalVerdict = (() => {
     const urlVerdicts = scanResults?.urlScanResults?.map((u) => u.verdict) || [];
     const attVerdicts = scanResults?.attachmentScanResults?.map((a) => a.verdict) || [];
@@ -201,7 +198,7 @@ const ScanEmail = () => {
             tabIndex={-1}
             aria-live="polite"
             aria-atomic="true"
-          >
+         >
             <h3>📄 Scan Report</h3>
             <div>
               <strong>🕒 Scan Time:</strong> {new Date().toLocaleString()}
@@ -222,7 +219,14 @@ const ScanEmail = () => {
               )}
             </div>
 
-            {/* Email Header Scan Section */}
+            <div>
+              <strong>⚠️ Final Verdict: </strong> {finalVerdict}
+            </div>
+
+            {/* Add separator and header for Email Header Scan */}
+            <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
+            <h4>Email Header Scan Results:</h4>
+
             {scanResults.emailHeaderScanResult && (
               <>
                 <button
@@ -233,37 +237,31 @@ const ScanEmail = () => {
                 </button>
                 {showHeaderDetails && (
                   <div className="api-details header-details">
-                    <h4>Email Header Scan Results</h4>
                     <p>
                       <strong>Sender:</strong>{" "}
                       {scanResults.emailHeaderScanResult.sanitized_email || "Unknown"}
                     </p>
                     <p>
-                      <strong>Deliverability:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.deliverability || "N/A"}
+                      <strong>Data Leak:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.leaked ? "Yes" : "No"}
                     </p>
                     <p>
-                      <strong>Spam Trap Score:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.spam_trap_score || "N/A"}
-                    </p>
-                    <p>
-                      <strong>Suspicious:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.suspect ? "Yes" : "No"}
+                      <strong>Domain Age:</strong>{" "}
+                      {scanResults.emailHeaderScanResult.domain_age?.human || "N/A"}
                     </p>
                     <p>
                       <strong>Fraud Score:</strong>{" "}
                       {scanResults.emailHeaderScanResult.fraud_score ?? "N/A"}
-                    </p>
-                    <p>
-                      <strong>Verdict:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.mapped_verdict || "N/A"}
                     </p>
                   </div>
                 )}
               </>
             )}
 
-            {/* NEW: Heuristic Scan Section */}
+      
+
+
+            {/* Heuristic Scan */}
             {scanResults.heuristicResult && (
               <>
                 <button
@@ -285,22 +283,33 @@ const ScanEmail = () => {
                     <p>
                       <strong>Reasons:</strong>
                     </p>
-                    <ul>
-                      {scanResults.heuristicResult.reasons.map((reason, idx) => (
-                        <li key={idx}>{reason}</li>
-                      ))}
+                    <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                      {scanResults.heuristicResult.reasons.map((reason, idx) => {
+                        const [reasonTitle, ...descParts] = reason.split(":");
+                        const description = descParts.join(":").trim();
+                        return (
+                          <li
+                            key={idx}
+                            style={{
+                              marginBottom: "0.5em",
+                              background: "rgba(255, 255, 255, 0.05)",
+                              padding: "0.4em 0.6em",
+                              borderRadius: "0.25em"
+                            }}
+                          >
+                            <strong style={{ color: "#F8F8F2" }}>{reasonTitle}:</strong>{" "}
+                            <span style={{ color: "#D6D6D6" }}>{description}</span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
               </>
             )}
 
-            <div>
-              <strong>⚠️ Final Verdict: </strong> {finalVerdict}
-            </div>
-
+            {/* URL Scan Results */}
             <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
-
             <h4>URL Scan Results:</h4>
             <ul>
               {scanResults.urlScanResults.map((res, idx) => (

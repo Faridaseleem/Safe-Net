@@ -1,0 +1,854 @@
+Delivered-To: mostafa.ahlawey@gmail.com
+Received: by 2002:aa6:da83:0:b0:2b6:e0f5:6870 with SMTP id 3csp1246274lkd;
+        Wed, 30 Apr 2025 17:58:22 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IE0sC4zIyxCWBvpJEYzSBIrMHG68VrajuCX9BxkD93uyNm+1D8HAkO4QfAID3DpVIYOuyyE
+X-Received: by 2002:a05:620a:d96:b0:7c5:9a6c:b7d3 with SMTP id af79cd13be357-7caceffd116mr62425285a.37.1746061102097;
+        Wed, 30 Apr 2025 17:58:22 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1746061102; cv=none;
+        d=google.com; s=arc-20240605;
+        b=WN/by3klu6z8OlaZRK/PNNCBG1+zNE7KAeHKuY2rEnkKVkuKxEDN4Kv+h5Lcza0A/l
+         yl77qgHNiEDhqm18G4fUP4CJnCVO+AYyNfOb/1wkgvuj9OQUeTX6ozVz1cSgvQq7ui0i
+         H2d/KQW/4DXvdkktOVO9tIF5OsrF3lFMsvz2f+ovNGKlsCh4fElWoHGydcS9UiLhDnsn
+         Zyqgd2xjbiODRYzWYK6NewB5BiYkJQa0jA2VZ9AgM+99HDf5UjQ/C9NNnaRmIKTVXAfy
+         AiIeQfBKXgYX15DFTC6T11oQjQM1CoI2NDgBilmcI8Ks5G7C80g4EIFVHehDwtrvbPk3
+         fFTA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=feedback-id:message-id:reply-to:mime-version:list-help:date:subject
+         :to:from:dkim-signature:dkim-signature;
+        bh=X6AUa15Nfx6huUMwy5DG3zx51PMHbJ39ML750kuiCK8=;
+        fh=hlRqQl+129Yy91HZse3nREra2kGTGMJM7M+2mGnKmas=;
+        b=gWes0JuN2YzyEwQ6g30bRRhuzRLbWIgwkQSBFHOgI+BM0U6/FdCRsU8CU9UVwmpkqM
+         J58F2voX+1A4XXlF4KW3JiH0zGBUNR7GmFJVUuNLBV2I2uFZntQDlhZyMdI96WCYFj1/
+         NjUSNgilNzISKrxz5QX3YNrmFv2PhZ9I3S/K9F3Ji7ypySz/Rnc3ZmwUFoHek4gEaBDt
+         voydQH4mBuidd+T3JbSxapZiNXN/oa9BvXwvvrWfI4HiVBSElXpywe5IZ4jK1wUkI+wx
+         UnWB2nVCgQMpOZhYFroSoToFc1trRqLQ8uNrMDudFieft4v7lf2L75kh3ORSilBAwVIS
+         9iRA==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@e.ea.com header.s=200608 header.b=aEP683Bn;
+       dkim=pass header.i=@s7.y.mc.salesforce.com header.s=fbldkim7 header.b=wOehpvwW;
+       spf=pass (google.com: domain of bounce-18_html-777525291-1046264-7229410-7269026@bounce.e.ea.com designates 136.147.183.216 as permitted sender) smtp.mailfrom=bounce-18_HTML-777525291-1046264-7229410-7269026@bounce.e.ea.com;
+       dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=e.ea.com
+Return-Path: <bounce-18_HTML-777525291-1046264-7229410-7269026@bounce.e.ea.com>
+Received: from mta11.e.ea.com (mta11.e.ea.com. [136.147.183.216])
+        by mx.google.com with ESMTPS id af79cd13be357-7cace14d3edsi56449085a.593.2025.04.30.17.58.21
+        for <mostafa.ahlawey@gmail.com>
+        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 30 Apr 2025 17:58:22 -0700 (PDT)
+Received-SPF: pass (google.com: domain of bounce-18_html-777525291-1046264-7229410-7269026@bounce.e.ea.com designates 136.147.183.216 as permitted sender) client-ip=136.147.183.216;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@e.ea.com header.s=200608 header.b=aEP683Bn;
+       dkim=pass header.i=@s7.y.mc.salesforce.com header.s=fbldkim7 header.b=wOehpvwW;
+       spf=pass (google.com: domain of bounce-18_html-777525291-1046264-7229410-7269026@bounce.e.ea.com designates 136.147.183.216 as permitted sender) smtp.mailfrom=bounce-18_HTML-777525291-1046264-7229410-7269026@bounce.e.ea.com;
+       dmarc=pass (p=QUARANTINE sp=QUARANTINE dis=NONE) header.from=e.ea.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; s=200608; d=e.ea.com;
+ h=From:To:Subject:Date:List-Help:MIME-Version:Reply-To:Message-ID:Content-Type;
+ i=EA@e.ea.com;
+ bh=X6AUa15Nfx6huUMwy5DG3zx51PMHbJ39ML750kuiCK8=;
+ b=aEP683BnXaitWwUn9hu89zmJl0eYiqGR9JX1YVR/V0eCd5HTHmWYgOemLlwoucnSQqQ+zKr4YIX2
+   RlhgZxCz4e2ua3X7RcQEQn0lX7rC18GWuC0seu8Pw7BzSEFwnRd/kOU4M3uEVW4sZ1jkFn0YL5z6
+   sss+5Agr9770jW2x+Yc=
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; s=fbldkim7; d=s7.y.mc.salesforce.com;
+ h=From:To:Subject:Date:List-Help:MIME-Version:Reply-To:Message-ID:Content-Type;
+ bh=X6AUa15Nfx6huUMwy5DG3zx51PMHbJ39ML750kuiCK8=;
+ b=wOehpvwWeEIguNBJiWufroQo9H6wTseP4RpswNAPfhzvVtTDZA+Gme/JjxOnLcciF/boDGRIti05
+   iu9WASFIcZsiW2M3ixbq0l+6r0lrnpsSTfFH/ZxzeR6cjYmZlBs6VSCzWBjCs6Xtgjg/nTBVFebL
+   Qy2fOUoddb5JVW8t3fGFrfqmwzX/bGgDmlC0u3ZYh2bYl63Ky8uJS3wYIyLZ2R4t4vu6B5oqLyEm
+   +id6PjN0D3ThCsKCzhJjV3SFbPRv7S/dM40F3hqTZqpp/kisH7tFmCMPolh5tfQcmKyS06v/dvM8
+   uD5kUY0iIGo/wfL7HSm99cDrGvXZK9lkMQbduA==
+Received: by mta11.e.ea.com id h2b3is2fmd47 for <mostafa.ahlawey@gmail.com>; Thu, 1 May 2025 00:58:21 +0000 (envelope-from <bounce-18_HTML-777525291-1046264-7229410-7269026@bounce.e.ea.com>)
+From: "EA" <EA@e.ea.com>
+To: <mostafa.ahlawey@gmail.com>
+Subject: Your EA Security Code is: 121474
+Date: Wed, 30 Apr 2025 18:58:21 -0600
+List-Help: <https://click.e.ea.com/subscription_center.aspx?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtaWQiOiI3MjI5NDEwIiwicyI6Ijc3NzUyNTI5MSIsImxpZCI6IjE4IiwiaiI6IjEwNDYyNjQiLCJqYiI6IjcyNjkwMjYiLCJkIjoiNzAyMzkifQ.D8O8cFCFGxyaJFiyoPm_YSVtgJvaIbUhibe8ik4KGTI>
+MIME-Version: 1.0
+Reply-To: "EA" <reply-fe9815707162067b71-18_HTML-777525291-7229410-7269026@e.ea.com>
+x-messageKey: 2b99f66c-de33-4138-9714-e802ffc0c988
+X-Delivery: Transactional
+X-SFMC-Stack: 7
+x-job: 7229410_1046264
+Message-ID: <417a5bf0-1bc1-4e3f-b112-f8142c6a2dd3@atl1s07mta2745.xt.local>
+Feedback-ID: 7229410:1046264:136.147.183.216:sfmktgcld
+Content-Type: multipart/alternative;
+	boundary="V9XLDvXlgHnl=_?:"
+
+This is a multi-part message in MIME format.
+
+--V9XLDvXlgHnl=_?:
+Content-Type: text/plain;
+	charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+
+ 
+ 
+  https://view.e.ea.com/?qs=8f4be07a572e75a9b85e356c7df91d2bc6f7a4795a9da0e66c1cdcce5bb7a29660f0f49869c425bb5c09cb890732db11c1d7930a6808cdde73f9678f5f57a1b057365b3cfd5043851d5077f5465431d0 
+View online click here.   
+
+ 
+ 
+https://click.e.ea.com/?qs=72804e83e20642b5eddfab58ea71cae8a908c5c5b17bb2a11439aa52ead4e4ba24c1fc02338fcca3d2b121466d173ab0cef3d1cd31ca0adeb116a6cf3eec02ce 
+
+ 
+ 
+ 
+Your EA Security Code:
+ 
+ 
+121474
+ 
+ 
+ If you didn't request this code, please go to your 
+https://click.e.ea.com/?qs=72804e83e20642b5e5e673757a8334a54eebb7f7527afa2d4d1de7415e600cde0a6ba03706713f258cc14413a91d7aef9b865c7c8562b4085f9a7ae8f7a348f0 
+My Account   page and change your password right away. For assistance, please contact  
+https://click.e.ea.com/?qs=72804e83e20642b555d8689adb6615bf246ce46a2ebad94da5317647e9b96a6bb48b4b2c2f7ec8ed441989650eac4a555699b790d83fa641d66bf5916f81929f 
+EA Help .
+
+
+ Thanks for helping us maintain your account's security.
+
+
+ Happy gaming,
+The EA Team
+ 
+ 
+
+ 
+
+
+  If you need technical assistance, please contact 
+https://click.e.ea.com/?qs=72804e83e20642b511f40032be55fce4bdab5b3748947875fecfa7136342fd4398aaf5e0d563773e81df58ecd256ad15e0f079662e4a32c9bf3883af7e99e8c3 
+EA Help .
+
+ This email is sent by Electronic Arts Inc. To view our complete Privacy & Cookie Policy and to contact Electronic Arts Inc. go to  
+https://click.e.ea.com/?qs=72804e83e20642b5bfc1c75ce7a730207a43a8a22532a39798bc9587af4620ec61ef620023dd593a4d1d7f753db1c4ea5322a8c1c76ccb170af6e4cb609cf091 
+https://www.ea.com/legal/privacy-portal   or write to: Electronic Arts Inc., 209 Redwood Shores Parkway, Redwood City, CA 94065.
+
+
+ (c) 2025 Electronic Arts Inc.
+
+
+  
+https://click.e.ea.com/?qs=72804e83e20642b52a41c309972d0324b5be595779a5c46dc76d3f0410dab9c3689a1ce4bef1c13ac3c213d73e418997705ad9c244ba5161c922f8a1af92fad9 
+About Us  |  
+https://click.e.ea.com/?qs=72804e83e20642b534887839a81a18827d16d803eb32a723d8bd2f66ec3de51e3eb7978e797017d8775346068906f13a71bd587421c49c171ab9f2a8ad08b8ec 
+Privacy and Cookie Policy  |  
+https://click.e.ea.com/?qs=72804e83e20642b5d9d4e952d50830820775e006e144c49047d7e615ea9bd37e0adecf13c3db900154e69a8dc77b95ac4a0d8517a996c9e38647cbc6d9a04a70 
+User Agreement  |  
+https://click.e.ea.com/?qs=72804e83e20642b569334c45f72a6f2176535533579dd731e73a3e9931772c9eaa649951435c16a217cc2c281eb941fd9e983d3a83cf3a5cac85918670b49acb 
+Legal   
+
+https://click.e.ea.com/?qs=72804e83e20642b5eddfab58ea71cae8a908c5c5b17bb2a11439aa52ead4e4ba24c1fc02338fcca3d2b121466d173ab0cef3d1cd31ca0adeb116a6cf3eec02ce 
+
+ 
+
+
+                                      
+  - - - - - - - - - - - - - - - - - - - - - - - 
+  
+ 
+
+
+--V9XLDvXlgHnl=_?:
+Content-Type: text/html;
+	charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+<!-- 
+
+  -->
+<!--GLOBAL_ELEMENTS/RTM_GLOBAL_ELEMENTS-->
+<!--<table style="min-width: 100%; " class="stylingblock-content-wrapper" width="100%" cellspacing="0" cellpadding="0"><tr><td class="stylingblock-content-wrapper camarker-inner"></td></tr></table> -->
+
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="robots" content="no index" />
+    <title>
+    </title>
+   
+   <style>
+  @font-face {
+    font-family: 'Electronic Arts Text';
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsText-Regular.eot');
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsText-Regular.eot?#iefix') format('embedded-opentype'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsText-Regular.woff') format('woff'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsText-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Electronic Arts Display';
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Regular.eot');
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Regular.eot?#iefix') format('embedded-opentype'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Regular.woff') format('woff'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Electronic Arts Display Bold';
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Bold.eot');
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Bold.eot?#iefix') format('embedded-opentype'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Bold.woff') format('woff'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsDisplay-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Electronic Arts Mono';
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsMono-Regular.eot');
+    src: url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsMono-Regular.eot?#iefix') format('embedded-opentype'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsMono-Regular.woff') format('woff'), url('https://ea-newsletter-assets.s3.amazonaws.com/template/empr/f/ElectronicArtsMono-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+</style>
+
+    <style type="text/css">
+      /** RESET STYLES **/
+      p {
+        margin: 1em 0;
+      }
+      /*Yahoo paragraph fix*/
+      table {
+        border-spacing: 0;
+      }
+      table td {
+        border-collapse: collapse;
+      }
+      .ExternalClass {
+        width: 100%;
+      }
+      .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+        line-height: 100%;
+      }
+      table {
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+      }
+      td 
+      {
+        mso-line-height-rule: exactly !important;
+      }
+      /*This resolves the Outlook 07, 10, and Gmail td padding issue fix*/
+      img,
+      a img {
+        border: 0;
+        height: auto;
+        outline: none;
+    
+      }
+      /* Remove the borders that appear when linking images with "border:none" and "outline:none" */
+      @-ms-viewport {
+        width: device-width;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      body,
+      {
+        height: 100% !important;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100 margin: 0;
+        padding: 0;
+        width: 100% !important;
+      }
+      /* Prevent Webkit and Windows Mobile platforms from changing default font sizes, while not breaking desktop design. */
+      linkfix a {
+        color: #bababa !important;
+        text-decoration: none;
+      }
+      /** CLIENT-SPECIFIC STYLE **/
+      img {
+        -ms-interpolation-mode: bicubic;
+      }
+      /* Force IE to smoothly render resized images. */
+    
+      /* Remove spacing between tables in Outlook 2007 and up. */
+      .ReadMsgBody {
+        width: 100%;
+      }
+      /* Force Outlook.com to display emails at full width. */
+      p,
+      a,
+      li,
+      td,
+      blockquote {
+        mso-line-height-rule: exactly;
+      }
+      /* Force Outlook to render line heights as they're originally set. */
+      a[href^="tel"],
+      a[href^="sms"] {
+        color: inherit;
+        cursor: default;
+        text-decoration: none;
+      }
+      /* Force mobile devices to inherit declared link styles. */
+      p,
+      a,
+      li,
+      td,
+      body,
+      table,
+      blockquote {
+        -ms-text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+      }
+      /* Prevent Windows- and Webkit-based mobile platforms from changing declared text sizes. */
+      /* Force Outlook.com to display line heights normally. */
+      /** STRUCTURAL STYLES **/
+      /** CONTENT STYLES **/
+      body {
+        width: 100%;
+        background-color:#DDDDDD;
+        margin: 0 auto;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+        font-family: "Arial", sans-serif !important;
+      }
+     
+      /** MOBILE STYLES **/
+     
+      /* Force iOS Mail to render the email at full width & removes margins. */
+      /*** STRUCTURAL ***/
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      * {
+        -webkit-text-size-adjust: none;
+      }
+      /* prevent iOS font upsizing */
+      /* force Outlook.com to honor line-height */
+      .appleFix a {
+        color: #000000 !important;
+        text-decoration: none !important;
+      }
+      /* prevent iOS auto-linking */
+      td {
+        mso-line-height-rule: exactly;
+      }
+    </style>
+    <style type="text/css">     
+      @media only screen and (max-width: 480px) {
+       
+        /* Force iOS Mail to render the email at full width & removes margins. */
+        /*** STRUCTURAL ***/
+         .container {
+          width: 100% !important;
+        }
+         .mobileShow {
+          display: block !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+          width: auto !important;
+          max-height: inherit !important;
+        }
+         .mobileHide {
+          display: none !important;
+        }
+         .photo img {
+          width: 100% !important;
+          max-width: 100% !important;
+          height: auto !important;
+        }
+         .columnStack {
+          width: 100% !important;
+          display: block !important;
+        }
+         .contentCenter,
+         .contentCenter img,
+         .contentCenter table {
+          margin: 0 auto !important;
+        }
+         .textCenter {
+          text-align: center !important;
+        }
+         .textLeft {
+          text-align: left !important;
+        }
+         .nullBorder {
+          border: none !important;
+        }
+         .alignTop {
+          vertical-align: top !important;
+        }
+         .autoHeight {
+          height: auto !important;
+        }
+        /*** PADDING ***/
+         .nullPad {
+          padding: 0px !important;
+        }
+         .mobilePad {
+          padding-right: 30px !important;
+          padding-left: 30px !important;
+        }
+         .bottomPad5 {
+          padding-bottom: 5px !important;
+        }
+         .topPad5 {
+          padding-bottom: 5px !important;
+        }
+         .topPad10 {
+          padding-top: 10px !important;
+        }
+         .bottomPad10 {
+          padding-bottom: 10px !important;
+        }
+         .topPad15 {
+          padding-top: 15px !important;
+        }
+         .bottomPad15 {
+          padding-bottom: 15px !important;
+        }
+         .topPad20 {
+          padding-top: 20px !important;
+        }
+         .bottomPad20 {
+          padding-bottom: 20px !important;
+        }
+         .topPad25 {
+          padding-top: 25px !important;
+        }
+         .bottomPad25 {
+          padding-bottom: 25px !important;
+        }
+         .bottomPad30 {
+          padding-bottom: 30px !important;
+        }
+         .rightPad30 {
+          padding-right: 30px !important;
+        }
+        /*** FONT RESIZING ***/
+         .fontResize17 {
+          font-size: 17px !important;
+        }
+        /* ported styles from 2014 and beyond */
+        /* force iOS5 to fill entire screen */
+         .marginfix {
+          position: relative;
+          top: 0;
+          left: 0;
+          right: 0;
+        }
+        /* to eliminate padding in iOS7 */
+        /*** Structure ***/
+         .full-width-content {
+          width: 300px !important;
+          min-width: 300px !important;
+          -webkit-box-sizing: border-box;
+          /* Safari/Chrome, other WebKit */
+          -moz-box-sizing: border-box;
+          /* Firefox, other Gecko */
+          box-sizing: border-box;
+          /* Opera/IE 8+ */
+        }
+         .hide {
+          width: 0px !important;
+          height: 0px !important;
+          display: none !important;
+        }
+         .stack {
+          display: block !important;
+          width: 100% !important;
+        }
+        .stack {
+          display: block !important;
+          width: 100% !important;
+        }
+        /*** Padding and resizing ***/
+         .pad15 {
+          padding-left: 15px !important;
+          padding-right: 15px !important;
+        }
+         .pad20 {
+          padding-left: 20px !important;
+          padding-right: 20px !important;
+        }
+         .nopadding {
+          padding: 0px !important;
+        }
+         .alignCenter {
+          text-align: center !important;
+          margin: 0 auto !important;
+        }
+         .alignLeft {
+          text-align: left !important;
+        }
+         span.mobileTITLE1 {
+          font-size: 17px !important;
+        }
+        /* shrink title font to fit in mobile */
+         span.mobileTITLE2 {
+          font-size: 15px !important;
+        }
+        /* shrink title font to fit in mobile */
+         span.mobileTITLE3 {
+          font-size: 13px !important;
+        }
+        /* shrink title font to fit in mobile */
+         span.mobileCTA {
+          font-size: 18px !important;
+        }
+        /*resize text cta to fit mobile scree added by Emeric 07/22/14*/
+         .CAP {
+          text-transform: capitalize !important;
+        }
+        /*cap a letter in mobile added by Emeric 7/16/14*/
+        /*** Image adjustments ***/
+         .stack img,
+        img.shrink {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+         img.shrink {
+          width: 100% !important;
+          height: auto !important;
+        }
+        .bgmob
+        {
+          background-color:#1D2033 !important;
+        }
+        .padth1
+        {
+          padding:0 15px !important;
+        }
+       
+
+        .padth2
+        {
+          padding:30px 15px 40px 15px !important;
+        }
+         .padth4
+        {
+          padding:20px 15px 0 15px !important;
+        }
+ .padth5
+        {
+          padding:0 15px 40px 15px !important;
+        }
+        .Fontth1
+        {
+          font-size:16px !important;
+          font-style:normal !important;
+          font-weight:bold !important;
+          line-height:22px !important;
+          letter-spacing:0.64px !important;
+          text-align:center !important;
+        }
+          .Fontth2
+        {
+          font-size:16px !important;
+          font-style:normal !important;
+          font-weight:normal!important;
+          line-height:22px !important;
+          letter-spacing:0.64px !important;
+          text-align:left !important;
+        }
+        .fontth04
+          {
+          font-size:16px !important;
+          line-height:22px !important;
+          letter-spacing:0.64px !important;
+     
+        }
+         .font05          {
+          font-size:18px !important;
+          line-height:22px !important;
+      
+     
+        }
+
+
+  .Fontth20
+        {
+          font-size:20px !important;
+          font-style:normal !important;
+          font-weight:bold !important;
+          line-height:24px !important;
+          letter-spacing:0.4px !important;
+         
+        }
+
+        .mobth
+        {
+          min-width:100% !important;
+        }
+        .fontthheader
+        {
+          font-size:12px !important;
+          line-height:14px !important;
+        }
+        .fontth16
+        {
+          font-size:16px !important;
+          line-height:20px !important;
+        }
+        .fontth14
+        {
+          font-size:14px !important;
+          line-height:18px !important;
+          letter-spacing:0.42px !important;
+        }
+        .padth03
+        {
+          padding:0px 0px 20px 0px !important;
+        }
+        .imgcen
+        {
+          margin:0 auto !important;
+        }
+        
+
+ div[class=mobile-only] {
+         display: block !important;
+         width: 100% !important;
+         max-height: none !important;
+         color: #000000 !important;
+         font-size:32px !important;
+         }
+         .mobile-only
+         {
+         display: block !important;
+         width: 100% !important;
+         max-height: none !important;
+         color: #000000 !important;
+         font-size:32px !important;
+         }
+         table[class=hide], img[class=hide], td[class=hide], p[class=hide], span[class=hide] {
+         display: none !important;
+         }
+         .hide
+         {
+         display: none !important;
+         }
+
+
+      }
+    </style>
+    
+    <!--[if gte mso 9]> <xml> <o:OfficeDocumentSettings> <o:AllowPNG/> <o:PixelsPerInch>96</o:PixelsPerInch> </o:OfficeDocumentSettings> </xml> <![endif]-->  
+
+
+    <!--[if mso]> <style type="text/css"> /* Begin Outlook Font Fix */ body, table, td, div, span { font-family:Arial, sans-serif !important;  } /* End Outlook Font Fix */ </style> <![endif]-->
+   
+   <!--[if gte mso 9]>      <style>       /* Target Outlook 2007 and 2010 */       html, body {         font-family: Arial, sans-serif !important;       }       table {         font-family: Arial, sans-serif !important;       }       td {         font-family: Arial, sans-serif !important;       }     </style>     <![endif]-->
+
+  </head>
+  <body style="margin: 0px; -webkit-text-size-adjust:none; background-color:#DDDDDD; padding:0" yahoo="fix">
+    <!-- Start of: Header-->
+    
+    <table width="100%" border="0" cellspacing="0" cellpadding="0"  bgcolor="#DDDDDD">
+     <tr>
+ <td align="center" valign="top">
+ 
+  <table border="0" cellspacing="0" cellpadding="0" width="800" bgcolor="#1D2033" class="container" >
+     <tr>
+ <td align="center" valign="top">
+ 
+ 
+ <table border="0" cellspacing="0" cellpadding="0" width="100%" class="container">
+                    <tr>
+                        <td align="center" style="padding:0px 0px;">
+                         <!-- Start of: EA Header -->                            
+                           <table cellpadding="0" cellspacing="0" border="0" width="550" style="width:550px;" class="container">                  <tr>
+                    <td align="center" valign="top">
+                    <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                                <tr>
+                                    <td align="center" valign="middle" style="padding: 30px 10px;" class="mobilePad">
+                                        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                                            <tr>  <td align="center" valign="middle" style="font-family: 'TT Commons', apple-system, sans-serif;font-size: 12px; line-height: 14px; color: #5288FD;font-weight:normal; text-align:center; letter-spacing:0.36px;text-decoration:underline;" > <a  href="https://view.e.ea.com/?qs=8f4be07a572e75a9b85e356c7df91d2bc6f7a4795a9da0e66c1cdcce5bb7a29660f0f49869c425bb5c09cb890732db11c1d7930a6808cdde73f9678f5f57a1b09fc3736dc25e465bb213024954e606f5"  target="_blank" style=" color: #5288FD; text-decoration: underline;">View online click here.</a> </td>  </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                              <tr>
+                                <td align="center" valign="top">                  
+                                   <table cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%; " class="stylingblock-content-wrapper"><tr><td class="stylingblock-content-wrapper camarker-inner"><table border="0" cellpadding="0" cellspacing="0" width="100%">
+           <tr>
+            <!--logo-->
+            <td align="center">  
+
+<a href="https://click.e.ea.com/?qs=72804e83e20642b57ec9d48706492ffff51144dc9e32289b2660e589646a551a24fbc9a014901a19414a0bf9d58a05a190501916b466d7b2dac95defdcbe3769"  title="EA logo" target="_blank">
+
+<img src="http://ea-newsletter-assets.s3.amazonaws.com/origin/rtm/images/RTM_ea-medallion.png" style="display:block;" alt="EA logo" width="96" border="0">
+</a>
+            </td>
+            <!--end logo-->
+           </tr>
+          </table>
+
+
+</td></tr></table>                                </td>
+                             </tr>
+                            </table>
+                             <!-- End of: EA Header -->
+                             <!-- Start of: Content -->
+                      <table width="100%" border="0" cellspacing="0" cellpadding="0">
+     <tr>
+              <td align="center" style="padding:30px 0px 40px 0px;" class="padth2">
+              
+                             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;" class="container">
+                        
+                        
+                        <tr>
+ <td align="left" valign="top">
+  <!--body content goes here-->
+                            <!--copy block-->
+ <table width="100%" border="0" cellspacing="0" cellpadding="0">
+ 
+  
+
+     <tr>
+                          <td align="left" style="font-family: 'Electronic Arts Text', 'Electronic Arts Display', apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-style: normal;font-weight: normal;font-size: 20px;line-height: 30px;text-align: left;letter-spacing: 0.48px;color: #F8F8F8;" class="Fontth2" > 
+                        
+Your EA Security Code:
+ 
+ </td>
+ 
+</tr>
+
+
+<tr>
+ <td align="left"  style="font-family:'Electronic Arts Display', apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-style: normal;font-weight: bold;font-size: 48px;line-height: 54px;color: #F8F8F8;padding:20px 0;" valign="top">
+                                        <b>121474</b>
+                                        
+      </td>
+      
+</tr>                                  
+           <tr>
+                          <td align="left"  style="font-family: 'Electronic Arts Text', 'Electronic Arts Display', apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-style: normal;font-weight: normal;font-size: 20px;line-height: 30px;text-align: left;letter-spacing: 0.48px;color: #F8F8F8;" class="Fontth2"> 
+                                  
+                                        If you didn't request this code, please go to your <a href="https://click.e.ea.com/?qs=72804e83e20642b54b77c68e72a59f03107960621753e5d74a3abb077a8b0340b3a35ab4da211ff94b99ef04b0e4d2d0821af76c78b4602acf598017069f441a"  target="_blank" style="color:#5288FD;text-decoration:underline;">My Account</a>  page and change your password right away. For assistance, please contact  <a href="https://click.e.ea.com/?qs=72804e83e20642b59ab77e64afd9c8c528124f7041790c82c4b08b2250d1a95a16989872a30e90393c5bfd830088ae0af746c520a017fee3af2db3b528f69167"  target="_blank" style="color:#5288FD;text-decoration:underline;">EA Help</a>.<br><br>
+                                      Thanks for helping us maintain your account's security.<br><br>
+                                      Happy gaming,<br>The EA Team
+                                  
+ 
+
+                 </td>
+                        </tr>
+
+                               </table> 
+                            <!--end body content-->
+ </td>
+</tr>
+                      </table>
+                <!--end EMAIL NAME-->
+                <!--end body content-->
+              </td>
+            </tr>
+</table>
+                      
+                
+                            
+     <!-- Start of: Footer -->
+     
+     
+     
+<table width="550" border="0" cellspacing="0" cellpadding="0" class="container" align="center">
+     <tr>
+ <td align="center" valign="top" class="pad15"><table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 0px 0px;border-top:2px solid #343647;" class="nullPad">
+                <table border="0" cellspacing="0" cellpadding="0" width="100%" class="container">
+                    <tr>
+                        <td align="center">
+                            <!--begin ORIGIN STATUS-->
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                    <td align="left" style="padding:40px 0px 0px;">
+                            <!--OX_nonpurchase_footer-Juno--><table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="min-width: 100%; " class="stylingblock-content-wrapper"><tr><td class="stylingblock-content-wrapper camarker-inner"><!--  --><table border="0" cellpadding="0" cellspacing="0" width="100%">
+ 
+  <tr>
+   <td align="left" class="fontth04" style="font-family: 'Electronic Arts Text', apple-system, sans-serif; color:#908E97; font-size:18px;font-style:normal; font-weight:normal;letter-spacing:0.48px; padding-bottom:15px; line-height:25px;" valign="top">
+     If you need technical assistance, please contact <a  href="https://click.e.ea.com/?qs=72804e83e20642b5751887b60f30030e50fce4978369b68e17b91d5b4b2ba597523bf4ddce40e24a48550d508000e3ecd3e4f1df3d0186000d91726cc7abd14f" style="color: #908E97; text-decoration: underline;" target="_blank">EA Help</a>.</td></tr><tr>
+   <td align="left" class="fontth04" style="font-family: 'Electronic Arts Text', apple-system, sans-serif; color:#908E97; font-size:18px;font-style:normal; font-weight:normal;letter-spacing:0.48px; line-height:25px;" valign="top">
+    This email is sent by Electronic Arts Inc. To view our complete Privacy & Cookie Policy and to contact Electronic Arts Inc. go to  <a  href="https://click.e.ea.com/?qs=72804e83e20642b5617f062ed219c2f8425107d61ebbb41ee6717a26d7851e450029370589b4b3a03e078bcbc81cf899f7c4501c143c29a9b70f36e922d5cf86" style="color: #908E97; text-decoration: underline;" target="_blank">https://www.ea.com/legal/privacy-portal</a>  or write to: Electronic Arts Inc., 209 Redwood Shores Parkway, Redwood City, CA 94065.<br>
+    <br>
+    &copy;&nbsp;2025&nbsp;Electronic&nbsp;Arts&nbsp;Inc.<br>
+    <br>
+     <a  href="https://click.e.ea.com/?qs=72804e83e20642b5adc375276fde7b5b3ee023a1c0ce14f3b3065782e5cb5ac3a3182e7a5ac0f698389aca1677bb04ac2765f7a27d6c72edaff54b933f36a825" style="color: #908E97; text-decoration: underline;" target="_blank">About Us</a> |  <a  href="https://click.e.ea.com/?qs=72804e83e20642b5ba8332d7456da7410e0dd417fa37fcafb332be0bde07a55c3e604f54a322c7207b7d44db27e90ffa54958d4a1b4360acd504aca4d50450b3" style="color: #908E97; text-decoration: underline;" target="_blank">Privacy and Cookie Policy</a> |  <a  href="https://click.e.ea.com/?qs=72804e83e20642b557695fd4447d47db70dba90f4b8ea501780865a963987cf71bd99f34e3067ea6558ef6cea1827b06ba2491c5e60273cd84cb2c7d5d1a4c13" style="color: #908E97; text-decoration: underline;" target="_blank">User Agreement</a> |  
+<a  href="https://click.e.ea.com/?qs=72804e83e20642b566795fa9f6f81360932bb8a09bf27aacba57ce7dbdbfb2599105a38122002564ff98f7f093a9888a640096132b17e82d64e8d7b67dcf731f" style="color: #908E97; text-decoration: underline;" target="_blank">Legal</a>  </td></tr><tr>
+   <td align="center" style="padding: 35px 0px" valign="middle">
+    <a  href="https://click.e.ea.com/?qs=72804e83e20642b5eddfab58ea71cae8a908c5c5b17bb2a11439aa52ead4e4ba24c1fc02338fcca3d2b121466d173ab0cef3d1cd31ca0adeb116a6cf3eec02ce" target="_blank"><img alt="EA footer icon" border="0" src="http://ea-newsletter-assets.s3.amazonaws.com/origin/rtm/images/RTM_EA_wordmark.png" style="display: block;" width="200"></a></td></tr><!-- <tr>    <td class="fontth04" style="font-family: 'Electronic Arts Text', apple-system, sans-serif;  font-size: 18px; mso-line-height-rule: exactly; line-height: 25px; color: #908E97; padding-bottom: 25px; letter-spacing:0.48px;" valign="top" align="left">     Origin is part of the EA Network.</td></tr>--></table></td></tr></table> </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table></td>
+    </tr>
+</table>
+
+     
+    
+    <!-- End of: Footer -->                   
+
+                            <!--end title-->
+            
+
+
+                    </td>
+                    <!--end order details-->
+                  </tr>
+                  
+                  
+                </table>                         
+                        </td>
+                    </tr>
+                </table>
+ 
+ 
+ </td>
+    </tr>
+</table>
+ 
+ </td>
+    </tr>
+</table>
+    
+    
+    
+   
+    <!-- End of: Header -->
+    <!-- Start of: Content -->
+    
+    
+    
+    <!-- End of: Content -->
+    
+    
+    <div id="new-gmail-hack" style="white-space: nowrap; font: 15px courier; line-height: 0; display: none;">
+      &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+    </div>
+    <div style="display:none; white-space:nowrap; font:20px courier; color:#ffffff; background-color:#ffffff;"> - - - - - - - - - - - - - - - - - - - - - - - 
+    </div>
+    <!-- End of: Footer -->
+     <table align="center" border="0" cellpadding="0" cellspacing="0" width="620" class="hide mobth">
+      <tr>
+        <td height="1" style="font-size: 1px; line-height: 1px; min-width: 620px;" class="hide">&nbsp;
+        </td>
+      </tr>
+    </table>
+
+    <!-- Start of : keep gmail android from collapsing table -->
+    
+    <!-- End of : keep gmail android from collapsing table -->
+    <img src="https://click.e.ea.com/open.aspx?ffcb10-fe9815707162067b71-fe1d1c7873620174721471-fe961372776d007c75-ff961578-fe22137772610678771d71-fe8f1372736d047f73&d=70239&bmt=0" width="1" height="1" alt="">
+</body>
+
+</html>
+
+--V9XLDvXlgHnl=_?:--
+

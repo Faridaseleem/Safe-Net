@@ -1,4 +1,4 @@
-Return-Path: <no-reply@malicious-domain.com>
+Return-Path: <no-reply@malicious.com>
 Received: from unknown (HELO attacker.com) (127.0.0.1)
 Received: from attacker.com (192.168.1.100)
 From: attacker@example.com

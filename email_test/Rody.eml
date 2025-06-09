@@ -1,0 +1,93 @@
+Delivered-To: faridaseleem10@gmail.com
+Received: by 2002:a05:6a10:d195:b0:600:cfb2:e537 with SMTP id l21csp1163767pxv;
+        Tue, 13 May 2025 03:25:14 -0700 (PDT)
+X-Received: by 2002:a05:6512:6510:b0:54e:8194:9a72 with SMTP id 2adb3069b0e04-54fc67cd36cmr4538086e87.28.1747131914173;
+        Tue, 13 May 2025 03:25:14 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1747131914; cv=none;
+        d=google.com; s=arc-20240605;
+        b=Hf7Y5OmSs/MLvJVaJVF9McTzPu9u4+CoIEhMGCEkuwrncURvtNBEDFOKGvrcgs7hVD
+         kH0db+KxvA8ttER7dEaBmxIEdshoUMAR9vIeOSGMakg6KwyZ/AeXynHwWcffoZcrQJTK
+         pyNjj3pvv3XXG4YaLY3fI5WNELjZE+Byl6Pre4/3xt2CN0hhPoj2Ze6OlN0WM1lDzmr9
+         DrMN+YklzhiH/F9eN1jJPxskEIXqmAH+17Phv3GeP0Vxz7GQurgCLhRMgWytsUW31Do+
+         R9LZ6xPiSxTQVaTDnxhZwRsxv5tBKimUjWE/aR7LQiEtl/09RpBvVFGQ5WAj1HhSg2D0
+         Ms5w==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature;
+        bh=eeDqW/I+biJde2Uxw8YRvOH3IH0/Rbhd1w0H/8l7Jfs=;
+        fh=x6tPM8knz466AZixu03w52OIBAeBLRYC5A+pUI94H4Y=;
+        b=AI5DTPG3k1MWNUkWZT5Amk9IsxoG+15tILkZN8ZG8Qwiw6cgC3GAVYnbojVrHtBwPd
+         KfUdUot0n7wKKrldpNncFS4U3ZIJK5aszcchlENlZCHOZTa8Eb2Ozqwtza2cOqwsvWXL
+         d895U1nhYEJ5NzPE4sG4OGG8yhSfHgtT6nn6OAqSYfh0XthJBugQbF8MHmcIDrXIFpP8
+         EUW8f+3ZGo5D/UJW3x4sNgqy2SniI7xu9QyKd/xa/gm6DOI+RIy+ojhjCJC2jod5YdkF
+         q74ApL/y2zs5VPP0XXJ2noYqt8YCBGy3SKMrFsjK0K+taDufsi+3ZOKKg8UfEIMoavv9
+         IeXQ==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@gmail.com header.s=20230601 header.b=cnglMeEZ;
+       spf=pass (google.com: domain of ahmedmt377@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ahmedmt377@gmail.com;
+       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;
+       dara=pass header.i=@gmail.com
+Return-Path: <ahmedmt377@gmail.com>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id 2adb3069b0e04-54fc64beda4sor2008201e87.25.2025.05.13.03.25.13
+        for <faridaseleem10@gmail.com>
+        (Google Transport Security);
+        Tue, 13 May 2025 03:25:14 -0700 (PDT)
+Received-SPF: pass (google.com: domain of ahmedmt377@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@gmail.com header.s=20230601 header.b=cnglMeEZ;
+       spf=pass (google.com: domain of ahmedmt377@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=ahmedmt377@gmail.com;
+       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;
+       dara=pass header.i=@gmail.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1747131913; x=1747736713; dara=google.com;
+        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=eeDqW/I+biJde2Uxw8YRvOH3IH0/Rbhd1w0H/8l7Jfs=;
+        b=cnglMeEZX5AIsHZBnkdCBx4c3awDVB5Msqrptir/Nnb+W3ZsUN5DoLY7VjRhVODVga
+         FP9JfCvFiN/4ySQIzYuZJR7XBfoN+RYer9K4x+wXYehuAPRp0RJOm9mTjjR2sGmbNETH
+         mbLsvOvcgAxbFvlpZUD/rnyvZk1/hFoChf0zjaDR+zIolC8aOaSPZGWmeea+JJ5Tb20Z
+         XJGFLomC2IgxeEVojMWDY3Sm7jooF1TXvTAqCWs48ZOg+UJ/IH73BY9rQZ5AOpLpReym
+         zkurY9YntLzlaTX3Cjo02MCnmzIU/ey3yRGtgopW+ndPStayuzq7BmUHowIZSeoMxGQG
+         ZOJg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1747131913; x=1747736713;
+        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=eeDqW/I+biJde2Uxw8YRvOH3IH0/Rbhd1w0H/8l7Jfs=;
+        b=kgJLWCnkrlohWjEgkT0LxEEde6EseZvMp65tFM+ie/DBZmItkYLKQzxP16kE+kzIc9
+         gtl1lYWiubnjVzbOdphrZz5Lnq4WSwVU5riVg4l8BHav6eBNxefpD43wEMWA78boQbzr
+         vn5glL+QwyGDhiABVmulChaLc6Rt/jnFvgZrreMURCUrMB7nzDCCtmF9pebwK6NLidbL
+         rXWJCtgIEmg+NNzD+6g5rYYhNDZYgo6R7ONsiMHI9rwZof7w5CAGCYjeBE+kQ1gmo/OA
+         b3lHe/hi5mAl/8PIniYvXzHNiB42QpxbNwu8wqBy2Warw+LKGj611tO4L0+6xVycix4k
+         1arQ==
+X-Gm-Message-State: AOJu0YwPwrRcuoOyM/rRR46hSA1tx6m9v5JrScFvODLLh887WhXwgNXc
+	dxrHEevPWhWWzPO8zN1gBAiiUPToKhGH9/msUnQiC99ITmhPOKVoeBrLpqSMrdtdo53pB1sADAD
+	e3ahoKfRfY/Fx/0I3YYA+kMEnXEAMcA==
+X-Gm-Gg: ASbGncuJLAVxUEbthsV+P5ptk1a3FU03x3cHxvtGs+Tw9ZXdfEOpObN0+YXSQbE72id
+	CtSnINUzURL5aWbvwV15y9JJ8h1FgwH4uUXXHjtNDkA4YWQc0aPn626phtBG2z6wA/+2onUSa5c
+	F1qTgmuGUhdNEmbA7BnyK7k3mQLYVIAV4J2A==
+X-Google-Smtp-Source: AGHT+IGIgXQbu221Ix0906uAR2w/jEJ5pIdWHGv+7L4M3N6oLZYsbpgb1BfQv2FkW0kaiLBFTy9AwVwBmqfLNC3TSLg=
+X-Received: by 2002:a2e:be08:0:b0:30b:a20d:1c06 with SMTP id
+ 38308e7fff4ca-326c441466bmr60750831fa.0.1747131913107; Tue, 13 May 2025
+ 03:25:13 -0700 (PDT)
+MIME-Version: 1.0
+From: Ahmed Mohamed <ahmedmt377@gmail.com>
+Date: Tue, 13 May 2025 13:25:01 +0300
+X-Gm-Features: AX0GCFt4ORg1DFEIdWq_zce-7vVAs5wZoCZWmVBrwwXlQhWRqst2qwu4-vx79W4
+Message-ID: <CAK1jTeRj+fBPi1tPZ+VZU6VseLZ0GQekHeA-rJYRt=Wevk7r+g@mail.gmail.com>
+Subject: Rody
+To: faridaseleem10@gmail.com
+Content-Type: multipart/alternative; boundary="0000000000000e7bb5063501d9f2"
+
+--0000000000000e7bb5063501d9f2
+Content-Type: text/plain; charset="UTF-8"
+
+Alooo
+
+--0000000000000e7bb5063501d9f2
+Content-Type: text/html; charset="UTF-8"
+
+Alooo
+
+--0000000000000e7bb5063501d9f2--
