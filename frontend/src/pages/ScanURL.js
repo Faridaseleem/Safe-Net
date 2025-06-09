@@ -15,6 +15,9 @@ const Scan = () => {
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
   const [showScamalyticsDetails, setShowScamalyticsDetails] = useState(false); // Renamed to Scamalytics
+  const [showHeuristicDetails, setShowHeuristicDetails] = useState(false);
+  const toggleHeuristicDetails = () => setShowHeuristicDetails(!showHeuristicDetails);
+
 
   const handleScan = async () => {
     if (!url) return alert("Please enter a URL to scan.");
@@ -154,6 +157,15 @@ const Scan = () => {
                 {showScamalyticsDetails ? '🔼 Hide Scamalytics Details' : '🔽 Show Scamalytics Details'}
               </button>
             )}
+            {result.heuristic_analysis && (
+              <button 
+                className={`details-toggle ${showHeuristicDetails ? 'active' : ''}`}
+                onClick={() => setShowHeuristicDetails(!showHeuristicDetails)}
+              >
+                {showHeuristicDetails ? '🔼 Hide Heuristic Details' : '🔽 Show Heuristic Details'}
+              </button>
+            )}
+
           </div>
 
           {/* Collapsible VirusTotal details */}
@@ -206,6 +218,43 @@ const Scan = () => {
               </div>
             </div>
           )}
+          {/* Heuristic Scan */}
+          {showHeuristicDetails && result.heuristic_analysis && (
+              <div className="api-details heuristic-details">
+                <h4>Heuristic Scan Results</h4>
+                <p>
+                  <strong>Suspicious:</strong>{" "}
+                  {result.heuristic_analysis.score >= 40 ? "Yes" : "No"}
+                </p>
+                <p>
+                  <strong>Score:</strong> {result.heuristic_analysis.score}/100
+                </p>
+                <p><strong>Verdict:</strong> {result.heuristic_analysis.verdict}</p>
+                <p><strong>Reasons:</strong></p>
+                <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+                  {result.heuristic_analysis.reasons.map((reason, idx) => {
+                    const [title, ...descParts] = reason.split(":");
+                    const description = descParts.join(":").trim();
+                    return (
+                      <li
+                        key={idx}
+                        style={{
+                          marginBottom: "0.5em",
+                          background: "rgba(255, 255, 255, 0.05)",
+                          padding: "0.4em 0.6em",
+                          borderRadius: "0.25em",
+                        }}
+                      >
+                        <strong style={{ color: "#F8F8F2" }}>{title}</strong>{" "}
+                        <span style={{ color: "#D6D6D6" }}>{description}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+              </div>
+            )}
+
 
           {/* Learn More Button for Education Page */}
           <button className="learn-more-btn" onClick={() => navigate("/education")}>

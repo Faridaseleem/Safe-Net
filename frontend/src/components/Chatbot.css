@@ -10,7 +10,7 @@
   .chatbot-window {
     width: 320px;
     max-height: 500px;
-    background: #000; /* Black background */
+    background: rgba(0, 0, 0, 0.3);; /* Black background */
     color: #fff;
     border: 1px solid #333;
     border-radius: 8px;
@@ -117,7 +117,7 @@
     align-items: center;
     margin-bottom: 10px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #ddd;
   }
   
   .ask-ai-header h4 {

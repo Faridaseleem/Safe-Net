@@ -5,6 +5,7 @@ const { simpleParser } = require("mailparser");
 const axios = require("axios");
 const FormData = require("form-data");
 const BlockedUrl = require("../models/BlockedUrl");
+const whois = require("whois-json");
 require("dotenv").config();
 
 const upload = multer(); // Multer memory storage (no disk save)
@@ -570,6 +571,56 @@ function formatScanReport(url, scanTime, successfulAPIs, aggregatedRiskScore, ve
 
 📖 Learn More About Phishing Protection`;
 }
+function analyzeUrlHeuristically(url) {
+  let score = 0;
+  const reasons = [];
+
+  if (url.length > 75) {
+    score += 10;
+    reasons.push("URL is unusually long (over 75 characters)");
+  }
+
+  const suspiciousWords = ['login', 'secure', 'update', 'verify', 'account', 'bank', 'confirm', 'webscr'];
+  suspiciousWords.forEach(word => {
+    if (url.toLowerCase().includes(word)) {
+      score += 10;
+      reasons.push(`Contains suspicious keyword: "${word}"`);
+    }
+  });
+
+  if (/https?:\/\/(\d{1,3}\.){3}\d{1,3}/.test(url)) {
+    score += 20;
+    reasons.push("Uses raw IP address instead of domain");
+  }
+
+  if (!url.startsWith("https://")) {
+    score += 10;
+    reasons.push("Does not use HTTPS (insecure)");
+  }
+
+  return { score: Math.min(score, 100), reasons };
+}
+
+async function analyzeDomainAge(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    const whoisData = await whois(hostname);
+    const created = new Date(whoisData.createdDate || whoisData.creationDate || whoisData.created);
+    
+    if (isNaN(created)) {
+      return { score: 10, reason: "Domain creation date unavailable (WHOIS incomplete)" };
+    }
+
+    const ageDays = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
+    if (ageDays < 90) return { score: 20, reason: "Domain registered less than 3 months ago" };
+    if (ageDays < 180) return { score: 10, reason: "Domain registered less than 6 months ago" };
+    
+    return { score: 0, reason: null };
+  } catch (err) {
+    console.error("WHOIS failed:", err.message);
+    return { score: 10, reason: "WHOIS lookup failed" };
+  }
+}
 
 function analyzeHeadersHeuristically(headers) {
   const reasons = [];
@@ -696,9 +747,8 @@ router.post("/scan-url", async (req, res) => {
       });
     }
 
-    // Run all scans in parallel for efficiency
+    // Run all scans in parallel
     const [vtResults, ipqsResults, scamalyticsResults] = await Promise.all([
-      // Submit URL to VirusTotal for scanning
       (async () => {
         try {
           const scanResponse = await axios.post(
@@ -718,16 +768,14 @@ router.post("/scan-url", async (req, res) => {
           const analysisResults = await fetchAnalysisResults(analysisId);
           console.log("✅ VT Scan Results Received");
 
-          let totalSources = Object.keys(analysisResults).length || 1; // Avoid division by zero
+          const totalSources = Object.keys(analysisResults).length || 1;
           let detectedCount = 0;
 
-          Object.values(analysisResults).forEach((engine) => {
-            if (engine.category === "malicious") {
-              detectedCount++;
-            }
+          Object.values(analysisResults).forEach(engine => {
+            if (engine.category === "malicious") detectedCount++;
           });
 
-          let vtRiskScore = ((detectedCount / totalSources) * 100);
+          const vtRiskScore = (detectedCount / totalSources) * 100;
           return {
             total_sources: totalSources,
             malicious_detections: detectedCount,
@@ -739,8 +787,6 @@ router.post("/scan-url", async (req, res) => {
           return { success: false, error: error.message };
         }
       })(),
-      
-      // Submit URL to IPQS for scanning
       (async () => {
         try {
           const ipqsResult = await scanUrlIPQS(url);
@@ -754,8 +800,6 @@ router.post("/scan-url", async (req, res) => {
           return { success: false, error: error.message };
         }
       })(),
-      
-      // Scan URL with Scamalytics
       (async () => {
         try {
           const scamalyticsResult = await scanWithScamalytics(url);
@@ -770,62 +814,67 @@ router.post("/scan-url", async (req, res) => {
         }
       })()
     ]);
-      
-    // Calculate aggregated risk score
+
+    // ✅ Heuristic Analysis
+    const heuristicStatic = analyzeUrlHeuristically(url);
+    const heuristicDynamic = await analyzeDomainAge(url);
+    const heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
+    const heuristicReasons = [...heuristicStatic.reasons];
+    if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
+    const heuristicVerdict = getVerdictFromScore(heuristicScore);
+
+    // ✅ Include heuristic in risk score aggregation
     const vtRiskScore = vtResults.success ? vtResults.risk_score : 0;
     const ipqsRiskScore = ipqsResults.success ? ipqsResults.risk_score : 0;
     const scamalyticsRiskScore = scamalyticsResults.success ? scamalyticsResults.risk_score : 0;
-    
-    // Calculate aggregated score with all available data
-    const aggregatedResult = calculateAggregatedRiskScore(
-      vtRiskScore, 
-      ipqsRiskScore,
-      scamalyticsRiskScore
-    );
 
-    // Update the count of successful APIs for the report
+    const allScores = [vtRiskScore, ipqsRiskScore, scamalyticsRiskScore, heuristicScore];
+    const availableScores = allScores.filter(score => score > 0);
+    const finalScore = Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length || 0);
+    const finalVerdict = getVerdictFromScore(finalScore);
+
     const successfulAPIs = [
-      vtResults.success, 
-      ipqsResults.success, 
-      scamalyticsResults.success
-    ].filter(Boolean).length;
+      vtResults.success,
+      ipqsResults.success,
+      scamalyticsResults.success,
+    ].filter(Boolean).length + 1; // +1 for heuristic
 
-    // Create the scan report with risk score instead of malicious detections
     const scanReport = formatScanReport(
       url,
       scanTime,
       successfulAPIs,
-      aggregatedResult.score,
-      aggregatedResult.verdict
+      finalScore,
+      finalVerdict
     );
 
     const educationLink = "/education";
 
     res.json({
-      url: url,
+      url,
       scan_time: formatDateForReport(scanTime),
-      // VirusTotal results
       vt_results: {
         total_sources: vtResults.total_sources || 0,
         malicious_detections: vtResults.malicious_detections || 0,
         risk_score: vtRiskScore,
       },
-      // IPQS results
       ipqs_results: {
         risk_score: ipqsRiskScore,
         is_phishing: ipqsResults.is_phishing,
         is_malware: ipqsResults.is_malware,
         is_suspicious: ipqsResults.is_suspicious,
       },
-      // Scamalytics results (if available)
       scamalytics_results: scamalyticsResults.success ? {
         ip: scamalyticsResults.ip,
         risk_score: scamalyticsRiskScore,
         verdict: scamalyticsResults.verdict
       } : null,
-      // Aggregated results
-      aggregated_risk_score: aggregatedResult.score,
-      verdict: aggregatedResult.verdict,
+      heuristic_analysis: {
+        score: heuristicScore,
+        reasons: heuristicReasons,
+        verdict: heuristicVerdict
+      },
+      aggregated_risk_score: finalScore,
+      verdict: finalVerdict,
       more_info: `If you want to learn more about phishing awareness and protection, visit our education page: ${educationLink}`,
       scan_report: scanReport,
     });

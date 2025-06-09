@@ -16,7 +16,7 @@ const ScanEmail = () => {
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
   const [showScamalyticsDetails, setShowScamalyticsDetails] = useState(false);
   const [showHeaderDetails, setShowHeaderDetails] = useState(false);
-
+  
   // Attachment detail toggles - track per attachment
   const [showAttachmentVTDetails, setShowAttachmentVTDetails] = useState({});
   const [showAttachmentHybridDetails, setShowAttachmentHybridDetails] = useState({});
