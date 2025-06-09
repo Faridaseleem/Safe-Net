@@ -305,6 +305,10 @@ const ScanEmail = () => {
                     </ul>
                   </div>
                 )}
+                {scanResults.emailHeaderFinalVerdict && (
+                  <p><strong>Final Header Verdict:</strong> {scanResults.emailHeaderFinalVerdict}</p>
+                )}
+
               </>
             )}
 

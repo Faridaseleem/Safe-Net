@@ -177,6 +177,16 @@ async function submitFileToHybridAnalysis(fileBuffer, filename) {
   }
 }
 
+//neww
+function calculateEmailHeaderVerdict(heuristicScore, ipqsFraudScore) {
+  const finalScore = (heuristicScore + (ipqsFraudScore || 0)) / 2;
+  if (finalScore >= 85) return "🔴 High Risk (Likely Malicious)";
+  if (finalScore >= 50) return "🟠 Medium Risk (Potentially Unsafe)";
+  if (finalScore >= 10) return "🟡 Low Risk (Exercise Caution)";
+  return "🟢 Low Risk (Likely Safe)";
+}
+
+
 // Get analysis results from Hybrid Analysis
 // Simplified function to get Hybrid Analysis results
 async function getHybridAnalysisResults(sha256) {
@@ -632,6 +642,8 @@ function extractDomain(value) {
 
 
 
+
+
 // === END heuristic email header analysis functions ===
 
 // POST /api/scan-url — Scan a single URL with multiple engines
@@ -919,7 +931,6 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       }
     }
 
-    // --- Added heuristic phishing detection ---
 
     // Convert parsedEmail.headers (Map) to a plain object
     const headersObject = {};
@@ -929,6 +940,14 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
 
     const heuristicResult = analyzeHeadersHeuristically(headersObject);
 
+
+    // Calculate final verdict
+    const headerFinalVerdict = calculateEmailHeaderVerdict(
+      heuristicResult.score,
+      emailHeaderScanResult?.fraud_score || 0
+    );
+
+
     // --- End heuristic addition ---
 
     res.json({
@@ -936,7 +955,8 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       urlScanResults,
       attachmentScanResults,
       emailHeaderScanResult,
-      heuristicResult  // New field with phishing heuristic info
+      heuristicResult,
+      emailHeaderFinalVerdict: headerFinalVerdict  
     });
 
   } catch (err) {
@@ -944,5 +964,7 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
     res.status(500).json({ error: "Failed to parse or scan .eml file." });
   }
 });
+
+
 
 module.exports = router;
