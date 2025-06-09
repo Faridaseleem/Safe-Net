@@ -185,14 +185,10 @@ function calculateEmailHeaderVerdict(heuristicScore, ipqsFraudScore) {
   if (finalScore >= 10) return "🟡 Low Risk (Exercise Caution)";
   return "🟢 Low Risk (Likely Safe)";
 }
-
-
-// Get analysis results from Hybrid Analysis
-// Simplified function to get Hybrid Analysis results
 async function getHybridAnalysisResults(sha256) {
   try {
     console.log(`🔍 Retrieving Hybrid Analysis results for: ${sha256}`);
-    
+
     const response = await axios.get(
       `https://www.hybrid-analysis.com/api/v2/overview/${sha256}`,
       {
@@ -202,40 +198,59 @@ async function getHybridAnalysisResults(sha256) {
         }
       }
     );
-    
-    // Log the full response for debugging
-    console.log(`Hybrid Analysis API response for ${sha256}:`, JSON.stringify(response.data, null, 2));
-    
-    if (response.data) {
-      // Extract the threat score (0-100)
-      const threatScore = response.data.threat_score || 0;
-      
-      // Determine verdict based on threat score
-      let verdict;
-      if (threatScore >= 80) {
-        verdict = "🔴 High Risk (Likely Malicious)";
-      } else if (threatScore >= 50) {
-        verdict = "🟠 Medium Risk (Potentially Unsafe)";
-      } else if (threatScore >= 20) {
-        verdict = "🟡 Low Risk (Exercise Caution)";
-      } else {
-        verdict = "🟢 Very Low Risk (Likely Safe)";
-      }
-      
-      return {
-        success: true,
-        sha256: sha256,
-        risk_score: threatScore,
-        verdict: verdict,
-        malware_family: response.data.vx_family || "None detected",
-        threat_level: response.data.threat_level || "unknown",
-        environment: response.data.environment_description || "",
-        analysis_url: `https://www.hybrid-analysis.com/sample/${sha256}`
-      };
-    } else {
-      console.error("Invalid or empty response from Hybrid Analysis API");
-      return { success: false, error: "Invalid response" };
+
+    const data = response.data;
+    const threatScore = data.threat_score || 0;
+    const family = data.vx_family || '';
+    const label = data.verdict || '';
+    const threatLevel = data.threat_level || 'unknown';
+
+    // ✅ Get bundled files from correct path
+    const bundledFiles = data.relations?.bundled_files || [];
+
+    // 🔍 Log for debugging
+    console.log("📦 Bundled Files:", JSON.stringify(bundledFiles, null, 2));
+
+    // Check for any malicious bundled file
+    const hasMaliciousBundle = bundledFiles.some(
+      f => (f.threat_level || '').toLowerCase() === 'malicious'
+    );
+
+    let adjustedScore = threatScore;
+
+    // Adjust score logic even if threat_score is 0
+    if (adjustedScore === 0) {
+      if (label.toLowerCase().includes("malicious")) adjustedScore = 80;
+      else if (label.toLowerCase().includes("suspicious")) adjustedScore = 40;
+      else if (family.toLowerCase().includes("eicar")) adjustedScore = 30;
     }
+
+    // ⬆️ Boost score if malicious bundled files found
+    if (hasMaliciousBundle && adjustedScore < 70) {
+      adjustedScore = 70;
+    }
+
+    // Map final verdict
+    let verdict;
+    if (adjustedScore >= 80) verdict = "🔴 High Risk (Likely Malicious)";
+    else if (adjustedScore >= 50) verdict = "🟠 Medium Risk (Potentially Unsafe)";
+    else if (adjustedScore >= 20) verdict = "🟡 Low Risk (Exercise Caution)";
+    else verdict = "🟢 Very Low Risk (Likely Safe)";
+
+    return {
+      success: true,
+      sha256,
+      risk_score: adjustedScore,
+      verdict,
+      malware_family: family || "None detected",
+      threat_level: threatLevel,
+      analysis_url: `https://www.hybrid-analysis.com/sample/${sha256}`,
+      bundled_files: bundledFiles.map(f => ({
+        filename: f.filename || "unknown",
+        threat_level: f.threat_level || "unknown",
+        sha256: f.sha256 || ""
+      }))
+    };
   } catch (error) {
     console.error(`❌ Error retrieving Hybrid Analysis results:`, error.message);
     if (error.response) {
@@ -245,6 +260,8 @@ async function getHybridAnalysisResults(sha256) {
     return { success: false, error: error.message };
   }
 }
+
+
 // Poll VirusTotal for file scan results by scan ID
 async function pollFileScanResult(scanId, retries = 15, delay = 5000) {
   for (let i = 0; i < retries; i++) {

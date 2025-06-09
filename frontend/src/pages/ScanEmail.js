@@ -438,35 +438,57 @@ const ScanEmail = () => {
                       )}
                     </div>
                   )}
+                {showAttachmentHybridDetails[idx] && att.hybrid_analysis_results && (
+                  <div className="api-details hybrid-details">
+                    <h4>Hybrid Analysis Results</h4>
+                    <p><strong>Risk Score:</strong> {att.hybrid_analysis_results.risk_score}/100</p>
+                    <p><strong>Verdict:</strong> {att.hybrid_analysis_results.verdict}</p>
 
-                  {showAttachmentHybridDetails[idx] && att.hybrid_analysis_results && (
-                    <div className="api-details hybrid-details">
-                      <h4>Hybrid Analysis Results</h4>
-                      <p><strong>Risk Score:</strong> {att.hybrid_analysis_results.risk_score}/100</p>
-                      <p><strong>Verdict:</strong> {att.hybrid_analysis_results.verdict}</p>
+                    {att.hybrid_analysis_results.malware_family !== "None detected" && (
+                      <p><strong>Malware Family:</strong> {att.hybrid_analysis_results.malware_family}</p>
+                    )}
 
-                      {att.hybrid_analysis_results.malware_family !== "None detected" && (
-                        <p><strong>Malware Family:</strong> {att.hybrid_analysis_results.malware_family}</p>
-                      )}
+                    {att.hybrid_analysis_results.threat_level && (
+                      <p><strong>Threat Level:</strong> {att.hybrid_analysis_results.threat_level}</p>
+                    )}
 
-                      {att.hybrid_analysis_results.threat_level && (
-                        <p><strong>Threat Level:</strong> {att.hybrid_analysis_results.threat_level}</p>
-                      )}
+                    {att.hybrid_analysis_results.analysis_url && (
+                      <p>
+                        <a
+                          href={att.hybrid_analysis_results.analysis_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="analysis-link"
+                        >
+                          View Full Analysis Report
+                        </a>
+                      </p>
+                    )}
 
-                      {att.hybrid_analysis_results.analysis_url && (
-                        <p>
-                          <a
-                            href={att.hybrid_analysis_results.analysis_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="analysis-link"
-                          >
-                            View Full Analysis Report
-                          </a>
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    {/* ✅ Bundled Files Section */}
+                    {att.hybrid_analysis_results.bundled_files?.length > 0 && (
+                      <div className="bundled-files">
+                        <h5>🧩 Bundled Files Detected:</h5>
+                        <ul>
+                          {att.hybrid_analysis_results.bundled_files.map((file, i) => (
+                            <li key={i}>
+                              <strong>{file.filename}</strong> — 
+                              <span style={{ marginLeft: "5px", color: file.threat_level === "malicious" ? "red" : "orange" }}>
+                                {file.threat_level}
+                              </span>
+                              {file.sha256 && (
+                                <span style={{ marginLeft: "10px", fontSize: "0.9em", color: "#888" }}>
+                                  SHA256: {file.sha256}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 </li>
               ))}
             </ul>

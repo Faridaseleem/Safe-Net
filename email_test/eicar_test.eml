@@ -1,0 +1,24 @@
+Content-Type: multipart/mixed; boundary="===============1545439410153104455=="
+MIME-Version: 1.0
+From: test@demo.com
+To: scan@yourapp.com
+Subject: Test ZIP for Malware Detection
+
+--===============1545439410153104455==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+This is a test email containing a ZIP file with the EICAR test string.
+--===============1545439410153104455==
+Content-Type: application/octet-stream; Name="test.zip"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="test.zip"
+
+UEsDBBQAAAAAAAyEyVo8z1FoRAAAAEQAAAAJAAAAZWljYXIuY29tWDVPIVAlQEFQWzRcUFpYNTQo
+UF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCpQSwECFAMU
+AAAAAAAMhMlaPM9RaEQAAABEAAAACQAAAAAAAAAAAAAApIEAAAAAZWljYXIuY29tUEsFBgAAAAAB
+AAEANwAAAGsAAAAAAA==
+
+--===============1545439410153104455==--
