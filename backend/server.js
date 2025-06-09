@@ -5,8 +5,10 @@ const connectDB = require("./config/db");
 const scanRoutes = require("./routes/scanRoutes");
 const authRoutes = require("./routes/auth");
 const reportRoutes = require("./routes/reportRoutes"); // <-- Import reportRoutes
+const chatbotRoutes = require("./routes/chatbotRoutes"); // <-- Import chatbotRoutes
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+const askAIRoutes = require("./routes/askAIRoutes"); // Adjust the path as necessary. 
 
 dotenv.config();
 connectDB();
@@ -56,9 +58,12 @@ app.use((req, res, next) => {
 });
 
 // Routes
+
+app.use("/api", askAIRoutes);
 app.use("/api", scanRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api", reportRoutes); // <-- Register report routes
+app.use("/api/chatbot", chatbotRoutes); // <-- Register chatbot routes
 
 app.get("/", (req, res) => {
   res.send("✅ Server is running and connected to MongoDB!");

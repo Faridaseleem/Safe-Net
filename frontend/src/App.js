@@ -13,6 +13,7 @@ import SelectPlan from "./pages/SelectPlan";
 import RootPage from "./pages/RootPage";
 import ReportURL from "./pages/ReportURL";  // User URL report page
 import AdminReportURLs from "./pages/AdminReportedURLs"; // Admin report management page
+import Chatbot from "./components/Chatbot"; // NEW: Import Chatbot component**
 import "./App.css";
 
 const App = () => {
@@ -32,6 +33,7 @@ const App = () => {
           element={
             <>
               <Navbar />
+              <Chatbot />
               <Routes>
                 <Route path="/home" element={<Home />} />
                 <Route path="/scan-url" element={<ScanURL />} />
@@ -41,6 +43,7 @@ const App = () => {
                 <Route path="/report-url" element={<ReportURL />} />  {/* User report */}
                 <Route path="/admin/reports" element={<AdminReportURLs />} /> {/* Admin manage */}
               </Routes>
+               {/* NEW: Mount Chatbot on pages with Navbar** */}
             </>
           }
         />
