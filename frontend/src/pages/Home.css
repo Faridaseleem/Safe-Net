@@ -64,4 +64,9 @@
     box-shadow: 0px 0px 25px #00e1ff;
     transform: scale(1.05);
   }
-      
+  .email-line {
+  font-size: 1rem !important;
+  margin: 0;
+  line-height: 1.2;
+}
+    

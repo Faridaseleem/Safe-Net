@@ -193,22 +193,26 @@ const ScanEmail = () => {
       {emailBody && (
         <section className="email-preview" aria-label="Email body preview">
           <h4>Email Body Preview:</h4>
-          <div style={{
-            fontFamily: "'Orbitron', sans-serif",
-            fontSize: "0.95rem",
-            lineHeight: "1.2",
-            whiteSpace: "pre-wrap",
-            padding: "10px",
-            backgroundColor: "rgb(27 31 59 / 42%)",
-            borderRadius: "8px",
-            border: "1px solid #4b538b",
-            maxHeight: "300px",
-            overflowY: "auto",
-            marginTop: "10px"
-          }}>
-            {emailBody.split(/\r?\n/).map((line, idx) => (
-              <p key={idx} style={{ margin: 0 }}>{line || <br />}</p>
-            ))}
+          <div
+            className="email-body-preview"
+            style={{
+              fontFamily: "'Orbitron', sans-serif",
+              fontSize: "0.75rem !important",
+              lineHeight: "1.2",
+              whiteSpace: "pre-wrap",
+              padding: "10px",
+              backgroundColor: "rgb(27 31 59 / 42%)",
+              borderRadius: "8px",
+              border: "1px solid #4b538b",
+              maxHeight: "300px",
+              overflowY: "auto",
+              marginTop: "10px"
+            }}
+          >
+      {emailBody.split(/\r?\n/).map((line, idx) => (
+        <p key={idx} className="email-line">{line || <br />}</p>
+      ))}
+
           </div>
         </section>
       )}

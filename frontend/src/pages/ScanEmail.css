@@ -111,17 +111,21 @@
 
 .email-preview {
   text-align: left;
-  color: #d0eaff;
-  font-family: "Orbitron", sans-serif;
-  background-color: #2a2e4a;
-  padding: 15px;
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid #444;
-  margin-top: 20px;
-  white-space: pre-wrap;
+  color: #d0eaff !important;
+  font-family: "Orbitron", sans-serif !important;
+  background-color: #1b1f3b !important;
+  padding: 16px 20px !important;
+  border-radius: 10px !important;
+  max-height: 250px !important;
+  overflow-y: auto !important;
+  border: 1px solid #4b538b !important;
+  margin-top: 25px !important;
+  white-space: pre-wrap !important;
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+  box-shadow: 0 0 15px #4b538b !important;
 }
+
 .email-body-preview {
   background: #1b1f3b;
   padding: 16px;
@@ -131,7 +135,7 @@
   max-height: 220px;
   overflow-y: auto;
   font-family: "Orbitron", sans-serif;
-  font-size: 1rem; /* ✅ changed from 1.5rem to 1rem */
+  font-size: 0.5rem; /* ✅ changed from 1.5rem to 1rem */
   color: #d0eaff;
   white-space: pre-wrap;
   text-align: left;
