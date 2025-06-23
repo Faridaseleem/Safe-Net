@@ -23,6 +23,13 @@ const ScanEmail = () => {
 
   // Heuristic scan toggle
   const [showHeuristicDetails, setShowHeuristicDetails] = useState(false);
+  const [showUrlHeuristicDetails, setShowUrlHeuristicDetails] = useState({});
+  const toggleUrlHeuristicDetails = (idx) => {
+    setShowUrlHeuristicDetails((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }));
+  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -186,9 +193,26 @@ const ScanEmail = () => {
       {emailBody && (
         <section className="email-preview" aria-label="Email body preview">
           <h4>Email Body Preview:</h4>
-          <pre style={{ whiteSpace: "pre-wrap" }}>{emailBody}</pre>
+          <div style={{
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: "0.95rem",
+            lineHeight: "1.2",
+            whiteSpace: "pre-wrap",
+            padding: "10px",
+            backgroundColor: "rgb(27 31 59 / 42%)",
+            borderRadius: "8px",
+            border: "1px solid #4b538b",
+            maxHeight: "300px",
+            overflowY: "auto",
+            marginTop: "10px"
+          }}>
+            {emailBody.split(/\r?\n/).map((line, idx) => (
+              <p key={idx} style={{ margin: 0 }}>{line || <br />}</p>
+            ))}
+          </div>
         </section>
       )}
+
 
       {scanResults && (
         <div className="scan-result-wrapper">
@@ -349,6 +373,14 @@ const ScanEmail = () => {
                         {showScamalyticsDetails ? "🔼 Hide Scamalytics Details" : "🔽 Show Scamalytics Details"}
                       </button>
                     )}
+                    {res.heuristic_analysis && (
+                    <button
+                      className={`details-toggle ${showUrlHeuristicDetails[idx] ? "active" : ""}`}
+                      onClick={() => toggleUrlHeuristicDetails(idx)}
+                    >
+                      {showUrlHeuristicDetails[idx] ? "🔼 Hide Heuristic Details" : "🔽 Show Heuristic Details"}
+                    </button>
+                  )}
                   </div>
 
                   {showVTDetails && res.vt_results && (
@@ -379,6 +411,26 @@ const ScanEmail = () => {
                       <p><strong>Verdict:</strong> {res.scamalytics_results.verdict}</p>
                     </div>
                   )}
+                  {showUrlHeuristicDetails[idx] && res.heuristic_analysis && (
+                    <div className="api-details heuristic-details">
+                      <h4>Heuristic Analysis</h4>
+                      <p><strong>Score:</strong> {res.heuristic_analysis.score}/100</p>
+                      <p><strong>Verdict:</strong> {res.heuristic_analysis.verdict}</p>
+                      <p><strong>Reasons:</strong></p>
+                      <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+                        {res.heuristic_analysis.reasons.map((reason, rIdx) => {
+                          const [title, ...descParts] = reason.split(":");
+                          return (
+                            <li key={rIdx} style={{ background: "#2c2f4a", margin: "4px 0", padding: "6px", borderRadius: "4px" }}>
+                              <strong style={{ color: "#F8F8F2" }}>{title}:</strong>{" "}
+                              <span style={{ color: "#D6D6D6" }}>{descParts.join(":").trim()}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                    
                 </li>
               ))}
             </ul>

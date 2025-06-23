@@ -293,10 +293,24 @@ async function pollFileScanResult(scanId, retries = 15, delay = 5000) {
   return { verdict: "Scan result not ready yet." };
 }
 
-// Scan a URL via VirusTotal API
-async function scanUrlVT(url) {
+// Scan a URL via VirusTotal API with cleanup and error handling
+async function scanUrlVT(rawUrl) {
   try {
+    // Sanitize the input URL
+    const url = rawUrl
+      .replace(/["'><)\]]+$/g, '')   // Remove trailing HTML/junk
+      .replace(/^[\["'<(]+/g, '')    // Remove leading junk
+      .trim();
+
+    // Validate format
+    if (!/^https?:\/\/[\w.-]/.test(url)) {
+      console.warn(`⚠️ Skipping invalid URL format: ${url}`);
+      return { url, error: "Invalid URL format", verdict: "⚠️ Skipped" };
+    }
+
     const encodedUrl = base64UrlEncode(url);
+
+    // Try to fetch existing scan
     const response = await axios.get(
       `https://www.virustotal.com/api/v3/urls/${encodedUrl}`,
       {
@@ -304,8 +318,7 @@ async function scanUrlVT(url) {
       }
     );
 
-    const data = response.data;
-    const stats = data.data.attributes.last_analysis_stats;
+    const stats = response.data.data.attributes.last_analysis_stats;
     const maliciousCount = (stats.malicious || 0) + (stats.suspicious || 0);
     const totalSources = Object.values(stats).reduce((a, b) => a + b, 0);
     const vtRiskScore = maliciousCount > 0 ? (maliciousCount / totalSources) * 100 : 0;
@@ -322,23 +335,33 @@ async function scanUrlVT(url) {
           ? "🟠 Medium Risk (Potentially Unsafe)"
           : "🟢 Low Risk (Likely Safe)",
     };
+
   } catch (error) {
+    // If no scan exists, submit a new one
     if (error.response && error.response.status === 404) {
-      await axios.post(
-        "https://www.virustotal.com/api/v3/urls",
-        `url=${encodeURIComponent(url)}`,
-        {
-          headers: {
-            "x-apikey": VIRUSTOTAL_API_KEY,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        }
-      );
-      return { url, verdict: "Scan submitted, results will be ready soon." };
+      try {
+        await axios.post(
+          "https://www.virustotal.com/api/v3/urls",
+          `url=${encodeURIComponent(rawUrl)}`,
+          {
+            headers: {
+              "x-apikey": VIRUSTOTAL_API_KEY,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+          }
+        );
+        return { url: rawUrl, verdict: "Scan submitted, results will be ready soon." };
+      } catch (submitError) {
+        console.error("❌ Error submitting URL to VT:", submitError.message);
+        return { url: rawUrl, error: submitError.message || "Submission failed" };
+      }
     }
-    return { url, error: error.message || "Unknown error" };
+
+    console.error("❌ VirusTotal scan error:", error.message);
+    return { url: rawUrl, error: error.message || "Unknown error" };
   }
 }
+
 
 // Scan a URL via IPQS API
 async function scanUrlIPQS(url) {
@@ -883,6 +906,16 @@ router.post("/scan-url", async (req, res) => {
     res.status(500).json({ error: "Failed to scan URL. Please try again." });
   }
 });
+function cleanUrl(rawUrl) {
+  if (!rawUrl) return "";
+
+  return rawUrl
+    .replace(/<\/?.*?>/g, '')         // ✅ strip HTML tags (new)
+    .replace(/["'><)\]]+$/g, '')      // trailing junk
+    .replace(/^[\["'<(]+/g, '')       // leading junk
+    .trim()
+    .toLowerCase();                  // normalize for deduplication
+}
 
 // POST /api/scan-eml-file — Scan an email file with attachments
 router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
@@ -898,65 +931,105 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       urls.push(...(parsedEmail.text.match(/https?:\/\/[^\s]+/g) || []));
     if (parsedEmail.html)
       urls.push(...(parsedEmail.html.match(/https?:\/\/[^\s]+/g) || []));
-    const uniqueUrls = [...new Set(urls)];
+
+    const url = new Set();
+    const allMatches = (parsedEmail.text || '' + parsedEmail.html || '').match(/https?:\/\/[^\s"'<>]+/g) || [];
+
+    for (const raw of allMatches) {
+      const cleaned = cleanUrl(raw);
+      if (
+        /^https?:\/\/[\w.-]/.test(cleaned) &&
+        !cleaned.includes(' ') &&
+        !url.has(cleaned)
+      ) {
+        url.add(cleaned);
+      }
+    }
+
+    const uniqueUrls = [...url];
+
 
     // Scan URLs concurrently with VirusTotal + IPQS + Scamalytics
     const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
-      // Run all three scans in parallel
       const [vtRes, ipqsRes, scamalyticsRes] = await Promise.all([
         scanUrlVT(u), 
         scanUrlIPQS(u),
         scanWithScamalytics(u)
       ]);
-      
+
       const vtRisk = vtRes?.risk_score || 0;
       const ipqsRisk = ipqsRes?.risk_score || 0;
       const scamalyticsRisk = scamalyticsRes?.risk_score || 0;
-      
-      const agg = calculateAggregatedRiskScore(vtRisk, ipqsRisk, scamalyticsRisk);
+
+      const heuristicStatic = analyzeUrlHeuristically(u);
+      const heuristicDynamic = await analyzeDomainAge(u);
+      const heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
+      const heuristicReasons = [...heuristicStatic.reasons];
+      if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
+      const heuristicVerdict = getVerdictFromScore(heuristicScore);
+
+      const blocked = await BlockedUrl.findOne({ url: u });
+      if (blocked?.status === "malicious") {
+        return {
+          url: u,
+          vt_results: null,
+          ipqs_results: null,
+          scamalytics_results: null,
+          heuristic_analysis: {
+            score: 100,
+            reasons: ["URL is blocked by admin"],
+            verdict: "🔴 Malicious (Blocked)"
+          },
+          aggregated_risk_score: 100,
+          verdict: "🔴 Malicious (Blocked by admin)"
+        };
+      }
+
+      const allScores = [vtRisk, ipqsRisk, scamalyticsRisk, heuristicScore];
+      const availableScores = allScores.filter(score => score > 0);
+      const finalScore = Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length || 0);
+      const finalVerdict = getVerdictFromScore(finalScore);
 
       return {
         url: u,
         vt_results: vtRes,
         ipqs_results: ipqsRes,
         scamalytics_results: scamalyticsRes.success ? scamalyticsRes : null,
-        aggregated_risk_score: agg.score,
-        verdict: agg.verdict,
+        heuristic_analysis: {
+          score: heuristicScore,
+          reasons: heuristicReasons,
+          verdict: heuristicVerdict
+        },
+        aggregated_risk_score: finalScore,
+        verdict: finalVerdict
       };
     }));
 
-    // Scan attachments with both VirusTotal and Hybrid Analysis
+    // Scan attachments
     const attachments = parsedEmail.attachments || [];
     const attachmentScanResults = [];
-    
+
     for (const att of attachments) {
-      console.log(`📎 Scanning attachment: ${att.filename}`);
-      
-      // Run both scans in parallel
       const [vtScanRes, hybridSubmitRes] = await Promise.all([
         scanFileVT(att.filename, att.content),
         submitFileToHybridAnalysis(att.content, att.filename)
       ]);
-      
-      // Get VirusTotal risk score (if available)
+
       let vtRiskScore = 0;
       if (vtScanRes.verdict && vtScanRes.verdict.includes("Malicious")) {
-        // Extract number from "🔴 Malicious (X detections)"
         const detections = parseInt(vtScanRes.verdict.match(/(\d+) detections/)?.[1] || "0");
         vtRiskScore = detections > 0 ? Math.min(100, detections * 10) : 0;
       }
-      
-      // Process Hybrid Analysis results if submission succeeded
+
       let hybridResults = { success: false, risk_score: 0 };
       if (hybridSubmitRes.success && hybridSubmitRes.sha256) {
         hybridResults = await getHybridAnalysisResults(hybridSubmitRes.sha256);
       }
-      
-      // Calculate aggregated risk score
+
       const hybridRiskScore = hybridResults.success ? hybridResults.risk_score : 0;
       const aggregatedScore = calculateFileRiskScore(vtRiskScore, hybridRiskScore);
       const aggregatedVerdict = getVerdictFromScore(aggregatedScore);
-      
+
       attachmentScanResults.push({
         filename: att.filename,
         vt_results: vtScanRes,
@@ -966,15 +1039,11 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       });
     }
 
-    // Extract raw headers + sender email
     const rawHeaders = parsedEmail.headerLines.map(h => h.line).join("\r\n");
     const senderEmail = parsedEmail.from?.value?.[0]?.address || "";
 
-    // IPQS Email Header Scan
     let emailHeaderScanResult = null;
     if (senderEmail && rawHeaders) {
-      console.log("Sender Email:", senderEmail);
-      
       try {
         const response = await axios.post(
           `https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(senderEmail)}`,
@@ -989,7 +1058,6 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
             }
           }
         );
-        console.log("IPQS Email Header Scan Response:", response.data);
         emailHeaderScanResult = response.data;
       } catch (error) {
         console.error("Error scanning email headers with IPQS:", error.response?.data || error.message);
@@ -997,24 +1065,16 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       }
     }
 
-
-    // Convert parsedEmail.headers (Map) to a plain object
     const headersObject = {};
     for (const [key, value] of parsedEmail.headers) {
       headersObject[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : value;
     }
 
     const heuristicResult = analyzeHeadersHeuristically(headersObject);
-
-
-    // Calculate final verdict
     const headerFinalVerdict = calculateEmailHeaderVerdict(
       heuristicResult.score,
       emailHeaderScanResult?.fraud_score || 0
     );
-
-
-    // --- End heuristic addition ---
 
     res.json({
       emailBody: parsedEmail.text || parsedEmail.html || "",
@@ -1022,7 +1082,7 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       attachmentScanResults,
       emailHeaderScanResult,
       heuristicResult,
-      emailHeaderFinalVerdict: headerFinalVerdict  
+      emailHeaderFinalVerdict: headerFinalVerdict
     });
 
   } catch (err) {
@@ -1030,7 +1090,5 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
     res.status(500).json({ error: "Failed to parse or scan .eml file." });
   }
 });
-
-
 
 module.exports = router;

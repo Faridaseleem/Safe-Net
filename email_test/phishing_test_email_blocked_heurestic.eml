@@ -1,0 +1,22 @@
+From: "Bank Security" <alerts@bank.com>
+To: victim@example.com
+Subject: Urgent: Action Required for Your Bank Account
+Date: Mon, 23 Jun 2025 19:00:00 +0300
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+
+<html>
+  <body>
+    <p>Dear Customer,</p>
+    <p>We've detected suspicious activity on your account and temporarily suspended access for your protection.</p>
+    <p>Please verify your identity by visiting the secure link below:</p>
+    <p>
+      <a href="http://secure-login-update-bank-alerts-info-payments-fraud-detect-system-safety-account.com">
+        Verify Now
+      </a>
+    </p>
+    <p>Or visit our official portal: <a href="http://far.com">http://far.com</a></p>
+    <p>If you do not verify within 24 hours, your account may be permanently locked.</p>
+    <p>Regards,<br>Bank Security Team</p>
+  </body>
+</html>

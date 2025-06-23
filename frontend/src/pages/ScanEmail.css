@@ -122,6 +122,20 @@
   margin-top: 20px;
   white-space: pre-wrap;
 }
+.email-body-preview {
+  background: #1b1f3b;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px #4b538b;
+  border: 1px solid #4b538b;
+  max-height: 220px;
+  overflow-y: auto;
+  font-family: "Orbitron", sans-serif;
+  font-size: 1rem; /* ✅ changed from 1.5rem to 1rem */
+  color: #d0eaff;
+  white-space: pre-wrap;
+  text-align: left;
+}
 
 .scan-result-wrapper {
   display: flex;
