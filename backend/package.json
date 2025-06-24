@@ -13,6 +13,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@fontsource/orbitron": "^5.2.6",
+    "@fontsource/roboto-mono": "^5.2.6",
     "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "connect-mongo": "^5.1.0",
