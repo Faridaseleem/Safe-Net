@@ -1,4 +1,3 @@
-// routes/telegramBotRoutes.js
 const express = require('express');
 const router = express.Router();
 const TelegramBot = require('node-telegram-bot-api');
@@ -7,33 +6,28 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Initialize bot WITHOUT polling to avoid conflicts
 const token = process.env.TELEGRAM_BOT_TOKEN;
+const botEnabled = process.env.ENABLE_BOT === 'true';
 let bot;
 
-// Check if we're in development or production
-const isDevelopment = process.env.NODE_ENV !== 'production';
+// Only initialize bot if enabled
+if (token && botEnabled) {
+    bot = new TelegramBot(token, { polling: true });
 
-if (token) {
-    // Always use polling: false to avoid 409 conflicts
-    bot = new TelegramBot(token, { polling: false });
-    
-    // Only start polling if no other instance is running
-    bot.startPolling()
-        .then(() => {
-            console.log('✅ Telegram bot started successfully');
-        })
-        .catch((error) => {
-            if (error.code === 'ETELEGRAM' && error.response.body.error_code === 409) {
-                console.log('⚠️ Another instance is already running. Bot initialized without polling.');
-            } else {
-                console.error('❌ Error starting bot:', error);
-            }
-        });
+    bot.on('polling_error', (error) => {
+        if (error.response?.body?.error_code === 409) {
+            console.log('⚠️ Another instance is already polling. Please disable other bots.');
+        } else {
+            console.log('❌ Polling error:', error.response?.body || error.message);
+        }
+    });
+
+    console.log('✅ Telegram bot is ENABLED and started polling.');
+} else if (!botEnabled) {
+    console.log('⛔ Telegram bot is DISABLED via ENABLE_BOT flag.');
 } else {
     console.log('⚠️ Telegram bot token not found in .env');
 }
-
 // Store user sessions
 const userSessions = new Map();
 
