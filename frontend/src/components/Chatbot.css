@@ -444,7 +444,17 @@
   }
 }
 
-
+/* Pulse animation for Telegram button */
+.telegram-toggle::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #0088cc;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  z-index: -1;
+}
 
 @keyframes pulse {
   0% {
