@@ -5,6 +5,7 @@ import "./Chatbot.css";
 import chatbotIcon from "./chatbot.png";
 import telegramIcon from "./telegram.png"; // Add this import
 
+
 const Chatbot = () => {
   // General chatbot states.
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +22,54 @@ const Chatbot = () => {
 
   // Telegram link state
   const [telegramLink, setTelegramLink] = useState("");
+
+      // Draggable state
+    const chatbotRef = useRef(null);
+    const [position, setPosition] = useState({ x: 60, y: 120 });
+    const [dragging, setDragging] = useState(false);
+    const [rel, setRel] = useState({ x: 0, y: 0 });
+
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      const rect = chatbotRef.current.getBoundingClientRect();
+      setDragging(true);
+      setRel({
+        x: e.pageX - rect.left,
+        y: e.pageY - rect.top
+      });
+      e.stopPropagation();
+      e.preventDefault();
+    };
+
+    const onMouseMove = (e) => {
+      if (!dragging) return;
+      setPosition({
+        x: e.pageX - rel.x,
+        y: e.pageY - rel.y
+      });
+      e.stopPropagation();
+      e.preventDefault();
+    };
+
+    const onMouseUp = () => {
+      setDragging(false);
+    };
+
+useEffect(() => {
+  if (dragging) {
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  } else {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  }
+
+  return () => {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  };
+}, [dragging]);
+
 
   // Load chat history from localStorage when component mounts
   useEffect(() => {
@@ -473,13 +522,23 @@ const Chatbot = () => {
 
   // Chatbot window with a header that displays the chatbot logo centered.
   const chatbotWindow = isOpen ? (
-    <div className="chatbot-window">
-      <div className="chatbot-header">
-        <img
-          src={chatbotIcon}
-          alt="Chatbot Logo"
-          className="chatbot-logo"
-        />
+    <div
+      className="chatbot-window"
+      ref={chatbotRef}
+      style={{
+        top: position.y,
+        left: position.x,
+        position: "fixed",
+        zIndex: 10000
+      }}
+    >
+
+      <div className="chatbot-header" onMouseDown={onMouseDown}>
+      <img
+        src={chatbotIcon}
+        alt="Chatbot Logo"
+        className="chatbot-logo"
+      />
       </div>
       {chatbotContent}
     </div>
