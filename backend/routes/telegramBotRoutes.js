@@ -335,218 +335,43 @@ async function handleURL(chatId, url, mode, session) {
     }
 }
 
-// Handle Email scanning
-function formatEmailScanReport(scanResult) {
-    if (!scanResult || typeof scanResult !== 'object') {
-        return '❌ Unable to generate report. Invalid scan data.';
-    }
 
-    // Extract data from the scan result
-    const {
-        verdict = 'unknown',
-        risk_score = 0,
-        email_headers = {},
-        urls_found = [],
-        attachments = [],
-        security_checks = {},
-        recommendations = [],
-        scan_timestamp = new Date().toISOString()
-    } = scanResult;
 
-    // Build the report sections
-    let report = '📧 **Email Security Scan Report**\n';
-    report += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
-
-    // Overall Verdict Section
-    const verdictEmoji = verdict === 'safe' ? '✅' : verdict === 'suspicious' ? '⚠️' : '🔴';
-    const verdictText = verdict.charAt(0).toUpperCase() + verdict.slice(1);
-    report += `${verdictEmoji} **Overall Verdict:** ${verdictText}\n`;
-    report += `📊 **Risk Score:** ${risk_score}/100\n\n`;
-
-    // Email Headers Section
-    if (email_headers && Object.keys(email_headers).length > 0) {
-        report += '📋 **Email Details:**\n';
-        if (email_headers.from) report += `• From: ${email_headers.from}\n`;
-        if (email_headers.to) report += `• To: ${email_headers.to}\n`;
-        if (email_headers.subject) report += `• Subject: ${email_headers.subject}\n`;
-        if (email_headers.date) report += `• Date: ${email_headers.date}\n`;
-        if (email_headers.reply_to) report += `• Reply-To: ${email_headers.reply_to}\n`;
-        report += '\n';
-    }
-
-    // Security Checks Section
-    if (security_checks && Object.keys(security_checks).length > 0) {
-        report += '🔍 **Security Checks:**\n';
-        
-        // SPF Check
-        if (security_checks.spf_check !== undefined) {
-            const spfStatus = security_checks.spf_check ? '✅ Passed' : '❌ Failed';
-            report += `• SPF Authentication: ${spfStatus}\n`;
-        }
-        
-        // DKIM Check
-        if (security_checks.dkim_check !== undefined) {
-            const dkimStatus = security_checks.dkim_check ? '✅ Valid' : '❌ Invalid';
-            report += `• DKIM Signature: ${dkimStatus}\n`;
-        }
-        
-        // DMARC Check
-        if (security_checks.dmarc_check !== undefined) {
-            const dmarcStatus = security_checks.dmarc_check ? '✅ Passed' : '❌ Failed';
-            report += `• DMARC Policy: ${dmarcStatus}\n`;
-        }
-        
-        // Spoofing Check
-        if (security_checks.spoofing_indicators !== undefined) {
-            const spoofStatus = security_checks.spoofing_indicators ? '⚠️ Detected' : '✅ None';
-            report += `• Spoofing Indicators: ${spoofStatus}\n`;
-        }
-        
-        report += '\n';
-    }
-
-    // URLs Analysis Section
-    if (urls_found && urls_found.length > 0) {
-        report += `🔗 **URLs Found (${urls_found.length}):**\n`;
-        urls_found.forEach((urlInfo, index) => {
-            const urlStatus = urlInfo.is_suspicious ? '⚠️' : '✅';
-            report += `${index + 1}. ${urlStatus} ${urlInfo.url || urlInfo}\n`;
-            
-            // Add URL details if available
-            if (urlInfo.risk_factors && urlInfo.risk_factors.length > 0) {
-                urlInfo.risk_factors.forEach(factor => {
-                    report += `   • ${factor}\n`;
-                });
-            }
-        });
-        report += '\n';
-    } else {
-        report += '🔗 **URLs Found:** None\n\n';
-    }
-
-    // Attachments Section
-    if (attachments && attachments.length > 0) {
-        report += `📎 **Attachments (${attachments.length}):**\n`;
-        attachments.forEach((attachment, index) => {
-            const attachStatus = attachment.is_safe === false ? '⚠️' : '✅';
-            report += `${index + 1}. ${attachStatus} ${attachment.filename || 'Unknown'}\n`;
-            if (attachment.file_type) report += `   • Type: ${attachment.file_type}\n`;
-            if (attachment.size) report += `   • Size: ${formatFileSize(attachment.size)}\n`;
-            if (attachment.risk_reason) report += `   • Risk: ${attachment.risk_reason}\n`;
-        });
-        report += '\n';
-    } else {
-        report += '📎 **Attachments:** None\n\n';
-    }
-
-    // Recommendations Section
-    if (recommendations && recommendations.length > 0) {
-        report += '💡 **Recommendations:**\n';
-        recommendations.forEach((rec, index) => {
-            report += `${index + 1}. ${rec}\n`;
-        });
-        report += '\n';
-    }
-
-    // Scan Info Footer
-    report += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
-    report += `🕒 Scanned at: ${formatDate(scan_timestamp)}\n`;
-    report += '🛡️ Powered by SafeNet Security';
-
-    return report;
-}
-
-// Helper function to format file size
-function formatFileSize(bytes) {
-    if (!bytes) return 'Unknown';
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    if (bytes === 0) return '0 Bytes';
-    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-    return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
-}
-
-// Helper function to format date
-function formatDate(dateString) {
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (error) {
-        return dateString;
-    }
-}
-
-// Alternative simpler version if you want less detail
-function formatSimpleEmailReport(scanResult) {
-    const { verdict = 'unknown', risk_score = 0, email_headers = {}, security_checks = {}, urls_found = [], attachments = [], recommendations = [] } = scanResult;
+// Replace your formatEmailReport function with this simplified version
+// Replace your formatEmailReport function with this version
+function formatEmailReport(data) {
+    let report = '';
     
-    const verdictEmoji = verdict === 'safe' ? '✅' : verdict === 'suspicious' ? '⚠️' : '🔴';
+    // Start with the header
+    report += `*🔍 Email Scan Complete*\n\n`;
     
-    let report = `📧 **Email Scan Results**\n\n`;
-    report += `${verdictEmoji} **Status:** ${verdict.toUpperCase()}\n`;
-    report += `📊 **Risk Level:** ${risk_score}/100\n\n`;
+    // Get the final verdict and explanation from backend
+    const finalVerdict = data.finalVerdict || '⚠️ Unable to determine';
+    const explanation = data.finalVerdictExplanation || 'No detailed explanation available.';
     
-    if (email_headers.from) {
-        report += `**From:** ${email_headers.from}\n`;
-        report += `**Subject:** ${email_headers.subject || 'No subject'}\n\n`;
+    // Display the final verdict
+    report += `*Final Verdict:*\n${finalVerdict}\n\n`;
+    
+    // Display the explanation/why
+    report += `*Why?*\n${explanation}\n\n`;
+    
+    // Optional: Include email header verdict if you want to show both
+    if (data.emailHeaderFinalVerdict) {
+        report += `*Email Header Analysis:* ${data.emailHeaderFinalVerdict}\n\n`;
     }
     
-    if (urls_found.length > 0) {
-        report += `⚠️ **Found ${urls_found.length} URL(s)** - Please verify before clicking\n\n`;
-    }
-    
-    if (attachments.length > 0) {
-        report += `📎 **${attachments.length} Attachment(s) detected**\n\n`;
-    }
-    
-    if (recommendations.length > 0) {
-        report += `💡 **Tips:**\n`;
-        recommendations.slice(0, 3).forEach(rec => {
-            report += `• ${rec}\n`;
-        });
-    }
+    // Add the webpage link
+    report += `📊 *For more details scan it on our webpage:*\n`;
+    report += `🔗 [Visit SafeNet Scanner](https://your-website.com/email-scanner)\n\n`;
+    report += `_Stay safe online!_ 🛡️`;
     
     return report;
 }
-// Handle Email scanning
-// Handle Email scanning with comprehensive report
+
+// Update handleEmailScan to ensure we're getting the right data
 async function handleEmailScan(chatId, fileId, fileName, session) {
     session.waitingFor = null;
-
     bot.sendChatAction(chatId, 'upload_document');
-    try {
-        // Show scanning message
-        const scanningMsg = await bot.sendMessage(chatId, '🔍 Scanning email file...');
-        
-        // Perform the scan
-        const formData = new FormData();
-        formData.append('file', fileBuffer, { filename: fileName });
-        
-        const response = await axios.post(`${API_BASE_URL}/api/scan-eml-file`, formData, {
-            headers: formData.getHeaders(),
-        });
-        
-        // Delete scanning message
-        await bot.deleteMessage(chatId, scanningMsg.message_id);
-        
-        // Format and send the report
-        const report = formatEmailScanReport(response.data);
-        
-        // Send the formatted report with Markdown parsing
-        await bot.sendMessage(chatId, report, { 
-            parse_mode: 'Markdown',
-            disable_web_page_preview: true 
-        });
-        
-    } catch (error) {
-        console.error('Error scanning email:', error);
-        await bot.sendMessage(chatId, '❌ Error scanning email file. Please try again.');
-    }
 
     try {
         // Get file info from Telegram
@@ -555,12 +380,12 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         
         // Download file from Telegram
         const downloadUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
-        const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+        const fileResponse = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
         
         // Create form data for API
         const FormData = require('form-data');
         const formData = new FormData();
-        formData.append('emlFile', Buffer.from(response.data), {
+        formData.append('emlFile', Buffer.from(fileResponse.data), {
             filename: fileName,
             contentType: 'message/rfc822'
         });
@@ -572,309 +397,45 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
             }
         });
 
-        // Get the response from backend
+        // Log to verify we're getting the expected fields
+        console.log('Backend response fields:', {
+            finalVerdict: scanResponse.data.finalVerdict,
+            finalVerdictExplanation: scanResponse.data.finalVerdictExplanation,
+            emailHeaderFinalVerdict: scanResponse.data.emailHeaderFinalVerdict
+        });
+        
+        // Get the scan result
         const result = scanResponse.data;
         
-        // Function to escape special characters for Telegram
-        const escape = (text) => {
-            if (!text) return 'N/A';
-            return text.toString()
-                .replace(/\\/g, '\\\\')
-                .replace(/\*/g, '\\*')
-                .replace(/_/g, '\\_')
-                .replace(/\[/g, '\$$')
-                .replace(/$$/g, '\\]')
-                .replace(/\(/g, '\$$')
-                .replace(/$$/g, '\\)')
-                .replace(/~/g, '\\~')
-                .replace(/`/g, '\\`')
-                .replace(/>/g, '\\>')
-                .replace(/#/g, '\\#')
-                .replace(/\+/g, '\\+')
-                .replace(/-/g, '\\-')
-                .replace(/=/g, '\\=')
-                .replace(/\|/g, '\\|')
-                .replace(/\{/g, '\\{')
-                .replace(/\}/g, '\\}')
-                .replace(/\./g, '\\.')
-                .replace(/!/g, '\\!');
-        };
+        // Format the simple report
+        const report = formatEmailReport(result);
 
-        // Calculate overall risk score
-        let totalRiskScore = 0;
-        let riskFactors = 0;
-
-        if (result.spamScore) {
-            totalRiskScore += result.spamScore * 10;
-            riskFactors++;
-        }
-        if (result.phishingScore) {
-            totalRiskScore += result.phishingScore;
-            riskFactors++;
-        }
-        if (result.suspiciousContent) {
-            totalRiskScore += 50;
-            riskFactors++;
-        }
-        if (result.spfStatus !== 'pass') {
-            totalRiskScore += 30;
-            riskFactors++;
-        }
-        if (result.dkimStatus !== 'pass') {
-            totalRiskScore += 30;
-            riskFactors++;
-        }
-
-        const aggregatedRiskScore = riskFactors > 0 ? Math.round(totalRiskScore / riskFactors) : 0;
-        
-        // Determine verdict
-        let verdict, verdictEmoji;
-        if (aggregatedRiskScore >= 70) {
-            verdict = 'High Risk \$$Likely Malicious\$$';
-            verdictEmoji = '🔴';
-        } else if (aggregatedRiskScore >= 40) {
-            verdict = 'Medium Risk \$$Potentially Unsafe\$$';
-            verdictEmoji = '🟠';
-        } else {
-            verdict = 'Low Risk \$$Likely Safe\$$';
-            verdictEmoji = '🟢';
-        }
-
-        // Build comprehensive report
-        let report = `*Email Scan Results:*\n\n`;
-        
-        // Header Analysis
-        report += `*Header Analysis:*\n`;
-        report += `• *From:* ${escape(result.from || 'Unknown')}\n`;
-        report += `• *To:* ${escape(result.to || 'Unknown')}\n`;
-        report += `• *Subject:* ${escape(result.subject || 'No Subject')}\n`;
-        report += `• *Date:* ${escape(result.date ? new Date(result.date).toLocaleString() : 'Unknown')}\n`;
-        report += `• *Message\\-ID:* ${escape(result.messageId || 'Not Found')}\n`;
-        
-        report += `\n*Aggregated Verdict:* ${verdictEmoji} ${verdict}\n`;
-        report += `*Aggregated Risk Score:* ${aggregatedRiskScore}/100\n\n`;
-
-        // Authentication Results
-        report += `*Authentication Results:*\n`;
-        
-        if (result.spfStatus) {
-            const spfEmoji = result.spfStatus === 'pass' ? '✅' : '❌';
-            const spfRisk = result.spfStatus === 'pass' ? 0 : 30;
-            report += `• *SPF Check:* ${spfEmoji} ${escape(result.spfStatus.toUpperCase())}\n`;
-            report += `  Risk Contribution: ${spfRisk}/100\n`;
-        }
-        
-        if (result.dkimStatus) {
-            const dkimEmoji = result.dkimStatus === 'pass' ? '✅' : '❌';
-            const dkimRisk = result.dkimStatus === 'pass' ? 0 : 30;
-            report += `• *DKIM Check:* ${dkimEmoji} ${escape(result.dkimStatus.toUpperCase())}\n`;
-            report += `  Risk Contribution: ${dkimRisk}/100\n`;
-        }
-        
-        if (result.dmarcStatus) {
-            const dmarcEmoji = result.dmarcStatus === 'pass' ? '✅' : '❌';
-            report += `• *DMARC Check:* ${dmarcEmoji} ${escape(result.dmarcStatus.toUpperCase())}\n`;
-        }
-
-        // URL/Link Analysis
-        if (result.links && result.links.length > 0) {
-            report += `\n*URL Scan Results:*\n\n`;
-            
-            for (let i = 0; i < Math.min(result.links.length, 5); i++) {
-                const link = result.links[i];
-                
-                // Analyze each link
-                let linkRisk = 0;
-                let linkVerdict = 'Safe';
-                let linkEmoji = '🟢';
-                
-                // Check for suspicious patterns
-                if (link.includes('bit.ly') || link.includes('tinyurl') || link.includes('goo.gl')) {
-                    linkRisk = 60;
-                    linkVerdict = 'Suspicious \$$URL Shortener\$$';
-                    linkEmoji = '🟠';
-                } else if (!link.includes('https://')) {
-                    linkRisk = 40;
-                    linkVerdict = 'Warning \$$Not Secure\$$';
-                    linkEmoji = '🟡';
-                }
-                
-                // Check for homograph attacks
-                const suspiciousPatterns = /[а-яА-Я]|[αβγδεζηθικλμνξοπρστυφχψω]/;
-                if (suspiciousPatterns.test(link)) {
-                    linkRisk = 80;
-                    linkVerdict = 'High Risk \$$Possible Homograph\$$';
-                    linkEmoji = '🔴';
-                }
-                
-                report += `• *${escape(link.substring(0, 50))}${link.length > 50 ? '\\.\\.\\.' : ''}*\n`;
-                report += `  Verdict: ${linkEmoji} ${linkVerdict}\n`;
-                report += `  Risk Score: ${linkRisk}/100\n\n`;
-            }
-            
-            if (result.links.length > 5) {
-                report += `_\\.\\.\\. and ${result.links.length - 5} more URLs_\n`;
-            }
-        }
-
-        // Attachment Analysis
-        if (result.attachments && result.attachments.length > 0) {
-            report += `\n*Attachment Scan Results:*\n\n`;
-            
-            result.attachments.forEach((att, index) => {
-                const attName = escape(att.filename || `Attachment ${index + 1}`);
-                const extension = att.filename ? att.filename.split('.').pop().toLowerCase() : 'unknown';
-                
-                // Determine risk based on file type
-                let attRisk = 0;
-                let attVerdict = 'Safe';
-                let attEmoji = '🟢';
-                
-                const dangerousExtensions = ['exe', 'scr', 'vbs', 'js', 'com', 'bat', 'cmd', 'pif'];
-                const suspiciousExtensions = ['zip', 'rar', 'docm', 'xlsm', 'pptm'];
-                
-                if (dangerousExtensions.includes(extension)) {
-                    attRisk = 90;
-                    attVerdict = 'High Risk \$$Executable\$$';
-                    attEmoji = '🔴';
-                } else if (suspiciousExtensions.includes(extension)) {
-                    attRisk = 60;
-                    attVerdict = 'Medium Risk \$$Potentially Unsafe\$$';
-                    attEmoji = '🟠';
-                }
-                
-                report += `• *${attName}*\n`;
-                report += `  Type: \\.${extension}\n`;
-                if (att.size) {
-                    report += `  Size: ${(att.size / 1024).toFixed(1)} KB\n`;
-                }
-                report += `  Verdict: ${attEmoji} ${attVerdict}\n`;
-                report += `  Risk Score: ${attRisk}/100\n\n`;
-            });
-        }
-
-        // Content Analysis
-        if (result.suspiciousContent || result.spamScore || result.phishingScore) {
-            report += `\n*Content Analysis:*\n`;
-            
-            if (result.suspiciousContent) {
-                report += `• *Suspicious Content:* ⚠️ Detected\n`;
-            }
-            
-            if (result.spamScore !== undefined) {
-                const spamBar = '█'.repeat(Math.floor(result.spamScore)) + '░'.repeat(10 - Math.floor(result.spamScore));
-                report += `• *Spam Score:* \$$${spamBar}\$$ ${result.spamScore}/10\n`;
-            }
-            
-            if (result.phishingScore !== undefined) {
-                const phishBar = '█'.repeat(Math.floor(result.phishingScore / 10)) + '░'.repeat(10 - Math.floor(result.phishingScore / 10));
-                report += `• *Phishing Probability:* \$$${phishBar}\$$ ${result.phishingScore}%\n`;
-            }
-        }
-
-        // Final Recommendations
-        report += `\n*Recommendations:*\n`;
-        if (aggregatedRiskScore >= 70) {
-            report += `⛔ *DO NOT interact with this email*\n`;
-            report += `• Delete immediately\n`;
-            report += `• Report to IT security\n`;
-            report += `• Do not click links or download attachments\n`;
-        } else if (aggregatedRiskScore >= 40) {
-            report += `⚠️ *Proceed with caution*\n`;
-            report += `• Verify sender independently\n`;
-            report += `• Scan attachments before opening\n`;
-            report += `• Hover over links before clicking\n`;
-        } else {
-            report += `✅ *Email appears legitimate*\n`;
-            report += `• Standard precautions apply\n`;
-            report += `• Verify unexpected requests\n`;
-            report += `• Keep security software updated\n`;
-        }
-
-        // Analysis Summary
-        report += `\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-        report += `🕐 *Scanned:* ${escape(new Date().toLocaleTimeString())}\n`;
-        report += `📄 *File:* ${escape(fileName)}\n`;
-        report += `🔍 *Total Elements Analyzed:* ${(result.links?.length || 0) + (result.attachments?.length || 0) + 3} items`;
-
-        // Check message length and split if necessary
-        if (report.length > 4000) {
-            // Split the report into multiple messages
-            const parts = [];
-            let currentPart = '';
-            const lines = report.split('\n');
-            
-            for (const line of lines) {
-                if (currentPart.length + line.length > 3900) {
-                    parts.push(currentPart);
-                    currentPart = line + '\n';
-                } else {
-                    currentPart += line + '\n';
-                }
-            }
-            if (currentPart) parts.push(currentPart);
-            
-            // Send each part
-            for (let i = 0; i < parts.length; i++) {
-                await bot.sendMessage(chatId, parts[i], {
-                    parse_mode: 'Markdown'
-                });
-                // Small delay between messages
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            
-            // Send menu after all parts
-            bot.sendMessage(chatId, 'Email analysis complete\\.', {
-                parse_mode: 'Markdown',
-                reply_markup: getBackToMenuKeyboard()
-            });
-        } else {
-            // Send as single message
-            bot.sendMessage(chatId, report, {
-                parse_mode: 'Markdown',
-                reply_markup: getBackToMenuKeyboard()
-            });
-        }
+        // Send the report
+        await bot.sendMessage(chatId, report, {
+            parse_mode: 'Markdown',
+            reply_markup: getBackToMenuKeyboard(),
+            disable_web_page_preview: false
+        });
 
     } catch (error) {
         console.error('Error scanning email:', error);
         
-        // If Markdown parsing fails, try plain text
-        if (error.message && error.message.includes("can't parse entities")) {
-            try {
-                // Retry with plain text
-                await handleEmailScanPlainText(chatId, fileId, fileName, session);
-            } catch (retryError) {
-                bot.sendMessage(chatId, '❌ Error scanning email. The file may be corrupted or too complex to analyze.', {
-                    reply_markup: getBackToMenuKeyboard()
-                });
-            }
-        } else {
-            let errorMessage = '❌ Email Scan Failed\n\n';
-            
-            if (error.response && error.response.data && error.response.data.error) {
-                errorMessage += `Reason: ${error.response.data.error}\n\n`;
-            } else {
-                errorMessage += 'Unable to scan the email file.\n\n';
-            }
-            
-            errorMessage += '📌 Possible reasons:\n';
-            errorMessage += '• Invalid or corrupted .eml file\n';
-            errorMessage += '• File too large\n';
-            errorMessage += '• Server temporarily unavailable\n\n';
-            errorMessage += 'Please try again with a valid .eml file.';
-            
-            bot.sendMessage(chatId, errorMessage, {
-                reply_markup: getBackToMenuKeyboard()
-            });
-        }
+        let errorMessage = '❌ *Email Scan Failed*\n\n';
+        errorMessage += 'Unable to scan the email file.\n\n';
+        errorMessage += '📊 *Try scanning it on our webpage:*\n';
+        errorMessage += '🔗 [Visit SafeNet Scanner](http://localhost:3000/scan-email)';
+        
+        bot.sendMessage(chatId, errorMessage, {
+            parse_mode: 'Markdown',
+            reply_markup: getBackToMenuKeyboard(),
+            disable_web_page_preview: false
+        });
     }
 }
 
-// Fallback plain text version for complex emails
-async function handleEmailScanPlainText(chatId, fileId, fileName, session) {
+// Also update handleEmailScan to log the response
+async function handleEmailScan(chatId, fileId, fileName, session) {
     session.waitingFor = null;
-
     bot.sendChatAction(chatId, 'upload_document');
 
     try {
@@ -884,12 +445,12 @@ async function handleEmailScanPlainText(chatId, fileId, fileName, session) {
         
         // Download file from Telegram
         const downloadUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
-        const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+        const fileResponse = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
         
         // Create form data for API
         const FormData = require('form-data');
         const formData = new FormData();
-        formData.append('emlFile', Buffer.from(response.data), {
+        formData.append('emlFile', Buffer.from(fileResponse.data), {
             filename: fileName,
             contentType: 'message/rfc822'
         });
@@ -901,116 +462,34 @@ async function handleEmailScanPlainText(chatId, fileId, fileName, session) {
             }
         });
 
+        // Log the response to see what we're getting
+        console.log('Email scan response:', JSON.stringify(scanResponse.data, null, 2));
+        
+        // Get the scan result
         const result = scanResponse.data;
         
-        // Calculate risk score
-        let totalRiskScore = 0;
-        let riskFactors = 0;
+        // Format the simple report
+        const report = formatEmailReport(result);
 
-        if (result.spamScore) {
-            totalRiskScore += result.spamScore * 10;
-            riskFactors++;
-        }
-        if (result.phishingScore) {
-            totalRiskScore += result.phishingScore;
-            riskFactors++;
-        }
-        if (result.suspiciousContent) {
-            totalRiskScore += 50;
-            riskFactors++;
-        }
-        if (result.spfStatus !== 'pass') {
-            totalRiskScore += 30;
-            riskFactors++;
-        }
-
-        const aggregatedRiskScore = riskFactors > 0 ? Math.round(totalRiskScore / riskFactors) : 0;
-        
-        // Build plain text report
-        let report = 'EMAIL SCAN RESULTS\n';
-        report += '══════════════════\n\n';
-        
-        report += 'HEADER ANALYSIS:\n';
-        report += `• From: ${result.from || 'Unknown'}\n`;
-        report += `• To: ${result.to || 'Unknown'}\n`;
-        report += `• Subject: ${result.subject || 'No Subject'}\n`;
-        report += `• Date: ${result.date ? new Date(result.date).toLocaleString() : 'Unknown'}\n\n`;
-        
-        // Verdict
-        let verdict;
-        if (aggregatedRiskScore >= 70) {
-            verdict = '🔴 HIGH RISK (Likely Malicious)';
-        } else if (aggregatedRiskScore >= 40) {
-            verdict = '🟠 MEDIUM RISK (Potentially Unsafe)';
-        } else {
-            verdict = '🟢 LOW RISK (Likely Safe)';
-        }
-        
-        report += `VERDICT: ${verdict}\n`;
-        report += `RISK SCORE: ${aggregatedRiskScore}/100\n\n`;
-        
-        // Authentication
-        report += 'AUTHENTICATION:\n';
-        if (result.spfStatus) {
-            report += `• SPF: ${result.spfStatus === 'pass' ? '✅' : '❌'} ${result.spfStatus.toUpperCase()}\n`;
-        }
-        if (result.dkimStatus) {
-            report += `• DKIM: ${result.dkimStatus === 'pass' ? '✅' : '❌'} ${result.dkimStatus.toUpperCase()}\n`;
-        }
-        if (result.dmarcStatus) {
-            report += `• DMARC: ${result.dmarcStatus === 'pass' ? '✅' : '❌'} ${result.dmarcStatus.toUpperCase()}\n`;
-        }
-        
-        // URLs
-        if (result.links && result.links.length > 0) {
-            report += `\nURLs FOUND: ${result.links.length}\n`;
-            result.links.slice(0, 3).forEach((link, i) => {
-                const truncated = link.length > 50 ? link.substring(0, 50) + '...' : link;
-                report += `${i + 1}. ${truncated}\n`;
-            });
-            if (result.links.length > 3) {
-                report += `... and ${result.links.length - 3} more\n`;
-            }
-        }
-        
-        // Attachments
-        if (result.attachments && result.attachments.length > 0) {
-            report += `\nATTACHMENTS: ${result.attachments.length}\n`;
-            result.attachments.forEach((att, i) => {
-                const name = att.filename || `Attachment ${i + 1}`;
-                const size = att.size ? ` (${(att.size / 1024).toFixed(1)} KB)` : '';
-                report += `${i + 1}. ${name}${size}\n`;
-            });
-        }
-        
-        // Recommendations
-        report += '\nRECOMMENDATIONS:\n';
-        if (aggregatedRiskScore >= 70) {
-            report += '⛔ DO NOT interact with this email\n';
-            report += '• Delete immediately\n';
-            report += '• Report to IT security\n';
-        } else if (aggregatedRiskScore >= 40) {
-            report += '⚠️ Proceed with caution\n';
-            report += '• Verify sender\n';
-            report += '• Check links carefully\n';
-        } else {
-            report += '✅ Email appears safe\n';
-            report += '• Standard precautions apply\n';
-        }
-        
-        report += '\n══════════════════\n';
-        report += `Scanned: ${new Date().toLocaleTimeString()}\n`;
-        report += `File: ${fileName}`;
-
-        // Send plain text report
-        bot.sendMessage(chatId, report, {
-            reply_markup: getBackToMenuKeyboard()
+        // Send the report
+        await bot.sendMessage(chatId, report, {
+            parse_mode: 'Markdown',
+            reply_markup: getBackToMenuKeyboard(),
+            disable_web_page_preview: false // Allow preview for the website link
         });
 
     } catch (error) {
-        console.error('Error in plain text scan:', error);
-        bot.sendMessage(chatId, '❌ Failed to scan email file. Please ensure it is a valid .eml file.', {
-            reply_markup: getBackToMenuKeyboard()
+        console.error('Error scanning email:', error);
+        
+        let errorMessage = '❌ *Email Scan Failed*\n\n';
+        errorMessage += 'Unable to scan the email file.\n\n';
+        errorMessage += '📊 *Try scanning it on our webpage:*\n';
+        errorMessage += '🔗 [Visit SafeNet Scanner](https://your-website.com/email-scanner)';
+        
+        bot.sendMessage(chatId, errorMessage, {
+            parse_mode: 'Markdown',
+            reply_markup: getBackToMenuKeyboard(),
+            disable_web_page_preview: false
         });
     }
 }

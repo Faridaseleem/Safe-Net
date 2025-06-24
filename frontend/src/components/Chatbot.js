@@ -5,7 +5,6 @@ import "./Chatbot.css";
 import chatbotIcon from "./chatbot.png";
 import telegramIcon from "./telegram.png"; // Add this import
 
-
 const Chatbot = () => {
   // General chatbot states.
   const [isOpen, setIsOpen] = useState(false);
@@ -23,53 +22,52 @@ const Chatbot = () => {
   // Telegram link state
   const [telegramLink, setTelegramLink] = useState("");
 
-      // Draggable state
-    const chatbotRef = useRef(null);
-    const [position, setPosition] = useState({ x: 60, y: 120 });
-    const [dragging, setDragging] = useState(false);
-    const [rel, setRel] = useState({ x: 0, y: 0 });
+  // Draggable state
+  const chatbotRef = useRef(null);
+  const [position, setPosition] = useState({ x: 60, y: 120 });
+  const [dragging, setDragging] = useState(false);
+  const [rel, setRel] = useState({ x: 0, y: 0 });
 
-    const onMouseDown = (e) => {
-      if (e.button !== 0) return;
-      const rect = chatbotRef.current.getBoundingClientRect();
-      setDragging(true);
-      setRel({
-        x: e.pageX - rect.left,
-        y: e.pageY - rect.top
-      });
-      e.stopPropagation();
-      e.preventDefault();
-    };
-
-    const onMouseMove = (e) => {
-      if (!dragging) return;
-      setPosition({
-        x: e.pageX - rel.x,
-        y: e.pageY - rel.y
-      });
-      e.stopPropagation();
-      e.preventDefault();
-    };
-
-    const onMouseUp = () => {
-      setDragging(false);
-    };
-
-useEffect(() => {
-  if (dragging) {
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  } else {
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
-  }
-
-  return () => {
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+  const onMouseDown = (e) => {
+    if (e.button !== 0) return;
+    const rect = chatbotRef.current.getBoundingClientRect();
+    setDragging(true);
+    setRel({
+      x: e.pageX - rect.left,
+      y: e.pageY - rect.top
+    });
+    e.stopPropagation();
+    e.preventDefault();
   };
-}, [dragging]);
 
+  const onMouseMove = (e) => {
+    if (!dragging) return;
+    setPosition({
+      x: e.pageX - rel.x,
+      y: e.pageY - rel.y
+    });
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  const onMouseUp = () => {
+    setDragging(false);
+  };
+
+  useEffect(() => {
+    if (dragging) {
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    } else {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [dragging]);
 
   // Load chat history from localStorage when component mounts
   useEffect(() => {
@@ -192,6 +190,53 @@ useEffect(() => {
     }
   };
 
+  // Add a function to format email scan results
+  const formatEmailScanResult = (data) => {
+    // Extract the verdict and explanation
+    const finalVerdict = data.finalVerdict || '⚠️ Unable to determine';
+    const explanation = data.finalVerdictExplanation || 'No detailed explanation available.';
+    const headerVerdict = data.emailHeaderFinalVerdict || '';
+    
+    // Create formatted HTML result
+    return (
+      <div className="email-scan-result">
+        <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>🔍 Email Scan Complete</h3>
+        
+        <div style={{ marginBottom: '15px' }}>
+          <strong>Final Verdict:</strong>
+          <div style={{ fontSize: '1.1em', marginTop: '5px' }}>{finalVerdict}</div>
+        </div>
+        
+        <div style={{ marginBottom: '15px' }}>
+          <strong>Why?</strong>
+          <div style={{ marginTop: '5px', color: '#666' }}>{explanation}</div>
+        </div>
+        
+        {headerVerdict && (
+          <div style={{ marginBottom: '15px' }}>
+            <strong>Email Header Analysis:</strong> {headerVerdict}
+          </div>
+        )}
+        
+        <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
+          <p style={{ margin: '0 0 10px 0' }}>📊 <strong>For more details scan it on our webpage:</strong></p>
+          <a 
+            href="https://your-website.com/email-scanner" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: '#2196F3', textDecoration: 'none' }}
+          >
+            🔗 Visit SafeNet Scanner
+          </a>
+        </div>
+        
+        <p style={{ marginTop: '15px', fontSize: '0.9em', color: '#666' }}>
+          <em>Stay safe online!</em> 🛡️
+        </p>
+      </div>
+    );
+  };
+
   // The submit handler now distinguishes between Ask AI and Services.
   const handleSubmit = () => {
     if (chatMode === "askai") {
@@ -200,6 +245,7 @@ useEffect(() => {
       if (!selectedService) return;
       console.log("Submitting service call for:", selectedService.type);
       console.log("User input:", userText, "Selected File:", selectedFile);
+      
       if (selectedService.type === "scan_url") {
         axios
           .post(
@@ -238,6 +284,10 @@ useEffect(() => {
         const formData = new FormData();
         formData.append("emlFile", selectedFile);
         console.log("FormData prepared with file:", selectedFile.name);
+        
+        // Show loading state
+        setResult({ loading: true });
+        
         axios
           .post("http://localhost:5000/api/scan-eml-file", formData, {
             withCredentials: true
@@ -248,7 +298,7 @@ useEffect(() => {
           })
           .catch((err) => {
             console.error("Error in scan_eml_file axios call:", err);
-            setResult({ error: "Failed to scan email." });
+            setResult({ error: "Failed to scan email. Please try scanning it on our webpage." });
           });
       } else if (selectedService.type === "education") {
         axios
@@ -368,200 +418,231 @@ useEffect(() => {
             setChatMode("main");
             setUserText("");
           }}
-        >
-          Back
-        </button>
-      </div>
-    );
-  };
-
-  // Render the service selection UI.
-  const renderServiceSelection = () => {
-    return (
-      <div className="service-selection">
-        <h4>Choose a Service:</h4>
-        {services.map((service, index) => (
-          <button
-            key={index}
-            className="service-button"
-            onClick={() => handleServiceSelection(service)}
           >
-            {service.name}
+            Back
           </button>
-        ))}
-        <button
-          className="back-button"
-          onClick={() => setChatMode("main")}
-        >
-          Back
-        </button>
-      </div>
-    );
-  };
-
-  // Render the service input UI if a particular service is selected.
-  const renderServiceInput = () => {
-    if (!selectedService) return null;
-    let inputComponent = null;
-    if (
-      selectedService.type === "scan_url" ||
-      selectedService.type === "report_url"
-    ) {
-      inputComponent = (
-        <input
-          type="text"
-          value={userText}
-          placeholder={
-            selectedService.type === "scan_url"
-              ? "Enter URL to scan"
-              : "Enter URL to report"
-          }
-          onChange={(e) => setUserText(e.target.value)}
-          onKeyDown={handleTextKeyDown}
-          className="service-input"
-        />
+        </div>
       );
-    } else if (selectedService.type === "scan_email") {
-      inputComponent = (
-        <input
-          type="file"
-          accept=".eml"
-          onChange={(e) => {
-            console.log("File selected:", e.target.files[0]);
-            setSelectedFile(e.target.files[0]);
-          }}
-          className="service-input"
-        />
-      );
-    } else if (selectedService.type === "education") {
-      inputComponent = <p>No input required. Press Submit to view content.</p>;
-    }
-    return (
-      <div className="service-input-container">
-        <p>Selected: {selectedService.name}</p>
-        {inputComponent}
-        <button onClick={handleSubmit} className="submit-button">
-          Submit
-        </button>
-        <button
-          className="back-button"
-          onClick={() => {
-            setSelectedService(null);
-            setUserText("");
-            setSelectedFile(null);
-            setResult(null);
-          }}
-        >
-          Back
-        </button>
-      </div>
-    );
-  };
-
-  // Render the result area in a scrollable container.
-  let resultContent = null;
-  if (result) {
-    let reportText = "";
-    if (
-      selectedService &&
-      (selectedService.type === "scan_url" ||
-        selectedService.type === "report_url")
-    ) {
-      reportText = result.scan_report
-        ? result.scan_report
-        : JSON.stringify(result, null, 2);
-    } else if (selectedService && selectedService.type === "scan_email") {
-      const resultCopy = { ...result };
-      delete resultCopy.emailBody;
-      reportText = JSON.stringify(resultCopy, null, 2);
-    } else if (selectedService && selectedService.type === "education") {
-      reportText = JSON.stringify(result, null, 2);
-    } else {
-      reportText = JSON.stringify(result, null, 2);
-    }
-    resultContent = (
-      <div className="result-area">
-        <pre
-          style={{
-            overflowY: "auto",
-            maxHeight: "250px",
-            backgroundColor: "#111",
-            color: "#eee",
-            padding: "10px",
-            borderRadius: "4px",
-            fontSize: "0.9em"
-          }}
-        >
-          {reportText}
-        </pre>
-      </div>
-    );
-  }
-
-  // Compose final content based on chatMode.
-  let chatbotContent;
-  if (chatMode === "main") {
-    chatbotContent = renderMainMenu();
-  } else if (chatMode === "askai") {
-    chatbotContent = renderAskAIMode();
-  } else if (chatMode === "services") {
-    chatbotContent = !selectedService
-      ? renderServiceSelection()
-      : renderServiceInput();
-  }
+    };
   
-  // For services mode, show results below the content
-  if (chatMode === "services" && resultContent) {
-    chatbotContent = (
-      <div>
+    // Render the service selection UI.
+    const renderServiceSelection = () => {
+      return (
+        <div className="service-selection">
+          <h4>Choose a Service:</h4>
+          {services.map((service, index) => (
+            <button
+              key={index}
+              className="service-button"
+              onClick={() => handleServiceSelection(service)}
+            >
+              {service.name}
+            </button>
+          ))}
+          <button
+            className="back-button"
+            onClick={() => setChatMode("main")}
+          >
+            Back
+          </button>
+        </div>
+      );
+    };
+  
+    // Render the service input UI if a particular service is selected.
+    const renderServiceInput = () => {
+      if (!selectedService) return null;
+      let inputComponent = null;
+      if (
+        selectedService.type === "scan_url" ||
+        selectedService.type === "report_url"
+      ) {
+        inputComponent = (
+          <input
+            type="text"
+            value={userText}
+            placeholder={
+              selectedService.type === "scan_url"
+                ? "Enter URL to scan"
+                : "Enter URL to report"
+            }
+            onChange={(e) => setUserText(e.target.value)}
+            onKeyDown={handleTextKeyDown}
+            className="service-input"
+          />
+        );
+      } else if (selectedService.type === "scan_email") {
+        inputComponent = (
+          <input
+            type="file"
+            accept=".eml"
+            onChange={(e) => {
+              console.log("File selected:", e.target.files[0]);
+              setSelectedFile(e.target.files[0]);
+            }}
+            className="service-input"
+          />
+        );
+      } else if (selectedService.type === "education") {
+        inputComponent = <p>No input required. Press Submit to view content.</p>;
+      }
+      return (
+        <div className="service-input-container">
+          <p>Selected: {selectedService.name}</p>
+          {inputComponent}
+          <button onClick={handleSubmit} className="submit-button">
+            Submit
+          </button>
+          <button
+            className="back-button"
+            onClick={() => {
+              setSelectedService(null);
+              setUserText("");
+              setSelectedFile(null);
+              setResult(null);
+            }}
+          >
+            Back
+          </button>
+        </div>
+      );
+    };
+  
+    // Render the result area in a scrollable container.
+    let resultContent = null;
+    if (result) {
+      if (result.loading) {
+        resultContent = (
+          <div className="result-area" style={{ textAlign: 'center', padding: '20px' }}>
+            <div className="loading-spinner">🔍 Scanning email file...</div>
+          </div>
+        );
+      } else if (result.error) {
+        resultContent = (
+          <div className="result-area">
+            <div style={{ color: '#f44336', padding: '15px' }}>
+              <h4>❌ {result.error}</h4>
+              <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
+                <p>📊 <strong>Try scanning it on our webpage:</strong></p>
+                <a 
+                  href="http://localhost:3000/scan-email"
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ color: '#2196F3' }}
+                >
+                  🔗 Visit SafeNet Scanner
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      } else if (selectedService && selectedService.type === "scan_email") {
+        // Special formatting for email scan results
+        resultContent = (
+          <div className="result-area">
+            {formatEmailScanResult(result)}
+          </div>
+        );
+      } else {
+        // Default formatting for other services
+        let reportText = "";
+        if (
+          selectedService &&
+          (selectedService.type === "scan_url" ||
+            selectedService.type === "report_url")
+        ) {
+          reportText = result.scan_report
+            ? result.scan_report
+            : JSON.stringify(result, null, 2);
+        } else if (selectedService && selectedService.type === "education") {
+          reportText = JSON.stringify(result, null, 2);
+        } else {
+          reportText = JSON.stringify(result, null, 2);
+        }
+        
+        resultContent = (
+          <div className="result-area">
+            <pre
+              style={{
+                overflowY: "auto",
+                maxHeight: "250px",
+                backgroundColor: "#111",
+                color: "#eee",
+                padding: "10px",
+                borderRadius: "4px",
+                fontSize: "0.9em"
+              }}
+            >
+              {reportText}
+            </pre>
+          </div>
+        );
+      }
+    }
+  
+    // Compose final content based on chatMode.
+    let chatbotContent;
+    if (chatMode === "main") {
+      chatbotContent = renderMainMenu();
+    } else if (chatMode === "askai") {
+      chatbotContent = renderAskAIMode();
+    } else if (chatMode === "services") {
+      chatbotContent = !selectedService
+        ? renderServiceSelection()
+        : renderServiceInput();
+    }
+    
+    // For services mode, show results below the content
+    if (chatMode === "services" && resultContent) {
+      chatbotContent = (
+        <div>
+          {chatbotContent}
+          {resultContent}
+        </div>
+      );
+    }
+  
+    // Chatbot window with a header that displays the chatbot logo centered.
+    const chatbotWindow = isOpen ? (
+      <div
+        className="chatbot-window"
+        ref={chatbotRef}
+        style={{
+          top: position.y,
+          left: position.x,
+          position: "fixed",
+          zIndex: 10000
+        }}
+      >
+        <div className="chatbot-header" onMouseDown={onMouseDown}>
+          <img
+            src={chatbotIcon}
+            alt="Chatbot Logo"
+            className="chatbot-logo"
+          />
+        </div>
         {chatbotContent}
-        {resultContent}
+      </div>
+    ) : null;
+  
+    // The buttons container with chatbot and Telegram
+    return (
+      <div className="chatbot-container">
+        {chatbotWindow}
+        <div className="floating-buttons">
+          <button 
+            className="telegram-toggle" 
+            onClick={handleTelegramClick}
+            title="Chat on Telegram"
+          >
+            <img src={telegramIcon} alt="Telegram" className="telegram-icon" />
+          </button>
+          <button className="chatbot-toggle" onClick={toggleChatbot}>
+            <img src={chatbotIcon} alt="Chatbot" className="chatbot-icon" />
+          </button>
+        </div>
       </div>
     );
-  }
-
-  // Chatbot window with a header that displays the chatbot logo centered.
-  const chatbotWindow = isOpen ? (
-    <div
-      className="chatbot-window"
-      ref={chatbotRef}
-      style={{
-        top: position.y,
-        left: position.x,
-        position: "fixed",
-        zIndex: 10000
-      }}
-    >
-
-      <div className="chatbot-header" onMouseDown={onMouseDown}>
-      <img
-        src={chatbotIcon}
-        alt="Chatbot Logo"
-        className="chatbot-logo"
-      />
-      </div>
-      {chatbotContent}
-    </div>
-  ) : null;
-
-  // The buttons container with chatbot and Telegram
-  return (
-    <div className="chatbot-container">
-      {chatbotWindow}
-      <div className="floating-buttons">
-        <button 
-          className="telegram-toggle" 
-          onClick={handleTelegramClick}
-          title="Chat on Telegram"
-        >
-          <img src={telegramIcon} alt="Telegram" className="telegram-icon" />
-        </button>
-        <button className="chatbot-toggle" onClick={toggleChatbot}>
-          <img src={chatbotIcon} alt="Chatbot" className="chatbot-icon" />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default Chatbot;
+  };
+  
+  export default Chatbot;
