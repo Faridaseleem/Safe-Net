@@ -336,12 +336,217 @@ async function handleURL(chatId, url, mode, session) {
 }
 
 // Handle Email scanning
+function formatEmailScanReport(scanResult) {
+    if (!scanResult || typeof scanResult !== 'object') {
+        return '❌ Unable to generate report. Invalid scan data.';
+    }
+
+    // Extract data from the scan result
+    const {
+        verdict = 'unknown',
+        risk_score = 0,
+        email_headers = {},
+        urls_found = [],
+        attachments = [],
+        security_checks = {},
+        recommendations = [],
+        scan_timestamp = new Date().toISOString()
+    } = scanResult;
+
+    // Build the report sections
+    let report = '📧 **Email Security Scan Report**\n';
+    report += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+
+    // Overall Verdict Section
+    const verdictEmoji = verdict === 'safe' ? '✅' : verdict === 'suspicious' ? '⚠️' : '🔴';
+    const verdictText = verdict.charAt(0).toUpperCase() + verdict.slice(1);
+    report += `${verdictEmoji} **Overall Verdict:** ${verdictText}\n`;
+    report += `📊 **Risk Score:** ${risk_score}/100\n\n`;
+
+    // Email Headers Section
+    if (email_headers && Object.keys(email_headers).length > 0) {
+        report += '📋 **Email Details:**\n';
+        if (email_headers.from) report += `• From: ${email_headers.from}\n`;
+        if (email_headers.to) report += `• To: ${email_headers.to}\n`;
+        if (email_headers.subject) report += `• Subject: ${email_headers.subject}\n`;
+        if (email_headers.date) report += `• Date: ${email_headers.date}\n`;
+        if (email_headers.reply_to) report += `• Reply-To: ${email_headers.reply_to}\n`;
+        report += '\n';
+    }
+
+    // Security Checks Section
+    if (security_checks && Object.keys(security_checks).length > 0) {
+        report += '🔍 **Security Checks:**\n';
+        
+        // SPF Check
+        if (security_checks.spf_check !== undefined) {
+            const spfStatus = security_checks.spf_check ? '✅ Passed' : '❌ Failed';
+            report += `• SPF Authentication: ${spfStatus}\n`;
+        }
+        
+        // DKIM Check
+        if (security_checks.dkim_check !== undefined) {
+            const dkimStatus = security_checks.dkim_check ? '✅ Valid' : '❌ Invalid';
+            report += `• DKIM Signature: ${dkimStatus}\n`;
+        }
+        
+        // DMARC Check
+        if (security_checks.dmarc_check !== undefined) {
+            const dmarcStatus = security_checks.dmarc_check ? '✅ Passed' : '❌ Failed';
+            report += `• DMARC Policy: ${dmarcStatus}\n`;
+        }
+        
+        // Spoofing Check
+        if (security_checks.spoofing_indicators !== undefined) {
+            const spoofStatus = security_checks.spoofing_indicators ? '⚠️ Detected' : '✅ None';
+            report += `• Spoofing Indicators: ${spoofStatus}\n`;
+        }
+        
+        report += '\n';
+    }
+
+    // URLs Analysis Section
+    if (urls_found && urls_found.length > 0) {
+        report += `🔗 **URLs Found (${urls_found.length}):**\n`;
+        urls_found.forEach((urlInfo, index) => {
+            const urlStatus = urlInfo.is_suspicious ? '⚠️' : '✅';
+            report += `${index + 1}. ${urlStatus} ${urlInfo.url || urlInfo}\n`;
+            
+            // Add URL details if available
+            if (urlInfo.risk_factors && urlInfo.risk_factors.length > 0) {
+                urlInfo.risk_factors.forEach(factor => {
+                    report += `   • ${factor}\n`;
+                });
+            }
+        });
+        report += '\n';
+    } else {
+        report += '🔗 **URLs Found:** None\n\n';
+    }
+
+    // Attachments Section
+    if (attachments && attachments.length > 0) {
+        report += `📎 **Attachments (${attachments.length}):**\n`;
+        attachments.forEach((attachment, index) => {
+            const attachStatus = attachment.is_safe === false ? '⚠️' : '✅';
+            report += `${index + 1}. ${attachStatus} ${attachment.filename || 'Unknown'}\n`;
+            if (attachment.file_type) report += `   • Type: ${attachment.file_type}\n`;
+            if (attachment.size) report += `   • Size: ${formatFileSize(attachment.size)}\n`;
+            if (attachment.risk_reason) report += `   • Risk: ${attachment.risk_reason}\n`;
+        });
+        report += '\n';
+    } else {
+        report += '📎 **Attachments:** None\n\n';
+    }
+
+    // Recommendations Section
+    if (recommendations && recommendations.length > 0) {
+        report += '💡 **Recommendations:**\n';
+        recommendations.forEach((rec, index) => {
+            report += `${index + 1}. ${rec}\n`;
+        });
+        report += '\n';
+    }
+
+    // Scan Info Footer
+    report += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    report += `🕒 Scanned at: ${formatDate(scan_timestamp)}\n`;
+    report += '🛡️ Powered by SafeNet Security';
+
+    return report;
+}
+
+// Helper function to format file size
+function formatFileSize(bytes) {
+    if (!bytes) return 'Unknown';
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return dateString;
+    }
+}
+
+// Alternative simpler version if you want less detail
+function formatSimpleEmailReport(scanResult) {
+    const { verdict = 'unknown', risk_score = 0, email_headers = {}, security_checks = {}, urls_found = [], attachments = [], recommendations = [] } = scanResult;
+    
+    const verdictEmoji = verdict === 'safe' ? '✅' : verdict === 'suspicious' ? '⚠️' : '🔴';
+    
+    let report = `📧 **Email Scan Results**\n\n`;
+    report += `${verdictEmoji} **Status:** ${verdict.toUpperCase()}\n`;
+    report += `📊 **Risk Level:** ${risk_score}/100\n\n`;
+    
+    if (email_headers.from) {
+        report += `**From:** ${email_headers.from}\n`;
+        report += `**Subject:** ${email_headers.subject || 'No subject'}\n\n`;
+    }
+    
+    if (urls_found.length > 0) {
+        report += `⚠️ **Found ${urls_found.length} URL(s)** - Please verify before clicking\n\n`;
+    }
+    
+    if (attachments.length > 0) {
+        report += `📎 **${attachments.length} Attachment(s) detected**\n\n`;
+    }
+    
+    if (recommendations.length > 0) {
+        report += `💡 **Tips:**\n`;
+        recommendations.slice(0, 3).forEach(rec => {
+            report += `• ${rec}\n`;
+        });
+    }
+    
+    return report;
+}
 // Handle Email scanning
 // Handle Email scanning with comprehensive report
 async function handleEmailScan(chatId, fileId, fileName, session) {
     session.waitingFor = null;
 
     bot.sendChatAction(chatId, 'upload_document');
+    try {
+        // Show scanning message
+        const scanningMsg = await bot.sendMessage(chatId, '🔍 Scanning email file...');
+        
+        // Perform the scan
+        const formData = new FormData();
+        formData.append('file', fileBuffer, { filename: fileName });
+        
+        const response = await axios.post(`${API_BASE_URL}/api/scan-eml-file`, formData, {
+            headers: formData.getHeaders(),
+        });
+        
+        // Delete scanning message
+        await bot.deleteMessage(chatId, scanningMsg.message_id);
+        
+        // Format and send the report
+        const report = formatEmailScanReport(response.data);
+        
+        // Send the formatted report with Markdown parsing
+        await bot.sendMessage(chatId, report, { 
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true 
+        });
+        
+    } catch (error) {
+        console.error('Error scanning email:', error);
+        await bot.sendMessage(chatId, '❌ Error scanning email file. Please try again.');
+    }
 
     try {
         // Get file info from Telegram
