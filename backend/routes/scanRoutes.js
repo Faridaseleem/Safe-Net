@@ -555,7 +555,7 @@ function calculateFileRiskScore(vtScore, hybridScore) {
 
 // Helper to determine verdict based on aggregated score
 function getVerdictFromScore(score) {
-  if (score >= 80) {
+  if (score >= 50) {
     return "🔴 High Risk (Likely Malicious)";
   } else if (score >= 30) {
     return "🟠 Medium Risk (Potentially Unsafe)";
