@@ -519,9 +519,9 @@ function calculateAggregatedRiskScore(vtRiskScore, ipqsRiskScore, scamalyticsRis
   
   if (hasScamalytics) {
     // All three sources available
-    vtWeight = 0.3;           // 30% weight to VirusTotal
+    vtWeight = 0.4;           // 30% weight to VirusTotal
     ipqsWeight = 0.4;         // 40% weight to IPQS
-    scamalyticsWeight = 0.3;  // 30% weight to Scamalytics
+    scamalyticsWeight = 0.2;  // 30% weight to Scamalytics
   } else {
     // Only VT and IPQS available
     vtWeight = 0.4;   // 40% weight to VirusTotal
@@ -557,9 +557,9 @@ function calculateFileRiskScore(vtScore, hybridScore) {
 function getVerdictFromScore(score) {
   if (score >= 80) {
     return "🔴 High Risk (Likely Malicious)";
-  } else if (score >= 50) {
+  } else if (score >= 30) {
     return "🟠 Medium Risk (Potentially Unsafe)";
-  } else if (score >= 20) {
+  } else if (score >= 10) {
     return "🟡 Low Risk (Exercise Caution)";
   } else {
     return "🟢 Very Low Risk (Likely Safe)";
@@ -730,9 +730,96 @@ function extractDomain(value) {
   const match = value.match(/@([\w.-]+)/);
   return match ? match[1].toLowerCase() : null;
 }
+function generateEmailScanFinalVerdict({
+  headerHeuristicScore,
+  headerIPQSFraudScore,
+  urlScanResults = [],
+  attachmentScanResults = []
+}) {
+  const sources = [];
+  const verdicts = [];
+
+  // Header score (weighted)
+  const headerScore = Math.min(
+    (headerHeuristicScore * 0.7) + (headerIPQSFraudScore * 0.3),
+    100
+  );
+  const headerVerdict = getVerdictFromScore(headerScore);
+  verdicts.push(headerVerdict);
+  sources.push(`📬 Header: ${headerVerdict} (${Math.round(headerScore)}/100)`);
+
+  // URLs
+  for (const url of urlScanResults) {
+    if (url.blocked_by_admin) {
+      url.aggregated_risk_score = 100;
+      url.verdict = "🔴 Malicious (Blocked by admin)";
+      verdicts.push(url.verdict);
+      sources.push(`🔗 URL: ${url.url} → ${url.verdict} (100/100) — 🚫 Blocked by admin`);
+      continue;
+    }
+
+    const vtScore = url.vt_results?.risk_score || 0;
+    const ipqsScore = url.ipqs_results?.risk_score || 0;
+    const scamalyticsScore = url.scamalytics_results?.risk_score || 0;
+    const heuristicScore = url.heuristic_analysis?.score || 0;
+
+    const urlScore = Math.min(
+      (vtScore * 0.2) +
+      (ipqsScore * 0.4) +
+      (scamalyticsScore * 0.1) +
+      (heuristicScore * 0.3),
+      100
+    );
+
+    url.aggregated_risk_score = Math.round(urlScore);
+    url.verdict = getVerdictFromScore(urlScore);
+
+    verdicts.push(url.verdict);
+    sources.push(`🔗 URL: ${url.url} → ${url.verdict} (${url.aggregated_risk_score}/100)`);
+  }
 
 
+  // Attachments
+  for (const file of attachmentScanResults) {
+    const vtScore = file.vt_results?.verdict?.includes("Malicious") ? 100 : 0;
+    const hybridScore = file.hybrid_analysis_results?.risk_score || 0;
 
+    const attachmentScore = Math.min(
+      (vtScore * 0.8) + (hybridScore * 0.2),
+      100
+    );
+
+    file.aggregated_risk_score = Math.round(attachmentScore);
+    file.verdict = getVerdictFromScore(attachmentScore);
+
+    verdicts.push(file.verdict);
+    sources.push(`📎 Attachment: ${file.filename} → ${file.verdict} (${file.aggregated_risk_score}/100)`);
+  }
+
+  // Determine final verdict from highest severity
+  const verdictOrder = ["🔴 High Risk (Likely Malicious)","🔴 Malicious (Blocked by admin)", "🟠 Medium Risk (Potentially Unsafe)", "🟡 Low Risk (Exercise Caution)", "🟢 Clean"];
+  const finalVerdict = verdictOrder.find(v => verdicts.includes(v)) || "⚪ Unknown";
+
+  return {
+    final_verdict: finalVerdict,
+    final_score: "Weighted",
+    summary: `${finalVerdict} — Based on:\n` + sources.join("\n"),
+    details: {
+      header_score: headerScore,
+      header_verdict: headerVerdict,
+      url_verdicts: urlScanResults.map(u => ({
+        url: u.url,
+        verdict: u.verdict,
+        score: u.aggregated_risk_score
+      })),
+      attachment_verdicts: attachmentScanResults.map(a => ({
+        filename: a.filename,
+        verdict: a.verdict,
+        score: a.aggregated_risk_score
+      }))
+    }
+  };
+}
 
 
 // === END heuristic email header analysis functions ===
@@ -846,14 +933,19 @@ router.post("/scan-url", async (req, res) => {
     if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
     const heuristicVerdict = getVerdictFromScore(heuristicScore);
 
-    // ✅ Include heuristic in risk score aggregation
-    const vtRiskScore = vtResults.success ? vtResults.risk_score : 0;
-    const ipqsRiskScore = ipqsResults.success ? ipqsResults.risk_score : 0;
-    const scamalyticsRiskScore = scamalyticsResults.success ? scamalyticsResults.risk_score : 0;
-
-    const allScores = [vtRiskScore, ipqsRiskScore, scamalyticsRiskScore, heuristicScore];
-    const availableScores = allScores.filter(score => score > 0);
-    const finalScore = Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length || 0);
+    // Extract scores
+    const vtScore = vtResults?.risk_score || 0;
+    const ipqsScore = ipqsResults?.risk_score || 0;
+    const scamalyticsScore = scamalyticsResults?.risk_score || 0;
+    // 🔢 Custom weighted score calculation
+    const customScore = Math.min(
+      (vtScore * 0.2) +
+      (ipqsScore * 0.4) +
+      (scamalyticsScore * 0.1) +
+      (heuristicScore * 0.3),
+      100
+    );
+    const finalScore = Math.round(customScore);
     const finalVerdict = getVerdictFromScore(finalScore);
 
     const successfulAPIs = [
@@ -878,17 +970,17 @@ router.post("/scan-url", async (req, res) => {
       vt_results: {
         total_sources: vtResults.total_sources || 0,
         malicious_detections: vtResults.malicious_detections || 0,
-        risk_score: vtRiskScore,
+        risk_score: vtScore,
       },
       ipqs_results: {
-        risk_score: ipqsRiskScore,
+        risk_score: ipqsScore,
         is_phishing: ipqsResults.is_phishing,
         is_malware: ipqsResults.is_malware,
         is_suspicious: ipqsResults.is_suspicious,
       },
       scamalytics_results: scamalyticsResults.success ? {
         ip: scamalyticsResults.ip,
-        risk_score: scamalyticsRiskScore,
+        risk_score: scamalyticsScore,
         verdict: scamalyticsResults.verdict
       } : null,
       heuristic_analysis: {
@@ -951,8 +1043,24 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
 
     // Scan URLs concurrently with VirusTotal + IPQS + Scamalytics
     const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
+      const blocked = await BlockedUrl.findOne({ url: u });
+      if (blocked?.status === "malicious") {
+        return {
+          url: u,
+          vt_results: null,
+          ipqs_results: null,
+          scamalytics_results: null,
+          heuristic_analysis: null,  // 🔴 Do NOT return a heuristic score here!
+          aggregated_risk_score: 100,
+          verdict: "🔴 Malicious (Blocked by admin)",
+          blocked_by_admin: true
+        };
+      }
+
+
+      // Proceed with normal scanning only if NOT blocked
       const [vtRes, ipqsRes, scamalyticsRes] = await Promise.all([
-        scanUrlVT(u), 
+        scanUrlVT(u),
         scanUrlIPQS(u),
         scanWithScamalytics(u)
       ]);
@@ -967,23 +1075,6 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       const heuristicReasons = [...heuristicStatic.reasons];
       if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
       const heuristicVerdict = getVerdictFromScore(heuristicScore);
-
-      const blocked = await BlockedUrl.findOne({ url: u });
-      if (blocked?.status === "malicious") {
-        return {
-          url: u,
-          vt_results: null,
-          ipqs_results: null,
-          scamalytics_results: null,
-          heuristic_analysis: {
-            score: 100,
-            reasons: ["URL is blocked by admin"],
-            verdict: "🔴 Malicious (Blocked)"
-          },
-          aggregated_risk_score: 100,
-          verdict: "🔴 Malicious (Blocked by admin)"
-        };
-      }
 
       const allScores = [vtRisk, ipqsRisk, scamalyticsRisk, heuristicScore];
       const availableScores = allScores.filter(score => score > 0);
@@ -1076,14 +1167,26 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       emailHeaderScanResult?.fraud_score || 0
     );
 
+    const finalVerdictSummary = generateEmailScanFinalVerdict({
+      headerHeuristicScore: heuristicResult.score,
+      headerIPQSFraudScore: emailHeaderScanResult?.fraud_score || 0,
+      urlScanResults,
+      attachmentScanResults
+    });
+
     res.json({
       emailBody: parsedEmail.text || parsedEmail.html || "",
       urlScanResults,
       attachmentScanResults,
       emailHeaderScanResult,
       heuristicResult,
-      emailHeaderFinalVerdict: headerFinalVerdict
+      emailHeaderFinalVerdict: finalVerdictSummary.details.header_verdict,
+      finalScore: finalVerdictSummary.final_score,
+      finalVerdict: finalVerdictSummary.final_verdict,
+      finalVerdictExplanation: finalVerdictSummary.summary,
+      verdictBreakdown: finalVerdictSummary.details
     });
+
 
   } catch (err) {
     console.error("Error parsing or scanning .eml file:", err);

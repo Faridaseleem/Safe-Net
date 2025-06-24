@@ -146,25 +146,9 @@ const ScanEmail = () => {
     setShowHeuristicDetails(!showHeuristicDetails);
   };
 
-  const finalVerdict = (() => {
-    const urlVerdicts = scanResults?.urlScanResults?.map((u) => u.verdict) || [];
-    const attVerdicts = scanResults?.attachmentScanResults?.map((a) => a.verdict) || [];
-    const allVerdicts = [...urlVerdicts, ...attVerdicts].filter(Boolean).map((v) => v.toLowerCase());
+  const finalVerdict = scanResults?.finalVerdict || "⚪ Unknown";
+  const finalVerdictExplanation = scanResults?.finalVerdictExplanation || "";
 
-    if (allVerdicts.some((v) => v.includes("high risk") || v.includes("malicious"))) {
-      return "🔴 High Risk (Likely Malicious)";
-    }
-    if (allVerdicts.some((v) => v.includes("medium risk"))) {
-      return "🟠 Medium Risk (Potentially Unsafe)";
-    }
-    if (allVerdicts.some((v) => v.includes("low risk"))) {
-      return "🟡 Low Risk (Exercise Caution)";
-    }
-    if (allVerdicts.some((v) => v.includes("clean") || v.includes("no threat"))) {
-      return "🟢 Clean";
-    }
-    return "⚪ Unknown";
-  })();
 
   return (
     <div className="scan-container">
@@ -248,8 +232,19 @@ const ScanEmail = () => {
             </div>
 
             <div>
-              <strong>⚠️ Final Verdict: </strong> {finalVerdict}
+              <strong>⚠️ Final Verdict:</strong> {finalVerdict}
             </div>
+
+            {finalVerdictExplanation && (
+              <div className="verdict-explanation" style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#ccc" }}>
+                <strong>Why?</strong><br />
+                <pre style={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
+                  {finalVerdictExplanation}
+                </pre>
+              </div>
+            )}
+
+
 
             {/* Add separator and header for Email Header Scan */}
             <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
@@ -347,8 +342,18 @@ const ScanEmail = () => {
               {scanResults.urlScanResults.map((res, idx) => (
                 <li key={idx} style={{ marginBottom: 16 }}>
                   <strong>{res.url}</strong>:<br />
-                  <div>Aggregated Verdict: {res.verdict}</div>
-                  <div>Aggregated Risk Score: {res.aggregated_risk_score}</div>
+                  {res.heuristic_analysis?.reasons?.includes("URL is blocked by admin") ? (
+                    <>
+                      <div>Aggregated Verdict: 🔴 Malicious (Blocked by admin)</div>
+                      <div>Aggregated Risk Score: 100</div>
+                    </>
+                  ) : (
+                    <>
+                      <div>Aggregated Verdict: {res.verdict}</div>
+                      <div>Aggregated Risk Score: {res.aggregated_risk_score}</div>
+                    </>
+                  )}
+
 
                   <div className="details-buttons">
                     {res.vt_results && (
