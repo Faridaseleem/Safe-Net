@@ -46,49 +46,57 @@ const Scan = () => {
     setLoading(false);
   };
 
-  const downloadReport = () => {
-    if (!reportRef.current) {
-      console.error("❌ Scan report element not found!");
-      return;
-    }
+ const downloadReport = async () => {
+  if (!reportRef.current) {
+    console.error("❌ Scan report element not found!");
+    return;
+  }
 
-    // Hide details before capturing if they're open
-    const vtWasOpen = showVTDetails;
-    const ipqsWasOpen = showIPQSDetails;
-    const scamalyticsWasOpen = showScamalyticsDetails; // Track Scamalytics state
-    
-    // Close details for clean screenshot
-    setShowVTDetails(false);
-    setShowIPQSDetails(false);
-    setShowScamalyticsDetails(false); // Hide Scamalytics details
-    
-    // Wait for state update to reflect in DOM
-    setTimeout(() => {
-      html2canvas(reportRef.current, {
-        backgroundColor: "#1b1f3b",
-        scale: 2,
-        useCORS: true,
-      })
-        .then((canvas) => {
-          const link = document.createElement("a");
-          link.href = canvas.toDataURL("image/png");
-          link.download = "Scan_Report.png";
-          link.click();
-          
-          // Restore previous state
-          setShowVTDetails(vtWasOpen);
-          setShowIPQSDetails(ipqsWasOpen);
-          setShowScamalyticsDetails(scamalyticsWasOpen); // Restore Scamalytics state
-        })
-        .catch((error) => {
-          console.error("❌ html2canvas error:", error);
-          // Restore previous state
-          setShowVTDetails(vtWasOpen);
-          setShowIPQSDetails(ipqsWasOpen);
-          setShowScamalyticsDetails(scamalyticsWasOpen); // Restore Scamalytics state
-        });
-    }, 100);
-  };
+  // Backup previous visibility states
+  const prevVT = showVTDetails;
+  const prevIPQS = showIPQSDetails;
+  const prevScamalytics = showScamalyticsDetails;
+  const prevHeuristic = showHeuristicDetails; // 👈 Heuristic
+
+  // Show all details for full screenshot
+  setShowVTDetails(true);
+  setShowIPQSDetails(true);
+  setShowScamalyticsDetails(true);
+  setShowHeuristicDetails(true); // 👈 Heuristic
+
+  // Ensure state updates are reflected in the DOM
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+  if (document.fonts) {
+    await document.fonts.ready;
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 800));
+
+  html2canvas(reportRef.current, {
+    backgroundColor: "#1b1f3b",
+    scale: 2,
+    useCORS: true,
+  })
+    .then((canvas) => {
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "Scan_Report.png";
+      link.click();
+    })
+    .catch((error) => {
+      console.error("❌ html2canvas error:", error);
+    })
+    .finally(() => {
+      // Restore previous states
+      setShowVTDetails(prevVT);
+      setShowIPQSDetails(prevIPQS);
+      setShowScamalyticsDetails(prevScamalytics);
+      setShowHeuristicDetails(prevHeuristic); // 👈 Heuristic
+    });
+};
+
+
 
   // Calculate number of successful API scans (updated to include Scamalytics)
   const getSuccessfulAPIs = (result) => {

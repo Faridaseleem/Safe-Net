@@ -76,57 +76,76 @@ const ScanEmail = () => {
       });
   };
 
-  const downloadReport = () => {
-    if (!reportRef.current) return;
+const downloadReport = async () => {
+  if (!reportRef.current) return;
 
-    const prevVT = showVTDetails;
-    const prevIPQS = showIPQSDetails;
-    const prevScamalytics = showScamalyticsDetails;
-    const prevHeader = showHeaderDetails;
-    const prevAttVT = { ...showAttachmentVTDetails };
-    const prevAttHybrid = { ...showAttachmentHybridDetails };
-    const prevHeuristic = showHeuristicDetails;
+  // Backup previous states
+  const prevVT = showVTDetails;
+  const prevIPQS = showIPQSDetails;
+  const prevScamalytics = showScamalyticsDetails;
+  const prevHeader = showHeaderDetails;
+  const prevAttVT = { ...showAttachmentVTDetails };
+  const prevAttHybrid = { ...showAttachmentHybridDetails };
+  const prevHeuristic = showHeuristicDetails;
 
-    setShowVTDetails(false);
-    setShowIPQSDetails(false);
-    setShowScamalyticsDetails(false);
-    setShowHeaderDetails(false);
-    setShowAttachmentVTDetails({});
-    setShowAttachmentHybridDetails({});
-    setShowHeuristicDetails(false);
+  // Dynamically show all attachments by index
+  const attachmentResults = scanResults?.attachmentScanResults || [];
+  const vtDetailState = {};
+  const hybridDetailState = {};
 
-    setTimeout(() => {
-      html2canvas(reportRef.current, {
-        backgroundColor: "#121629",
-        scale: 2,
-        useCORS: true,
-      })
-        .then((canvas) => {
-          const link = document.createElement("a");
-          link.href = canvas.toDataURL("image/png");
-          link.download = "Email_Scan_Report.png";
-          link.click();
+  attachmentResults.forEach((_, idx) => {
+    vtDetailState[idx] = true;
+    hybridDetailState[idx] = true;
+  });
 
-          setShowVTDetails(prevVT);
-          setShowIPQSDetails(prevIPQS);
-          setShowScamalyticsDetails(prevScamalytics);
-          setShowHeaderDetails(prevHeader);
-          setShowAttachmentVTDetails(prevAttVT);
-          setShowAttachmentHybridDetails(prevAttHybrid);
-          setShowHeuristicDetails(prevHeuristic);
-        })
-        .catch((err) => {
-          console.error("html2canvas error:", err);
-          setShowVTDetails(prevVT);
-          setShowIPQSDetails(prevIPQS);
-          setShowScamalyticsDetails(prevScamalytics);
-          setShowHeaderDetails(prevHeader);
-          setShowAttachmentVTDetails(prevAttVT);
-          setShowAttachmentHybridDetails(prevAttHybrid);
-          setShowHeuristicDetails(prevHeuristic);
-        });
-    }, 100);
-  };
+  // Show all detail sections
+  setShowVTDetails(true);
+  setShowIPQSDetails(true);
+  setShowScamalyticsDetails(true);
+  setShowHeaderDetails(true);
+  setShowAttachmentVTDetails(vtDetailState);
+  setShowAttachmentHybridDetails(hybridDetailState);
+  setShowHeuristicDetails(true);
+
+  // Wait for DOM updates
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  if (document.fonts) await document.fonts.ready;
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for full paint
+
+  // Capture screenshot
+  html2canvas(reportRef.current, {
+    backgroundColor: "#121629",
+    scale: 2,
+    useCORS: true,
+  })
+    .then((canvas) => {
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "Email_Scan_Report.png";
+      link.click();
+
+      // Restore previous states
+      setShowVTDetails(prevVT);
+      setShowIPQSDetails(prevIPQS);
+      setShowScamalyticsDetails(prevScamalytics);
+      setShowHeaderDetails(prevHeader);
+      setShowAttachmentVTDetails(prevAttVT);
+      setShowAttachmentHybridDetails(prevAttHybrid);
+      setShowHeuristicDetails(prevHeuristic);
+    })
+    .catch((err) => {
+      console.error("html2canvas error:", err);
+      // Restore on error too
+      setShowVTDetails(prevVT);
+      setShowIPQSDetails(prevIPQS);
+      setShowScamalyticsDetails(prevScamalytics);
+      setShowHeaderDetails(prevHeader);
+      setShowAttachmentVTDetails(prevAttVT);
+      setShowAttachmentHybridDetails(prevAttHybrid);
+      setShowHeuristicDetails(prevHeuristic);
+    });
+};
+
 
   const toggleAttachmentVTDetails = (idx) => {
     setShowAttachmentVTDetails((prev) => ({
