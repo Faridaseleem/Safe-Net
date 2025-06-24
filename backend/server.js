@@ -9,6 +9,7 @@ const chatbotRoutes = require("./routes/chatbotRoutes"); // <-- Import chatbotRo
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const askAIRoutes = require("./routes/askAIRoutes"); // Adjust the path as necessary. 
+const telegramBotRoutes = require("./routes/telegramBotRoutes");
 
 dotenv.config();
 connectDB();
@@ -64,6 +65,7 @@ app.use("/api", scanRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api", reportRoutes); // <-- Register report routes
 app.use("/api/chatbot", chatbotRoutes); // <-- Register chatbot routes
+app.use("/api/telegram", telegramBotRoutes);
 
 app.get("/", (req, res) => {
   res.send("✅ Server is running and connected to MongoDB!");

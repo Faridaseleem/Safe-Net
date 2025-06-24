@@ -2,15 +2,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "./Chatbot.css";
-import chatbotIcon from "./chatbot.png"; // Ensure chatbot.png is in the same folder or adjust the path
+import chatbotIcon from "./chatbot.png";
+import telegramIcon from "./telegram.png"; // Add this import
 
 const Chatbot = () => {
   // General chatbot states.
   const [isOpen, setIsOpen] = useState(false);
-  // chatMode controls which main view is shown:
-  // "main" shows the two main buttons,
-  // "services" shows the service selection and input,
-  // "askai" shows the Ask AI interface.
   const [chatMode, setChatMode] = useState("main");
   const [selectedService, setSelectedService] = useState(null);
   const [userText, setUserText] = useState("");
@@ -22,13 +19,32 @@ const Chatbot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const chatContainerRef = useRef(null);
 
+  // Telegram link state
+  const [telegramLink, setTelegramLink] = useState("");
+
   // Load chat history from localStorage when component mounts
   useEffect(() => {
     const savedMessages = localStorage.getItem('cybersecurityChatHistory');
     if (savedMessages) {
       setChatMessages(JSON.parse(savedMessages));
     }
+    
+    // Fetch Telegram bot info
+    fetchTelegramLink();
   }, []);
+
+  // Fetch Telegram link from backend
+  const fetchTelegramLink = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/telegram/bot-info');
+      if (response.data.success) {
+        setTelegramLink(response.data.botLink);
+      }
+    } catch (error) {
+      console.error('Error fetching Telegram bot info:', error);
+      setTelegramLink('https://t.me/SafeNett_bot');
+    }
+  };
 
   // Save chat messages to localStorage whenever they change
   useEffect(() => {
@@ -48,12 +64,18 @@ const Chatbot = () => {
   const toggleChatbot = () => {
     setIsOpen((prev) => !prev);
     if (!isOpen) {
-      // If opening, reset to main menu and clear service inputs (but keep chat history).
       setChatMode("main");
       setSelectedService(null);
       setUserText("");
       setSelectedFile(null);
       setResult(null);
+    }
+  };
+
+  // Handle Telegram button click
+  const handleTelegramClick = () => {
+    if (telegramLink) {
+      window.open(telegramLink, '_blank');
     }
   };
 
@@ -94,7 +116,6 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
-      // Get conversation context (last 10 messages)
       const conversationHistory = chatMessages.slice(-10).map(msg => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
@@ -166,13 +187,11 @@ const Chatbot = () => {
           return;
         }
         const formData = new FormData();
-        // IMPORTANT: Use "emlFile" as the key so that it matches your working Scan Email service.
         formData.append("emlFile", selectedFile);
         console.log("FormData prepared with file:", selectedFile.name);
         axios
           .post("http://localhost:5000/api/scan-eml-file", formData, {
             withCredentials: true
-            // Let the browser automatically set the Content-Type header.
           })
           .then((res) => {
             console.log("Response from scan-eml-file:", res.data);
@@ -212,7 +231,7 @@ const Chatbot = () => {
     }
   };
 
-  // Render the main menu with two buttons: "Choose from our services." and "Ask AI".
+  // Render the main menu with two buttons
   const renderMainMenu = () => {
     return (
       <div className="chatbot-main-menu">
@@ -226,7 +245,6 @@ const Chatbot = () => {
           className="main-menu-button"
           onClick={() => {
             setChatMode("askai");
-            // Add welcome message if chat is empty
             if (chatMessages.length === 0) {
               addMessage('bot', 'Hello! I\'m your cybersecurity assistant. I can help you with questions about network security, encryption, vulnerabilities, ethical hacking, and other cybersecurity topics. How can I assist you today?');
             }
@@ -405,7 +423,7 @@ const Chatbot = () => {
         : JSON.stringify(result, null, 2);
     } else if (selectedService && selectedService.type === "scan_email") {
       const resultCopy = { ...result };
-      delete resultCopy.emailBody; // Do not show emailBody
+      delete resultCopy.emailBody;
       reportText = JSON.stringify(resultCopy, null, 2);
     } else if (selectedService && selectedService.type === "education") {
       reportText = JSON.stringify(result, null, 2);
@@ -467,17 +485,22 @@ const Chatbot = () => {
     </div>
   ) : null;
 
-  // The toggle button remains at its location; it displays the chatbot icon.
-  const toggleButton = (
-    <button className="chatbot-toggle" onClick={toggleChatbot}>
-      <img src={chatbotIcon} alt="Chatbot" className="chatbot-icon" />
-    </button>
-  );
-
+  // The buttons container with chatbot and Telegram
   return (
     <div className="chatbot-container">
       {chatbotWindow}
-      {toggleButton}
+      <div className="floating-buttons">
+        <button 
+          className="telegram-toggle" 
+          onClick={handleTelegramClick}
+          title="Chat on Telegram"
+        >
+          <img src={telegramIcon} alt="Telegram" className="telegram-icon" />
+        </button>
+        <button className="chatbot-toggle" onClick={toggleChatbot}>
+          <img src={chatbotIcon} alt="Chatbot" className="chatbot-icon" />
+        </button>
+      </div>
     </div>
   );
 };
