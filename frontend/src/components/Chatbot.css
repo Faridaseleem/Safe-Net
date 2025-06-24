@@ -393,7 +393,9 @@
   width: 65%;
   height: 65%;
   object-fit: contain;
+  padding: 10%;
 }
+
 
 /* Update floating buttons for 2 buttons only */
 .floating-buttons {
@@ -441,8 +443,6 @@
     transform: translateY(0);
   }
 }
-
-
 
 @keyframes pulse {
   0% {
