@@ -522,22 +522,23 @@ useEffect(() => {
 
   // Chatbot window with a header that displays the chatbot logo centered.
   const chatbotWindow = isOpen ? (
-    <div className="chatbot-window"
+    <div
+      className="chatbot-window"
       ref={chatbotRef}
-      onMouseDown={onMouseDown}
       style={{
         top: position.y,
         left: position.x,
         position: "fixed",
         zIndex: 10000
-      }}>
+      }}
+    >
 
-      <div className="chatbot-header">
-        <img
-          src={chatbotIcon}
-          alt="Chatbot Logo"
-          className="chatbot-logo"
-        />
+      <div className="chatbot-header" onMouseDown={onMouseDown}>
+      <img
+        src={chatbotIcon}
+        alt="Chatbot Logo"
+        className="chatbot-logo"
+      />
       </div>
       {chatbotContent}
     </div>
