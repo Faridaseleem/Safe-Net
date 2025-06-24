@@ -952,7 +952,8 @@ router.post("/scan-url", async (req, res) => {
       vtResults.success,
       ipqsResults.success,
       scamalyticsResults.success,
-    ].filter(Boolean).length ; //  for heuristic
+
+    ].filter(Boolean).length; // +1 for heuristic
 
     const scanReport = formatScanReport(
       url,
