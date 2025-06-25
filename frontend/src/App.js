@@ -14,9 +14,11 @@ import RootPage from "./pages/RootPage";
 import ReportURL from "./pages/ReportURL";  // User URL report page
 import AdminReportURLs from "./pages/AdminReportedURLs"; // Admin report management page
 import Chatbot from "./components/Chatbot"; // NEW: Import Chatbot component**
+import { useUser } from "./contexts/UserContext";
 import "./App.css";
 
 const App = () => {
+  const { user } = useUser();
   return (
     <Router>
       <Routes>
@@ -33,7 +35,7 @@ const App = () => {
           element={
             <>
               <Navbar />
-              <Chatbot />
+              {(user && (user.role === 'premium' || user.role === 'admin')) && <Chatbot />}
               <Routes>
                 <Route path="/home" element={<Home />} />
                 <Route path="/scan-url" element={<ScanURL />} />

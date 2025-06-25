@@ -2,11 +2,30 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 require("dotenv").config();
+const User = require("../models/User");
+
+// Helper: Get user role from session or request
+async function getUserRole(req) {
+  if (req.session && req.session.user) {
+    return req.session.user.role;
+  }
+  if (req.body && req.body.userId) {
+    const user = await User.findById(req.body.userId);
+    return user?.role || "standard";
+  }
+  return "standard";
+}
 
 router.post("/ask-ai", async (req, res) => {
   const { question, conversationHistory } = req.body;
   if (!question) {
     return res.status(400).json({ error: "Question is required." });
+  }
+
+  // Restrict to premium or admin users
+  const role = await getUserRole(req);
+  if (role !== "premium" && role !== "admin") {
+    return res.status(403).json({ error: "AI-powered chatbot is available for premium users only." });
   }
 
   try {

@@ -8,6 +8,7 @@ const SelectPlan = () => {
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
+    localStorage.setItem('selectedPlan', plan.toLowerCase());
   };
 
   const handleProceed = () => {
