@@ -190,53 +190,54 @@ const Chatbot = () => {
     }
   };
 
-  // Add a function to format email scan results
+  // Replace your existing formatEmailScanResult function with this updated version
+
   const formatEmailScanResult = (data) => {
     // Extract the verdict and explanation
     const finalVerdict = data.finalVerdict || '⚠️ Unable to determine';
     const explanation = data.finalVerdictExplanation || 'No detailed explanation available.';
     const headerVerdict = data.emailHeaderFinalVerdict || '';
     
-    // Create formatted HTML result
+    // Create formatted HTML result using CSS classes
     return (
       <div className="email-scan-result">
-        <h3 style={{ color: '#4CAF50', marginBottom: '15px' }}>🔍 Email Scan Complete</h3>
+        <h3>🔍 Email Scan Complete</h3>
         
-        <div style={{ marginBottom: '15px' }}>
-          <strong>Final Verdict:</strong>
-          <div style={{ fontSize: '1.1em', marginTop: '5px' }}>{finalVerdict}</div>
+        <div className="email-verdict-section">
+          <span className="email-verdict-label">Final Verdict:</span>
+          <div className="email-verdict-value">{finalVerdict}</div>
         </div>
         
-        <div style={{ marginBottom: '15px' }}>
-          <strong>Why?</strong>
-          <div style={{ marginTop: '5px', color: '#666' }}>{explanation}</div>
+        <div className="email-explanation-section">
+          <span className="email-explanation-label">Why?</span>
+          <div className="email-explanation-text">{explanation}</div>
         </div>
         
         {headerVerdict && (
-          <div style={{ marginBottom: '15px' }}>
-            <strong>Email Header Analysis:</strong> {headerVerdict}
+          <div className="email-header-section">
+            <span className="email-header-label">Email Header Analysis:</span>
+            <div className="email-header-text">{headerVerdict}</div>
           </div>
         )}
         
-        <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
-          <p style={{ margin: '0 0 10px 0' }}>📊 <strong>For more details scan it on our webpage:</strong></p>
+        <div className="email-info-box">
+          <p className="email-info-title">📊 <strong>For more details scan it on our webpage:</strong></p>
           <a 
             href="http://localhost:3000/scan-email" 
             target="_blank" 
             rel="noopener noreferrer"
-            style={{ color: '#2196F3', textDecoration: 'none' }}
+            className="email-info-link"
           >
             🔗 Visit SafeNet Scanner
           </a>
         </div>
         
-        <p style={{ marginTop: '15px', fontSize: '0.9em', color: '#666' }}>
+        <p className="email-footer-message">
           <em>Stay safe online!</em> 🛡️
         </p>
       </div>
     );
   };
-
   // The submit handler now distinguishes between Ask AI and Services.
   const handleSubmit = () => {
     if (chatMode === "askai") {
@@ -518,25 +519,25 @@ const Chatbot = () => {
           </div>
         );
       } else if (result.error) {
-        resultContent = (
-          <div className="result-area">
-            <div style={{ color: '#f44336', padding: '15px' }}>
-              <h4>❌ {result.error}</h4>
-              <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
-                <p>📊 <strong>Try scanning it on our webpage:</strong></p>
-                <a 
-                  href="http://localhost:3000/scan-email"
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ color: '#2196F3' }}
-                >
-                  🔗 Visit SafeNet Scanner
-                </a>
+          resultContent = (
+            <div className="result-area">
+              <div className="error-container">
+                <h4 className="error-title">❌ {result.error}</h4>
+                <div className="error-info-box">
+                  <p className="error-info-text">📊 <strong>Try scanning it on our webpage:</strong></p>
+                  <a 
+                    href="http://localhost:3000/scan-email"
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="error-info-link"
+                  >
+                    🔗 Visit SafeNet Scanner
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
-        );
-      } else if (selectedService && selectedService.type === "scan_email") {
+          );
+        } else if (selectedService && selectedService.type === "scan_email") {
         // Special formatting for email scan results
         resultContent = (
           <div className="result-area">
