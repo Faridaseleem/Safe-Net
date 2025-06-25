@@ -221,7 +221,7 @@ const Chatbot = () => {
         <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
           <p style={{ margin: '0 0 10px 0' }}>📊 <strong>For more details scan it on our webpage:</strong></p>
           <a 
-            href="https://your-website.com/email-scanner" 
+            href="http://localhost:3000/scan-email" 
             target="_blank" 
             rel="noopener noreferrer"
             style={{ color: '#2196F3', textDecoration: 'none' }}
