@@ -10,6 +10,7 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const askAIRoutes = require("./routes/askAIRoutes");
 const telegramBotRoutes = require("./routes/telegramBotRoutes");
+const educationRoutes = require("./routes/educationRoutes"); // <<-- 1. ADD THIS LINE
 
 dotenv.config();
 connectDB();
@@ -61,8 +62,9 @@ app.use((req, res, next) => {
 // ✅ Register routes
 app.use("/api", askAIRoutes);
 app.use("/api", scanRoutes);
-app.use("/api/auth", authRoutes);
 app.use("/api", reportRoutes);
+app.use("/api", educationRoutes); // <<-- 2. ADD THIS LINE
+app.use("/api/auth", authRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/telegram", telegramBotRoutes);
 

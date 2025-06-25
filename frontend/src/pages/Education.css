@@ -1,70 +1,197 @@
+/* === Main Transparent Container === */
 .education-container {
-    text-align: center;
-    padding: 50px;
-    color: #d0eaff;
+    max-width: 1100px; /* Slightly narrower for better content fit */
+    margin: 2rem auto;
+    padding: 1.5rem 2rem;
     font-family: "Orbitron", sans-serif;
+    background-color: rgba(10, 15, 26, 0.5); /* More transparent */
+    color: #e2e8f0;
+    backdrop-filter: blur(1.5px); /* Softer blur */
+    border-radius: 12px;
+    box-shadow: 0 0 24px rgba(0, 255, 247, 0.04);
 }
 
-.education-title {
-    font-size: 2.5rem;
+
+/* === Hero Section === */
+.hero-section {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.hero-section h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #525eb9;
     text-shadow: 0px 0px 15px #1a1b1b;
 }
 
-.education-intro {
-    font-size: 1.5rem;
-    color: #cacbcf;
-    margin-bottom: 20px;
+.hero-section p {
+    font-size: 1.2rem;
+    color: #a1a8b2;
+    margin-top: 0.5rem;
 }
 
-.education-content {
-    background: rgba(255, 255, 255, 0.055);
-    color: #cacbcf;
+/* === Section Headings === */
+.content-section {
+    margin-bottom: 4rem;
+}
+
+.content-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #525eb9;
+    border-left: 5px solid #4b538b;
+    padding-left: 0.75rem;
+}
+
+/* === Video Grid === */
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.video-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 1rem;
     text-align: center;
-    padding: 20px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border-radius: 10px;
-    max-width: 80%;
-    margin: 20px auto;
-    animation: fadeIn 1s ease-in-out;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.07);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Styled list items with hover effect */
-.education-content ul {
-    list-style-type: none;
-    padding: 0;
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
 }
 
-.education-content li {
-    font-size: 1.2rem;
-    background: rgba(255, 255, 255, 0.055);
-    padding: 15px;
-    margin: 10px 0;
+.video-card iframe {
+    width: 100%;
+    height: 200px;
     border-radius: 8px;
-    transition: 0.3s;
+    border: none;
+}
+
+.video-card p {
+    margin-top: 0.75rem;
+    font-weight: 500;
+    color: #a2a3b0;
+}
+
+/* === Blog & News Cards === */
+.blog-posts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.blog-card {
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 4px solid #3d4b63;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.07);
+    transition: box-shadow 0.2s ease;
+}
+
+.blog-card:hover {
+    box-shadow: 0 0 14px rgba(59, 130, 246, 0.15);
+}
+
+.blog-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #e0f2fe;
+}
+
+.blog-card p {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    margin-bottom: 0.75rem;
+}
+
+.blog-card a {
+    color: #8f9dff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.blog-card a:hover {
+    color: #8f9dff;
+}
+
+/* === Tip Box with Winged Arrows === */
+.tip-box {
+    background: radial-gradient(circle at top left, #1e293b, #0f172a);
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+    color: #e2e8f0;
+    max-width: 760px;
+    margin: 2rem auto;
+    font-size: 1.1rem;
+    font-weight: 600;
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.2),
+                inset 0 0 8px rgba(255, 255, 255, 0.02);
+    opacity: 0;
+    animation: fadeIn 0.6s ease forwards;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+}
+
+/* Tip Text */
+.tip-box p {
+    margin: 0;
+    flex: 1;
+    text-align: center;
+    line-height: 1.6;
+    color: #cbd5e1;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Arrows (Winged Style) */
+.arrow-icon {
+    font-size: 2rem;
+    color: #8f9dff;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s ease, color 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    font-weight: bold;
-    border: 2px solid transparent;
 }
 
-.education-content li:hover {
-    border: 2px solid #00e1ff;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0px 0px 15px #00e1ff;
-    transform: scale(1.05);
+.arrow-icon:hover {
+    transform: scale(1.2);
+    color: #8f9dff;
 }
 
-/* Animation */
+/* === Animation Keyframe === */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
     to {
         opacity: 1;
-        transform: translateY(0);
+    }
+}
+
+/* === Responsive Adjustments === */
+@media screen and (max-width: 768px) {
+    .tip-box {
+        flex-direction: row;
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .tip-box p {
+        font-size: 1rem;
+    }
+
+    .arrow-icon {
+        font-size: 1.6rem;
     }
 }
