@@ -1104,7 +1104,7 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
       vtResults.success,
       userRole === "premium" || userRole === "admin" ? ipqsResults?.success : false,
       userRole === "premium" || userRole === "admin" ? scamalyticsResults?.success : false,
-      true // heuristic always succeeds
+      //true // heuristic always succeeds
     ].filter(Boolean).length;
 
     const scanReport = formatScanReport(
