@@ -4,6 +4,7 @@ import axios from "axios";
 import "./Chatbot.css";
 import chatbotIcon from "./chatbot.png";
 import telegramIcon from "./telegram.png"; // Add this import
+import { useUser } from "../contexts/UserContext";
 
 const Chatbot = () => {
   // General chatbot states.
@@ -27,6 +28,10 @@ const Chatbot = () => {
   const [position, setPosition] = useState({ x: 60, y: 120 });
   const [dragging, setDragging] = useState(false);
   const [rel, setRel] = useState({ x: 0, y: 0 });
+
+  const { user } = useUser();
+
+  console.log("Current user in Chatbot:", user);
 
   const onMouseDown = (e) => {
     if (e.button !== 0) return;
@@ -168,20 +173,24 @@ const Chatbot = () => {
         content: msg.content
       }));
 
+      console.log("Sending userId to backend:", user?.id);
+
       const response = await axios.post(
         "https://localhost:5000/api/ask-ai",
         { 
           question,
-          conversationHistory 
+          conversationHistory,
+          userId: user?.id
         },
         { withCredentials: true }
       );
 
-      if (response.data.answer) {
-        addMessage('bot', response.data.answer);
+      if (response.data.message) {
+        addMessage('bot', response.data.message);
       } else {
-        addMessage('bot', 'Sorry, I couldn\'t process your request. Please try again.');
+        addMessage('bot', '⚠️ Error: ' + (response.data.error || 'Unknown error occurred'));
       }
+
     } catch (err) {
       console.error("Failed to get AI answer:", err);
       addMessage('bot', 'Sorry, I encountered an error. Please try again.');

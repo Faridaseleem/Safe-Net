@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./ScanURL.css";
 import logo from "../assets/logo.png";
 import html2canvas from "html2canvas";
+import { useUser } from "../contexts/UserContext";
 
 const Scan = () => {
   const [url, setUrl] = useState("");
@@ -10,6 +11,7 @@ const Scan = () => {
   const [loading, setLoading] = useState(false);
   const reportRef = useRef(null);
   const navigate = useNavigate();
+  const { user } = useUser();
   
   // State to track which details are expanded
   const [showVTDetails, setShowVTDetails] = useState(false);
@@ -132,137 +134,111 @@ const Scan = () => {
           <h3>📄 Scan Report</h3>
           <p><strong>🔗 URL:</strong> {result.url}</p>
           <p><strong>🕒 Scan Time:</strong> {result.timestamp}</p>
-          <p><strong>📊 API Sources:</strong> {getSuccessfulAPIs(result)}/3</p>
-          <p><strong>🎯 Risk Score:</strong> {result.aggregated_risk_score}/100</p>
-          <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p>
-
-          {/* Detailed results buttons */}
-          <div className="details-buttons">
-            {result.vt_results && (
-              <button 
-                className={`details-toggle ${showVTDetails ? 'active' : ''}`}
-                onClick={() => setShowVTDetails(!showVTDetails)}
-              >
-                {showVTDetails ? '🔼 Hide VirusTotal Details' : '🔽 Show VirusTotal Details'}
-              </button>
-            )}
-            
-            {result.ipqs_results && (
-              <button 
-                className={`details-toggle ${showIPQSDetails ? 'active' : ''}`}
-                onClick={() => setShowIPQSDetails(!showIPQSDetails)}
-              >
-                {showIPQSDetails ? '🔼 Hide IPQS Details' : '🔽 Show IPQS Details'}
-              </button>
-            )}
-
-            {/* Scamalytics details button */}
-            {result.scamalytics_results && (
-              <button 
-                className={`details-toggle ${showScamalyticsDetails ? 'active' : ''}`}
-                onClick={() => setShowScamalyticsDetails(!showScamalyticsDetails)}
-              >
-                {showScamalyticsDetails ? '🔼 Hide Scamalytics Details' : '🔽 Show Scamalytics Details'}
-              </button>
-            )}
-            {result.heuristic_analysis && (
-              <button 
-                className={`details-toggle ${showHeuristicDetails ? 'active' : ''}`}
-                onClick={() => setShowHeuristicDetails(!showHeuristicDetails)}
-              >
-                {showHeuristicDetails ? '🔼 Hide Heuristic Details' : '🔽 Show Heuristic Details'}
-              </button>
-            )}
-
-          </div>
-
-          {/* Collapsible VirusTotal details */}
-          {showVTDetails && result.vt_results && (
-            <div className="api-details vt-details">
-              <h4>VirusTotal Results</h4>
-              <p><strong>Total Sources:</strong> {result.vt_results.total_sources}</p>
-              <p><strong>Malicious Detections:</strong> {result.vt_results.malicious_detections}</p>
-              <p><strong>Risk Score:</strong> {Math.round(result.vt_results.risk_score)}/100</p>
-            </div>
-          )}
-          
-          {/* Collapsible IPQS details */}
-          {showIPQSDetails && result.ipqs_results && (
-            <div className="api-details ipqs-details">
-              <h4>IPQS Results</h4>
-              <p><strong>Risk Score:</strong> {result.ipqs_results.risk_score}/100</p>
-              <p><strong>Phishing:</strong> {result.ipqs_results.is_phishing ? "Yes" : "No"}</p>
-              <p><strong>Malware:</strong> {result.ipqs_results.is_malware ? "Yes" : "No"}</p>
-              <p><strong>Suspicious:</strong> {result.ipqs_results.is_suspicious ? "Yes" : "No"}</p>
-            </div>
-          )}
-          
-          {/* Collapsible Scamalytics details */}
-          {showScamalyticsDetails && result.scamalytics_results && (
-            <div className="api-details scamalytics-details">
-              <h4>Scamalytics IP Analysis</h4>
-              <p><strong>IP Address:</strong> {result.scamalytics_results.ip}</p>
-              <p><strong>Risk Score:</strong> {result.scamalytics_results.risk_score}/100</p>
-              <p><strong>Fraud Risk:</strong> {result.scamalytics_results.fraud_risk || "Unknown"}</p>
-              <p><strong>Location:</strong> {result.scamalytics_results.country_name} ({result.scamalytics_results.country_code})</p>
-              
-              {/* Show network type indicators */}
-              <div className="network-indicators">
-                <span className={result.scamalytics_results.is_proxy ? "alert" : "normal"}>
-                  {result.scamalytics_results.is_proxy ? "⚠️ Proxy Detected" : "✅ Not a Proxy"}
-                </span>
-                <span className={result.scamalytics_results.is_vpn ? "alert" : "normal"}>
-                  {result.scamalytics_results.is_vpn ? "⚠️ VPN Detected" : "✅ Not a VPN"}
-                </span>
-                <span className={result.scamalytics_results.is_tor ? "alert" : "normal"}>
-                  {result.scamalytics_results.is_tor ? "⚠️ Tor Exit Node" : "✅ Not Tor"}
-                </span>
-                <span className={result.scamalytics_results.is_datacenter ? "alert" : "normal"}>
-                  {result.scamalytics_results.is_datacenter ? "⚠️ Datacenter IP" : "✅ Residential IP"}
-                </span>
-                <span className={result.scamalytics_results.is_bot ? "alert" : "normal"}>
-                  {result.scamalytics_results.is_bot ? "⚠️ Bot Detected" : "✅ Not a Bot"}
-                </span>
+          {/* Only show VirusTotal for standard users */}
+          {user && user.role === 'standard' ? (
+            <>
+              <p><strong>API Source:</strong> VirusTotal</p>
+              <p><strong>Risk Score:</strong> {result.vt_results ? Math.round(result.vt_results.risk_score) : 'N/A'}/100</p>
+              <p><strong>Malicious Detections:</strong> {result.vt_results ? result.vt_results.malicious_detections : 'N/A'}</p>
+              <p><strong>⚠️ Final Verdict:</strong> {result.vt_results ? result.vt_results.verdict || result.verdict : result.verdict}</p>
+              {/* Show VirusTotal details only */}
+              {result.vt_results && (
+                <button 
+                  className={`details-toggle ${showVTDetails ? 'active' : ''}`}
+                  onClick={() => setShowVTDetails(!showVTDetails)}
+                >
+                  {showVTDetails ? '🔼 Hide VirusTotal Details' : '🔽 Show VirusTotal Details'}
+                </button>
+              )}
+              {showVTDetails && result.vt_results && (
+                <div className="api-details vt-details">
+                  <h4>VirusTotal Results</h4>
+                  <p><strong>Total Sources:</strong> {result.vt_results.total_sources}</p>
+                  <p><strong>Malicious Detections:</strong> {result.vt_results.malicious_detections}</p>
+                  <p><strong>Risk Score:</strong> {Math.round(result.vt_results.risk_score)}/100</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <p><strong>📊 API Sources:</strong> {getSuccessfulAPIs(result)}/3</p>
+              <p><strong>🎯 Risk Score:</strong> {result.aggregated_risk_score}/100</p>
+              <p><strong>⚠️ Final Verdict:</strong> {result.verdict}</p>
+              {/* Detailed results buttons and details for premium/admin */}
+              <div className="details-buttons">
+                {result.vt_results && (
+                  <button 
+                    className={`details-toggle ${showVTDetails ? 'active' : ''}`}
+                    onClick={() => setShowVTDetails(!showVTDetails)}
+                  >
+                    {showVTDetails ? '🔼 Hide VirusTotal Details' : '🔽 Show VirusTotal Details'}
+                  </button>
+                )}
+                {result.ipqs_results && (
+                  <button 
+                    className={`details-toggle ${showIPQSDetails ? 'active' : ''}`}
+                    onClick={() => setShowIPQSDetails(!showIPQSDetails)}
+                  >
+                    {showIPQSDetails ? '🔼 Hide IPQS Details' : '🔽 Show IPQS Details'}
+                  </button>
+                )}
+                {result.scamalytics_results && (
+                  <button 
+                    className={`details-toggle ${showScamalyticsDetails ? 'active' : ''}`}
+                    onClick={() => setShowScamalyticsDetails(!showScamalyticsDetails)}
+                  >
+                    {showScamalyticsDetails ? '🔼 Hide Scamalytics Details' : '🔽 Show Scamalytics Details'}
+                  </button>
+                )}
+                {result.heuristic_analysis && (
+                  <button 
+                    className={`details-toggle ${showHeuristicDetails ? 'active' : ''}`}
+                    onClick={() => setShowHeuristicDetails(!showHeuristicDetails)}
+                  >
+                    {showHeuristicDetails ? '🔼 Hide Heuristic Details' : '🔽 Show Heuristic Details'}
+                  </button>
+                )}
               </div>
-            </div>
+              {/* Collapsible details for premium/admin */}
+              {showVTDetails && result.vt_results && (
+                <div className="api-details vt-details">
+                  <h4>VirusTotal Results</h4>
+                  <p><strong>Total Sources:</strong> {result.vt_results.total_sources}</p>
+                  <p><strong>Malicious Detections:</strong> {result.vt_results.malicious_detections}</p>
+                  <p><strong>Risk Score:</strong> {Math.round(result.vt_results.risk_score)}/100</p>
+                </div>
+              )}
+              {showIPQSDetails && result.ipqs_results && (
+                <div className="api-details ipqs-details">
+                  <h4>IPQS Results</h4>
+                  <p><strong>Risk Score:</strong> {result.ipqs_results.risk_score}/100</p>
+                  <p><strong>Phishing:</strong> {result.ipqs_results.is_phishing ? "Yes" : "No"}</p>
+                  <p><strong>Malware:</strong> {result.ipqs_results.is_malware ? "Yes" : "No"}</p>
+                  <p><strong>Suspicious:</strong> {result.ipqs_results.is_suspicious ? "Yes" : "No"}</p>
+                </div>
+              )}
+              {showScamalyticsDetails && result.scamalytics_results && (
+                <div className="api-details scamalytics-details">
+                  <h4>Scamalytics Results</h4>
+                  <p><strong>IP:</strong> {result.scamalytics_results.ip}</p>
+                  <p><strong>Risk Score:</strong> {result.scamalytics_results.risk_score}/100</p>
+                  <p><strong>Verdict:</strong> {result.scamalytics_results.verdict}</p>
+                </div>
+              )}
+              {showHeuristicDetails && result.heuristic_analysis && (
+                <div className="api-details heuristic-details">
+                  <h4>Heuristic Analysis</h4>
+                  <p><strong>Score:</strong> {result.heuristic_analysis.score}/100</p>
+                  <ul>
+                    {result.heuristic_analysis.reasons.map((reason, idx) => (
+                      <li key={idx}>{reason}</li>
+                    ))}
+                  </ul>
+                  <p><strong>Verdict:</strong> {result.heuristic_analysis.verdict}</p>
+                </div>
+              )}
+            </>
           )}
-          {/* Heuristic Scan */}
-          {showHeuristicDetails && result.heuristic_analysis && (
-              <div className="api-details heuristic-details">
-                <h4>Heuristic Scan Results</h4>
-                <p>
-                  <strong>Suspicious:</strong>{" "}
-                  {result.heuristic_analysis.score >= 40 ? "Yes" : "No"}
-                </p>
-                <p>
-                  <strong>Score:</strong> {result.heuristic_analysis.score}/100
-                </p>
-                <p><strong>Verdict:</strong> {result.heuristic_analysis.verdict}</p>
-                <p><strong>Reasons:</strong></p>
-                <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
-                  {result.heuristic_analysis.reasons.map((reason, idx) => {
-                    const [title, ...descParts] = reason.split(":");
-                    const description = descParts.join(":").trim();
-                    return (
-                      <li
-                        key={idx}
-                        style={{
-                          marginBottom: "0.5em",
-                          background: "rgba(255, 255, 255, 0.05)",
-                          padding: "0.4em 0.6em",
-                          borderRadius: "0.25em",
-                        }}
-                      >
-                        <strong style={{ color: "#F8F8F2" }}>{title}</strong>{" "}
-                        <span style={{ color: "#D6D6D6" }}>{description}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-
-              </div>
-            )}
-
 
           {/* Learn More Button for Education Page */}
           <button className="learn-more-btn" onClick={() => navigate("/education")}>

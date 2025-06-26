@@ -6,6 +6,8 @@ const axios = require("axios");
 const FormData = require("form-data");
 const BlockedUrl = require("../models/BlockedUrl");
 const whois = require("whois-json");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 const upload = multer(); // Multer memory storage (no disk save)
@@ -44,77 +46,108 @@ async function fetchAnalysisResults(analysisId, maxRetries = 10, waitTime = 5000
         return response.data.data.attributes.results;
       } else if (retry < maxRetries - 1) {
         console.log(`⏳ Analysis not ready, waiting ${waitTime/1000} seconds...`);
-        // Wait longer between retries
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     } catch (error) {
       console.error(`❌ Error fetching analysis results (attempt ${retry + 1}):`, error.message);
       if (retry < maxRetries - 1) {
-        // Wait between retries
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
     }
   }
   
   console.warn("⚠️ All retries failed for VT analysis");
-  return {}; // Return empty object if all retries failed
+  return {};
 }
 
-// Extract IP from a URL
+// Fixed IP extraction function
 async function extractIpFromUrl(url) {
   try {
-    // First get hostname from URL
     const urlObj = new URL(url);
     const hostname = urlObj.hostname;
     
-    // Use DNS lookup to get IP (using a Promise-based wrapper for dns.lookup)
-    const dns = require('dns');
-    const { promisify } = require('util');
-    const lookup = promisify(dns.lookup);
+    // Check if it's already an IP
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    if (ipRegex.test(hostname)) {
+      return hostname;
+    }
     
-    const { address } = await lookup(hostname);
-    return address;
+    // Use DNS lookup
+    const dns = require('dns').promises;
+    try {
+      const result = await dns.lookup(hostname);
+      return result.address;
+    } catch (dnsError) {
+      console.error(`DNS lookup failed for ${hostname}:`, dnsError.message);
+      return null;
+    }
+    
   } catch (error) {
     console.error(`Error extracting IP from URL ${url}:`, error.message);
     return null;
   }
 }
 
-// Scan with Scamalytics API - Accepts URL or IP
+// Fixed Scamalytics function
 async function scanWithScamalytics(input) {
   try {
     let ip = input;
     
-    // If input appears to be a URL, extract IP
+    // If input is a URL, extract IP
     if (input.startsWith('http') || input.includes('://')) {
       ip = await extractIpFromUrl(input);
-      if (!ip) return { success: false, risk_score: 0, error: "Could not extract IP from URL" };
+      if (!ip) {
+        console.log('⚠️ Could not extract IP from URL for Scamalytics');
+        return { 
+          success: false, 
+          risk_score: 0, 
+          error: "Could not extract IP from URL" 
+        };
+      }
     }
     
     console.log(`🔍 Scamalytics scanning IP: ${ip}`);
     
-    // Use the correct endpoint structure
-    const response = await axios.get(
-      `https://api12.scamalytics.com/v3/${SCAMALYTICS_ACCOUNT}/`, {
-        params: {
-          key: SCAMALYTICS_API_KEY,
-          ip: ip
-        }
+    // Fixed API endpoint
+    const apiUrl = `https://api12.scamalytics.com/v3/${SCAMALYTICS_ACCOUNT}/`;
+    console.log(`📡 Calling Scamalytics API: ${apiUrl}`);
+    
+    const response = await axios.get(apiUrl, {
+      params: {
+        key: SCAMALYTICS_API_KEY,
+        ip: ip
+      },
+      timeout: 10000,
+      validateStatus: function (status) {
+        return status < 500;
       }
-    );
+    });
     
-    // Log complete response for debugging
-    console.log("Full Scamalytics response:", JSON.stringify(response.data, null, 2));
+    console.log(`📥 Scamalytics Response Status: ${response.status}`);
+    console.log(`📥 Scamalytics Response Data:`, JSON.stringify(response.data, null, 2));
     
-    // Check if we got valid data - accessing the correct nested structure
-    if (response.data && response.data.scamalytics) {
-      const scamalyticsData = response.data.scamalytics;
+    // Handle different response structures
+    if (response.data) {
+      let score = 0;
+      let risk = 'Unknown';
       
-      // Extract the specific fields we want
-      const score = scamalyticsData.scamalytics_score || 0;
-      const risk = scamalyticsData.scamalytics_risk || 'Unknown';
+      // Try different possible response structures
+      if (response.data.score !== undefined) {
+        score = parseInt(response.data.score) || 0;
+      } else if (response.data.scamalytics?.score !== undefined) {
+        score = parseInt(response.data.scamalytics.score) || 0;
+      } else if (response.data.scamalytics?.scamalytics_score !== undefined) {
+        score = parseInt(response.data.scamalytics.scamalytics_score) || 0;
+      }
       
-      console.log(`✅ Extracted Scamalytics score: ${score}, risk: ${risk}`);
+      // Determine risk level
+      if (score >= 80) risk = 'very high';
+      else if (score >= 60) risk = 'high';
+      else if (score >= 40) risk = 'medium';
+      else if (score >= 20) risk = 'low';
+      else risk = 'very low';
+      
+      console.log(`✅ Scamalytics final score: ${score}, risk: ${risk}`);
       
       return {
         success: true,
@@ -122,17 +155,25 @@ async function scanWithScamalytics(input) {
         risk_score: score,
         verdict: risk
       };
-    } else {
-      console.error("Invalid or empty response from Scamalytics API");
-      return { success: false, risk_score: 0 };
     }
+    
+    return { 
+      success: false, 
+      risk_score: 0, 
+      error: "Invalid response structure" 
+    };
+    
   } catch (error) {
-    console.error(`Error scanning with Scamalytics: ${error.message}`);
+    console.error(`❌ Error scanning with Scamalytics:`, error.message);
     if (error.response) {
       console.error(`Response status: ${error.response.status}`);
       console.error(`Response data:`, error.response.data);
     }
-    return { success: false, risk_score: 0 };
+    return { 
+      success: false, 
+      risk_score: 0, 
+      error: error.message 
+    };
   }
 }
 
@@ -153,7 +194,8 @@ async function submitFileToHybridAnalysis(fileBuffer, filename) {
           'api-key': HYBRID_ANALYSIS_API_KEY,
           'User-Agent': 'Falcon Sandbox',
           ...formData.getHeaders()
-        }
+        },
+        timeout: 30000
       }
     );
     
@@ -178,7 +220,6 @@ async function submitFileToHybridAnalysis(fileBuffer, filename) {
   }
 }
 
-//neww
 function calculateEmailHeaderVerdict(heuristicScore, ipqsFraudScore) {
   const finalScore = (heuristicScore + (ipqsFraudScore || 0)) / 2;
   if (finalScore >= 85) return "🔴 High Risk (Likely Malicious)";
@@ -186,6 +227,7 @@ function calculateEmailHeaderVerdict(heuristicScore, ipqsFraudScore) {
   if (finalScore >= 10) return "🟡 Low Risk (Exercise Caution)";
   return "🟢 Low Risk (Likely Safe)";
 }
+
 async function getHybridAnalysisResults(sha256) {
   try {
     console.log(`🔍 Retrieving Hybrid Analysis results for: ${sha256}`);
@@ -196,7 +238,8 @@ async function getHybridAnalysisResults(sha256) {
         headers: {
           'api-key': HYBRID_ANALYSIS_API_KEY,
           'User-Agent': 'Falcon Sandbox'
-        }
+        },
+        timeout: 15000
       }
     );
 
@@ -206,32 +249,25 @@ async function getHybridAnalysisResults(sha256) {
     const label = data.verdict || '';
     const threatLevel = data.threat_level || 'unknown';
 
-    // ✅ Get bundled files from correct path
     const bundledFiles = data.relations?.bundled_files || [];
-
-    // 🔍 Log for debugging
     console.log("📦 Bundled Files:", JSON.stringify(bundledFiles, null, 2));
 
-    // Check for any malicious bundled file
     const hasMaliciousBundle = bundledFiles.some(
       f => (f.threat_level || '').toLowerCase() === 'malicious'
     );
 
     let adjustedScore = threatScore;
 
-    // Adjust score logic even if threat_score is 0
     if (adjustedScore === 0) {
       if (label.toLowerCase().includes("malicious")) adjustedScore = 80;
       else if (label.toLowerCase().includes("suspicious")) adjustedScore = 40;
       else if (family.toLowerCase().includes("eicar")) adjustedScore = 30;
     }
 
-    // ⬆️ Boost score if malicious bundled files found
     if (hasMaliciousBundle && adjustedScore < 70) {
       adjustedScore = 70;
     }
 
-    // Map final verdict
     let verdict;
     if (adjustedScore >= 80) verdict = "🔴 High Risk (Likely Malicious)";
     else if (adjustedScore >= 50) verdict = "🟠 Medium Risk (Potentially Unsafe)";
@@ -261,7 +297,6 @@ async function getHybridAnalysisResults(sha256) {
     return { success: false, error: error.message };
   }
 }
-
 
 // Poll VirusTotal for file scan results by scan ID
 async function pollFileScanResult(scanId, retries = 15, delay = 5000) {
@@ -293,16 +328,14 @@ async function pollFileScanResult(scanId, retries = 15, delay = 5000) {
   return { verdict: "Scan result not ready yet." };
 }
 
-// Scan a URL via VirusTotal API with cleanup and error handling
+// Fixed VirusTotal URL scanning
 async function scanUrlVT(rawUrl) {
   try {
-    // Sanitize the input URL
     const url = rawUrl
-      .replace(/["'><)\]]+$/g, '')   // Remove trailing HTML/junk
-      .replace(/^[\["'<(]+/g, '')    // Remove leading junk
+      .replace(/["'><)\]]+$/g, '')
+      .replace(/^[\["'<(]+/g, '')
       .trim();
 
-    // Validate format
     if (!/^https?:\/\/[\w.-]/.test(url)) {
       console.warn(`⚠️ Skipping invalid URL format: ${url}`);
       return { url, error: "Invalid URL format", verdict: "⚠️ Skipped" };
@@ -315,6 +348,7 @@ async function scanUrlVT(rawUrl) {
       `https://www.virustotal.com/api/v3/urls/${encodedUrl}`,
       {
         headers: { "x-apikey": VIRUSTOTAL_API_KEY },
+        timeout: 15000
       }
     );
 
@@ -334,10 +368,10 @@ async function scanUrlVT(rawUrl) {
           : maliciousCount > 0
           ? "🟠 Medium Risk (Potentially Unsafe)"
           : "🟢 Low Risk (Likely Safe)",
+      success: true
     };
 
   } catch (error) {
-    // If no scan exists, submit a new one
     if (error.response && error.response.status === 404) {
       try {
         await axios.post(
@@ -348,44 +382,58 @@ async function scanUrlVT(rawUrl) {
               "x-apikey": VIRUSTOTAL_API_KEY,
               "Content-Type": "application/x-www-form-urlencoded",
             },
+            timeout: 15000
           }
         );
-        return { url: rawUrl, verdict: "Scan submitted, results will be ready soon." };
+        return { url: rawUrl, verdict: "Scan submitted, results will be ready soon.", success: false };
       } catch (submitError) {
         console.error("❌ Error submitting URL to VT:", submitError.message);
-        return { url: rawUrl, error: submitError.message || "Submission failed" };
+        return { url: rawUrl, error: submitError.message || "Submission failed", success: false };
       }
     }
 
     console.error("❌ VirusTotal scan error:", error.message);
-    return { url: rawUrl, error: error.message || "Unknown error" };
+    return { url: rawUrl, error: error.message || "Unknown error", success: false };
   }
 }
 
-
-// Scan a URL via IPQS API
+// Fixed IPQS URL scanning
 async function scanUrlIPQS(url) {
   try {
-    const response = await axios.get(
-      `https://www.ipqualityscore.com/api/json/url/${IPQS_API_KEY}/${encodeURIComponent(url)}`,
-      {
-        params: {
-          strictness: 2, // Medium strictness
-          fast: "true",
-          timeout: 5, // 5 second timeout
-        }
+    console.log(`🔍 IPQS scanning URL: ${url}`);
+    
+    const apiUrl = `https://www.ipqualityscore.com/api/json/url/${IPQS_API_KEY}/${encodeURIComponent(url)}`;
+    console.log(`📡 Calling IPQS API...`);
+    
+    const response = await axios.get(apiUrl, {
+      params: {
+        strictness: 2,
+        fast: "true",
+        timeout: 5
+      },
+      timeout: 1000000,
+      validateStatus: function (status) {
+        return status < 500;
       }
-    );
-
+    });
+    
+    console.log(`📥 IPQS Response Status: ${response.status}`);
     const data = response.data;
     
-    // Extract key metrics
-    const riskScore = data.risk_score || 0; // 0-100 risk score
-    const phishing = data.phishing;
-    const malware = data.malware;
-    const suspicious = data.suspicious;
-
-    // Create verdict based on IPQS results
+    if (!data || data.success === false) {
+      console.error('❌ IPQS API returned error:', data?.message || 'Unknown error');
+      return {
+        url,
+        risk_score: 0,
+        error: data?.message || 'IPQS API error',
+        success: false
+      };
+    }
+    
+    const riskScore = parseInt(data.risk_score) || 0;
+    
+    console.log(`✅ IPQS scan complete. Risk score: ${riskScore}`);
+    
     let ipqsVerdict;
     if (riskScore >= 85) {
       ipqsVerdict = "🔴 High Risk (Likely Malicious)";
@@ -394,56 +442,77 @@ async function scanUrlIPQS(url) {
     } else {
       ipqsVerdict = "🟢 Low Risk (Likely Safe)";
     }
-
+    
     return {
       url,
       risk_score: riskScore,
-      is_phishing: phishing,
-      is_malware: malware,
-      is_suspicious: suspicious,
+      is_phishing: data.phishing || false,
+      is_malware: data.malware || false,
+      is_suspicious: data.suspicious || false,
       verdict: ipqsVerdict,
+      success: true
     };
+    
   } catch (error) {
-    console.error("Error scanning URL with IPQS:", error.message);
+    console.error("❌ Error scanning URL with IPQS:", error.message);
+    if (error.response) {
+      console.error("Response status:", error.response.status);
+      console.error("Response data:", error.response.data);
+    }
     return { 
       url, 
       error: error.message || "Unknown error with IPQS scan",
-      risk_score: 0 
+      risk_score: 0,
+      success: false
     };
   }
 }
 
-// Scan an email header (sender domain) via IPQS Email Validation API
+// Fixed email header scanning with IPQS
 async function scanEmailHeaderWithIPQS(email) {
   try {
-    const response = await axios.get(`https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(email)}`, {
-      params: {
-        timeout: 5,
-        fast: "true",
-        abuse_strictness: 1,
+    console.log(`🔍 IPQS scanning email: ${email}`);
+    
+    // Use GET request, not POST
+    const response = await axios.get(
+      `https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(email)}`,
+      {
+        params: {
+          timeout: 5,
+          fast: "true",
+          abuse_strictness: 1
+        },
+        timeout: 10000
       }
-    });
-
+    );
+    
     const data = response.data;
+    console.log(`✅ IPQS email scan complete. Fraud score: ${data.fraud_score || 0}`);
+    
     return {
       email,
-      valid: data.valid,
-      recent_abuse: data.recent_abuse,
-      reputation_score: data.spam_score,
-      is_suspect: !data.valid || data.recent_abuse || data.spam_score > 70,
-      verdict: data.spam_score > 85
+      valid: data.valid || false,
+      recent_abuse: data.recent_abuse || false,
+      fraud_score: data.fraud_score || 0,
+      reputation_score: data.spam_score || 0,
+      is_suspect: !data.valid || data.recent_abuse || (data.fraud_score > 70),
+      verdict: data.fraud_score > 85
         ? "🔴 High Risk"
-        : data.spam_score > 50
+        : data.fraud_score > 50
         ? "🟠 Medium Risk"
-        : data.spam_score > 20
+        : data.fraud_score > 20
         ? "🟡 Low Risk"
-        : "🟢 Clean"
+        : "🟢 Clean",
+      success: true
     };
+    
   } catch (error) {
-    console.error("Error scanning email header with IPQS:", error.message);
+    console.error("❌ Error scanning email header with IPQS:", error.message);
     return {
       email,
-      error: error.message || "IPQS email header scan failed"
+      error: error.message || "IPQS email header scan failed",
+      fraud_score: 0,
+      success: false
     };
   }
 }
@@ -476,6 +545,7 @@ async function scanFileVT(filename, fileBuffer) {
           "x-apikey": VIRUSTOTAL_API_KEY,
           ...formData.getHeaders(),
         },
+        timeout: 30000
       }
     );
 
@@ -506,30 +576,24 @@ async function scanFileVT(filename, fileBuffer) {
 
 // Calculate aggregated risk score from scanning engines
 function calculateAggregatedRiskScore(vtRiskScore, ipqsRiskScore, scamalyticsRiskScore = 0) {
-  // Convert all risk scores to a 0-100 scale if needed
-  const normalizedVtScore = vtRiskScore;
-  const normalizedIpqsScore = ipqsRiskScore;
-  const normalizedScamalyticsScore = scamalyticsRiskScore;
+  const normalizedVtScore = vtRiskScore || 0;
+  const normalizedIpqsScore = ipqsRiskScore || 0;
+  const normalizedScamalyticsScore = scamalyticsRiskScore || 0;
   
-  // Determine if Scamalytics data is available
   const hasScamalytics = normalizedScamalyticsScore > 0;
   
-  // Adjust weights based on available data
   let vtWeight, ipqsWeight, scamalyticsWeight;
   
   if (hasScamalytics) {
-    // All three sources available
-    vtWeight = 0.4;           // 30% weight to VirusTotal
-    ipqsWeight = 0.4;         // 40% weight to IPQS
-    scamalyticsWeight = 0.2;  // 30% weight to Scamalytics
+    vtWeight = 0.4;
+    ipqsWeight = 0.4;
+    scamalyticsWeight = 0.2;
   } else {
-    // Only VT and IPQS available
-    vtWeight = 0.4;   // 40% weight to VirusTotal
-    ipqsWeight = 0.6; // 60% weight to IPQS
+    vtWeight = 0.4;
+    ipqsWeight = 0.6;
     scamalyticsWeight = 0;
   }
   
-  // Calculate weighted average
   const aggregatedScore = 
     (normalizedVtScore * vtWeight) + 
     (normalizedIpqsScore * ipqsWeight) + 
@@ -543,12 +607,10 @@ function calculateAggregatedRiskScore(vtRiskScore, ipqsRiskScore, scamalyticsRis
 
 // Calculate aggregated risk score for file attachments
 function calculateFileRiskScore(vtScore, hybridScore) {
-  // If only one scanner provided results, use that score
   if (vtScore > 0 && hybridScore === 0) return vtScore;
   if (hybridScore > 0 && vtScore === 0) return hybridScore;
   if (vtScore === 0 && hybridScore === 0) return 0;
   
-  // Calculate weighted average (equal weights for both scanners)
   const aggregatedScore = (vtScore * 0.5) + (hybridScore * 0.5);
   return Math.round(aggregatedScore);
 }
@@ -594,6 +656,7 @@ function formatScanReport(url, scanTime, successfulAPIs, aggregatedRiskScore, ve
 
 📖 Learn More About Phishing Protection`;
 }
+
 function analyzeUrlHeuristically(url) {
   let score = 0;
   const reasons = [];
@@ -688,7 +751,6 @@ function analyzeHeadersHeuristically(headers) {
         reasons.push(`Suspicious "Received" header at position ${idx + 1}: contains "unknown" host or localhost IP`);
       }
     });
-    // Cap received headers suspicious score at 10 points max
     score += Math.min(suspiciousReceivedCount * 5, 10);
   }
 
@@ -700,11 +762,10 @@ function analyzeHeadersHeuristically(headers) {
     reasons.push('Suspicious "Message-ID" format: appears to use an IP address instead of domain');
   }
 
-  // Cap score at 100 max
   if (score > 100) score = 100;
 
   return { 
-    suspicious: score >= 40,  // threshold remains 40
+    suspicious: score >= 40,
     score,
     reasons
   };
@@ -730,6 +791,7 @@ function extractDomain(value) {
   const match = value.match(/@([\w.-]+)/);
   return match ? match[1].toLowerCase() : null;
 }
+
 function generateEmailScanFinalVerdict({
   headerHeuristicScore,
   headerIPQSFraudScore,
@@ -778,7 +840,6 @@ function generateEmailScanFinalVerdict({
     sources.push(`🔗 URL: ${url.url} → ${url.verdict} (${url.aggregated_risk_score}/100)`);
   }
 
-
   // Attachments
   for (const file of attachmentScanResults) {
     const vtScore = file.vt_results?.verdict?.includes("Malicious") ? 100 : 0;
@@ -797,7 +858,7 @@ function generateEmailScanFinalVerdict({
   }
 
   // Determine final verdict from highest severity
-  const verdictOrder = ["🔴 High Risk (Likely Malicious)","🔴 Malicious (Blocked by admin)", "🟠 Medium Risk (Potentially Unsafe)", "🟡 Low Risk (Exercise Caution)", "🟢 Clean"];
+  const verdictOrder = ["🔴 High Risk (Likely Malicious)","🔴 Malicious (Blocked by admin)", "🟠 Medium Risk (Potentially Unsafe)", "🟡 Low Risk (Exercise Caution)", "🟢 Very Low Risk (Likely Safe)"];
   const finalVerdict = verdictOrder.find(v => verdicts.includes(v)) || "⚪ Unknown";
 
   return {
@@ -821,23 +882,47 @@ function generateEmailScanFinalVerdict({
   };
 }
 
+// Middleware to check user role and enforce scan limits
+async function enforceScanLimit(req, res, next) {
+  let userId = req.session?.user?.id || req.body.userId;
+  if (!userId) return next();
+  const user = await User.findById(userId);
+  if (!user) return res.status(403).json({ error: "User not found" });
+  if (user.role === "premium" || user.role === "admin") return next();
 
-// === END heuristic email header analysis functions ===
+  const ScanLog = mongoose.connection.collection("scanlogs");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const count = await ScanLog.countDocuments({
+    userId: user._id.toString(),
+    createdAt: { $gte: today, $lt: tomorrow }
+  });
+  if (count >= 10) {
+    return res.status(429).json({ error: "Scan limit reached (10 per day for standard users)" });
+  }
+  await ScanLog.insertOne({ userId: user._id.toString(), createdAt: new Date() });
+  next();
+}
 
-// POST /api/scan-url — Scan a single URL with multiple engines
-router.post("/scan-url", async (req, res) => {
+// Fixed POST /api/scan-url endpoint with better error handling
+router.post("/scan-url", enforceScanLimit, async (req, res) => {
   if (!req.body || !req.body.url) {
-    console.error("❌ Error: URL is missing from request body.");
     return res.status(400).json({ error: "URL is required." });
   }
 
   const { url } = req.body;
   const scanTime = new Date();
+  
+  console.log(`\n🚀 Starting URL scan for: ${url}`);
+  console.log(`👤 User role: ${await getUserRole(req)}`);
 
   try {
     // Check blocked URLs first
     const blocked = await BlockedUrl.findOne({ url });
     if (blocked && blocked.status === "malicious") {
+      console.log(`🚫 URL is blocked by admin: ${url}`);
       const blockedReport = formatScanReport(
         url, 
         scanTime, 
@@ -857,75 +942,112 @@ router.post("/scan-url", async (req, res) => {
       });
     }
 
-    // Run all scans in parallel
-    const [vtResults, ipqsResults, scamalyticsResults] = await Promise.all([
-      (async () => {
-        try {
-          const scanResponse = await axios.post(
-            "https://www.virustotal.com/api/v3/urls",
-            new URLSearchParams({ url }),
-            {
-              headers: {
-                "x-apikey": VIRUSTOTAL_API_KEY,
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-            }
-          );
+    // Role-based scan logic
+    const userRole = await getUserRole(req);
+    let vtResults = { success: false };
+    let ipqsResults = { success: false };
+    let scamalyticsResults = { success: false };
+    
+    if (userRole === "premium" || userRole === "admin") {
+      console.log(`🎯 Premium user - running all scanners...`);
+      
+      // Run all scans in parallel with individual error handling
+      const scanPromises = [
+        // VirusTotal scan
+        (async () => {
+          try {
+            console.log(`📡 Starting VirusTotal scan...`);
+            const scanResponse = await axios.post(
+              "https://www.virustotal.com/api/v3/urls",
+              new URLSearchParams({ url }),
+              {
+                headers: {
+                  "x-apikey": VIRUSTOTAL_API_KEY,
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                timeout: 15000
+              }
+            );
+            
+            const analysisId = scanResponse.data.data.id;
+            console.log(`✅ VT scan submitted, analysis ID: ${analysisId}`);
+            
+            const analysisResults = await fetchAnalysisResults(analysisId);
+            const totalSources = Object.keys(analysisResults).length || 1;
+            let detectedCount = 0;
+            
+            Object.values(analysisResults).forEach(engine => {
+              if (engine.category === "malicious" || engine.category === "suspicious") {
+                detectedCount++;
+              }
+            });
+            const vtRiskScore = Math.round((detectedCount / totalSources) * 100);
+            console.log(`✅ VT scan complete. Score: ${vtRiskScore}`);
+            
+            return {
+              total_sources: totalSources,
+              malicious_detections: detectedCount,
+              risk_score: vtRiskScore,
+              success: true
+            };
+          } catch (error) {
+            console.error(`❌ VirusTotal scan failed:`, error.message);
+            return { success: false, error: error.message, risk_score: 0 };
+          }
+        })(),
+        
+        // IPQS scan
+        scanUrlIPQS(url),
+        
+        // Scamalytics scan
+        scanWithScamalytics(url)
+      ];
+      
+      [vtResults, ipqsResults, scamalyticsResults] = await Promise.all(scanPromises);
+      
+    } else {
+      // Standard users: VirusTotal only
+      console.log(`📊 Standard user - running VirusTotal only...`);
+      
+      try {
+        const scanResponse = await axios.post(
+          "https://www.virustotal.com/api/v3/urls",
+          new URLSearchParams({ url }),
+          {
+            headers: {
+              "x-apikey": VIRUSTOTAL_API_KEY,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            timeout: 15000
+          }
+        );
+        
+        const analysisId = scanResponse.data.data.id;
+        const analysisResults = await fetchAnalysisResults(analysisId);
+        const totalSources = Object.keys(analysisResults).length || 1;
+        let detectedCount = 0;
+        
+        Object.values(analysisResults).forEach(engine => {
+          if (engine.category === "malicious" || engine.category === "suspicious") {
+            detectedCount++;
+          }
+        });
+        
+        const vtRiskScore = Math.round((detectedCount / totalSources) * 100);
+        
+        vtResults = {
+          total_sources: totalSources,
+          malicious_detections: detectedCount,
+          risk_score: vtRiskScore,
+          success: true
+        };
+      } catch (error) {
+        console.error(`❌ VirusTotal scan failed:`, error.message);
+        vtResults = { success: false, error: error.message, risk_score: 0 };
+      }
+    }
 
-          const analysisId = scanResponse.data.data.id;
-          console.log(`🔍 VT Analysis ID: ${analysisId}`);
-
-          const analysisResults = await fetchAnalysisResults(analysisId);
-          console.log("✅ VT Scan Results Received");
-
-          const totalSources = Object.keys(analysisResults).length || 1;
-          let detectedCount = 0;
-
-          Object.values(analysisResults).forEach(engine => {
-            if (engine.category === "malicious") detectedCount++;
-          });
-
-          const vtRiskScore = (detectedCount / totalSources) * 100;
-          return {
-            total_sources: totalSources,
-            malicious_detections: detectedCount,
-            risk_score: vtRiskScore,
-            success: true
-          };
-        } catch (error) {
-          console.error("❌ Error with VirusTotal scan:", error.message);
-          return { success: false, error: error.message };
-        }
-      })(),
-      (async () => {
-        try {
-          const ipqsResult = await scanUrlIPQS(url);
-          console.log("✅ IPQS Scan Results Received");
-          return {
-            ...ipqsResult,
-            success: !ipqsResult.error
-          };
-        } catch (error) {
-          console.error("❌ Error with IPQS scan:", error.message);
-          return { success: false, error: error.message };
-        }
-      })(),
-      (async () => {
-        try {
-          const scamalyticsResult = await scanWithScamalytics(url);
-          console.log("✅ Scamalytics Scan Results Received");
-          return {
-            ...scamalyticsResult,
-            success: scamalyticsResult.success
-          };
-        } catch (error) {
-          console.error("❌ Error with Scamalytics scan:", error.message);
-          return { success: false, error: error.message };
-        }
-      })()
-    ]);
-
-    // ✅ Heuristic Analysis
+    // Heuristic Analysis (for all users)
     const heuristicStatic = analyzeUrlHeuristically(url);
     const heuristicDynamic = await analyzeDomainAge(url);
     const heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
@@ -933,26 +1055,57 @@ router.post("/scan-url", async (req, res) => {
     if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
     const heuristicVerdict = getVerdictFromScore(heuristicScore);
 
-    // Extract scores
+    // Extract scores with fallbacks
     const vtScore = vtResults?.risk_score || 0;
     const ipqsScore = ipqsResults?.risk_score || 0;
     const scamalyticsScore = scamalyticsResults?.risk_score || 0;
-    // 🔢 Custom weighted score calculation
-    const customScore = Math.min(
-      (vtScore * 0.2) +
-      (ipqsScore * 0.4) +
-      (scamalyticsScore * 0.1) +
-      (heuristicScore * 0.3),
-      100
-    );
+    
+    // Calculate weighted score based on available data
+    let customScore;
+    if (userRole === "premium" || userRole === "admin") {
+      // Premium: all sources
+      const weights = {
+        vt: vtResults.success ? 0.2 : 0,
+        ipqs: ipqsResults.success ? 0.4 : 0,
+        scamalytics: scamalyticsResults.success ? 0.1 : 0,
+        heuristic: 0.3
+      };
+      
+      // Normalize weights if some APIs failed
+      const totalWeight = weights.vt + weights.ipqs + weights.scamalytics + weights.heuristic;
+      if (totalWeight > 0) {
+        Object.keys(weights).forEach(key => {
+          weights[key] = weights[key] / totalWeight;
+        });
+      }
+      
+      customScore = Math.min(
+        (vtScore * weights.vt) +
+        (ipqsScore * weights.ipqs) +
+        (scamalyticsScore * weights.scamalytics) +
+        (heuristicScore * weights.heuristic),
+        100
+      );
+    } else {
+      // Standard: VT + heuristic only
+      const vtWeight = vtResults.success ? 0.7 : 0;
+      const heuristicWeight = vtResults.success ? 0.3 : 1.0;
+      
+      customScore = Math.min(
+        (vtScore * vtWeight) + (heuristicScore * heuristicWeight),
+        100
+      );
+    }
+    
     const finalScore = Math.round(customScore);
     const finalVerdict = getVerdictFromScore(finalScore);
 
     const successfulAPIs = [
       vtResults.success,
-      ipqsResults.success,
-      scamalyticsResults.success,
-    ].filter(Boolean).length + 1; // +1 for heuristic
+      userRole === "premium" || userRole === "admin" ? ipqsResults?.success : false,
+      userRole === "premium" || userRole === "admin" ? scamalyticsResults?.success : false,
+      true // heuristic always succeeds
+    ].filter(Boolean).length;
 
     const scanReport = formatScanReport(
       url,
@@ -967,18 +1120,18 @@ router.post("/scan-url", async (req, res) => {
     res.json({
       url,
       scan_time: formatDateForReport(scanTime),
-      vt_results: {
+      vt_results: vtResults.success ? {
         total_sources: vtResults.total_sources || 0,
         malicious_detections: vtResults.malicious_detections || 0,
         risk_score: vtScore,
-      },
-      ipqs_results: {
+      } : null,
+      ipqs_results: (userRole === "premium" || userRole === "admin") && ipqsResults.success ? {
         risk_score: ipqsScore,
-        is_phishing: ipqsResults.is_phishing,
-        is_malware: ipqsResults.is_malware,
-        is_suspicious: ipqsResults.is_suspicious,
-      },
-      scamalytics_results: scamalyticsResults.success ? {
+        is_phishing: ipqsResults?.is_phishing,
+        is_malware: ipqsResults?.is_malware,
+        is_suspicious: ipqsResults?.is_suspicious,
+      } : null,
+      scamalytics_results: (userRole === "premium" || userRole === "admin") && scamalyticsResults?.success ? {
         ip: scamalyticsResults.ip,
         risk_score: scamalyticsScore,
         verdict: scamalyticsResults.verdict
@@ -993,24 +1146,26 @@ router.post("/scan-url", async (req, res) => {
       more_info: `If you want to learn more about phishing awareness and protection, visit our education page: ${educationLink}`,
       scan_report: scanReport,
     });
+    
   } catch (error) {
     console.error("❌ Error scanning URL:", error.message);
     res.status(500).json({ error: "Failed to scan URL. Please try again." });
   }
 });
+
 function cleanUrl(rawUrl) {
   if (!rawUrl) return "";
 
   return rawUrl
-    .replace(/<\/?.*?>/g, '')         // ✅ strip HTML tags (new)
-    .replace(/["'><)\]]+$/g, '')      // trailing junk
-    .replace(/^[\["'<(]+/g, '')       // leading junk
+    .replace(/<\/?.*?>/g, '')
+    .replace(/["'><)\]]+$/g, '')
+    .replace(/^[\["'<(]+/g, '')
     .trim()
-    .toLowerCase();                  // normalize for deduplication
+    .toLowerCase();
 }
 
 // POST /api/scan-eml-file — Scan an email file with attachments
-router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
+router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async (req, res) => {
   if (!req.file)
     return res.status(400).json({ error: "No file uploaded" });
 
@@ -1040,8 +1195,8 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
 
     const uniqueUrls = [...url];
 
-
-    // Scan URLs concurrently with VirusTotal + IPQS + Scamalytics
+    // Scan URLs concurrently
+    const userRole = await getUserRole(req);
     const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
       const blocked = await BlockedUrl.findOne({ url: u });
       if (blocked?.status === "malicious") {
@@ -1050,41 +1205,72 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
           vt_results: null,
           ipqs_results: null,
           scamalytics_results: null,
-          heuristic_analysis: null,  // 🔴 Do NOT return a heuristic score here!
+          heuristic_analysis: null,
           aggregated_risk_score: 100,
           verdict: "🔴 Malicious (Blocked by admin)",
           blocked_by_admin: true
         };
       }
-
-
-      // Proceed with normal scanning only if NOT blocked
-      const [vtRes, ipqsRes, scamalyticsRes] = await Promise.all([
-        scanUrlVT(u),
-        scanUrlIPQS(u),
-        scanWithScamalytics(u)
-      ]);
-
+      
+      let vtRes = { success: false };
+      let ipqsRes = { success: false };
+      let scamalyticsRes = { success: false };
+      
+      if (userRole === "premium" || userRole === "admin") {
+        [vtRes, ipqsRes, scamalyticsRes] = await Promise.all([
+          scanUrlVT(u),
+          scanUrlIPQS(u),
+          scanWithScamalytics(u)
+        ]);
+      } else {
+        vtRes = await scanUrlVT(u);
+      }
+      
       const vtRisk = vtRes?.risk_score || 0;
       const ipqsRisk = ipqsRes?.risk_score || 0;
       const scamalyticsRisk = scamalyticsRes?.risk_score || 0;
-
+      
       const heuristicStatic = analyzeUrlHeuristically(u);
       const heuristicDynamic = await analyzeDomainAge(u);
       const heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
       const heuristicReasons = [...heuristicStatic.reasons];
       if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
       const heuristicVerdict = getVerdictFromScore(heuristicScore);
-
-      const allScores = [vtRisk, ipqsRisk, scamalyticsRisk, heuristicScore];
-      const availableScores = allScores.filter(score => score > 0);
-      const finalScore = Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length || 0);
+      
+      // Calculate aggregated score based on available data
+      const availableScores = [];
+      const weights = [];
+      
+      if (vtRes.success) {
+        availableScores.push(vtRisk);
+        weights.push(0.3);
+      }
+      if (ipqsRes.success) {
+        availableScores.push(ipqsRisk);
+        weights.push(0.4);
+      }
+      if (scamalyticsRes.success) {
+        availableScores.push(scamalyticsRisk);
+        weights.push(0.1);
+      }
+      availableScores.push(heuristicScore);
+      weights.push(0.2);
+      
+      // Normalize weights
+      const totalWeight = weights.reduce((a, b) => a + b, 0);
+      const normalizedWeights = weights.map(w => w / totalWeight);
+      
+      // Calculate weighted average
+      const finalScore = Math.round(
+        availableScores.reduce((sum, score, idx) => sum + (score * normalizedWeights[idx]), 0)
+      );
+      
       const finalVerdict = getVerdictFromScore(finalScore);
-
+      
       return {
         url: u,
-        vt_results: vtRes,
-        ipqs_results: ipqsRes,
+        vt_results: vtRes.success ? vtRes : null,
+        ipqs_results: ipqsRes.success ? ipqsRes : null,
         scamalytics_results: scamalyticsRes.success ? scamalyticsRes : null,
         heuristic_analysis: {
           score: heuristicScore,
@@ -1134,26 +1320,8 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
     const senderEmail = parsedEmail.from?.value?.[0]?.address || "";
 
     let emailHeaderScanResult = null;
-    if (senderEmail && rawHeaders) {
-      try {
-        const response = await axios.post(
-          `https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(senderEmail)}`,
-          {
-            email_header: rawHeaders,
-            strictness: 2,
-            fast: true
-          },
-          {
-            headers: {
-              "Content-Type": "application/json"
-            }
-          }
-        );
-        emailHeaderScanResult = response.data;
-      } catch (error) {
-        console.error("Error scanning email headers with IPQS:", error.response?.data || error.message);
-        emailHeaderScanResult = { error: error.response?.data || error.message };
-      }
+    if (senderEmail) {
+      emailHeaderScanResult = await scanEmailHeaderWithIPQS(senderEmail);
     }
 
     const headersObject = {};
@@ -1187,11 +1355,23 @@ router.post("/scan-eml-file", upload.single("emlFile"), async (req, res) => {
       verdictBreakdown: finalVerdictSummary.details
     });
 
-
   } catch (err) {
     console.error("Error parsing or scanning .eml file:", err);
     res.status(500).json({ error: "Failed to parse or scan .eml file." });
   }
 });
+
+// Helper: Get user role from session or request
+async function getUserRole(req) {
+  if (req.session && req.session.user) {
+    return req.session.user.role;
+  }
+  // Optionally, allow passing userId in body for API clients
+  if (req.body && req.body.userId) {
+    const user = await User.findById(req.body.userId);
+    return user?.role || "premium";
+  }
+  return "premium";
+}
 
 module.exports = router;

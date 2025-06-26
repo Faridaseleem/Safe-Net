@@ -16,14 +16,22 @@ const Signup = () => {
     setError("");
     setLoading(true);
 
+    // Get selected plan from localStorage
+    let selectedPlan = localStorage.getItem('selectedPlan');
+    let role = 'standard';
+    if (selectedPlan && selectedPlan === 'premium') role = 'premium';
+    console.log('Signup role being sent:', role);
+
     try {
       const response = await axios.post("https://localhost:5000/api/auth/signup", {
         name,
         email: email.trim(),
         password: password.trim(),
+        role,
       });
 
       alert("Signup successful! A verification code has been sent to your email.");
+      localStorage.removeItem('selectedPlan');
       navigate(`/verify?email=${email}`); // Redirect to verification page
     } catch (err) {
       setError(err.response?.data?.message || "Signup failed. Try again.");

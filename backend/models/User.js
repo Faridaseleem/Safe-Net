@@ -13,10 +13,10 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, required: true },
     verificationCode: { type: String, required: false },
     verified: { type: Boolean, default: false },
-    role: {                        // <-- Add this
+    role: {
       type: String,
-      enum: ["user", "admin"],
-      default: "user"
+      enum: ["standard", "premium", "admin"],
+      default: "standard"
     },
     createdAt: { type: Date, default: Date.now },
   },
