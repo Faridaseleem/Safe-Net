@@ -23,6 +23,9 @@ const Login = () => {
         {
           email: email.trim(),
           password: password.trim(),
+        },
+       {
+          withCredentials: true, // ✅ Required for session cookies
         }
       );
 
