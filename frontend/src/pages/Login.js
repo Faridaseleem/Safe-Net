@@ -32,8 +32,7 @@ const Login = () => {
           headers: {
             'Content-Type': 'application/json',
           }
-        }
-      );
+    });
 
       console.log("Login response:", response.data);
 
