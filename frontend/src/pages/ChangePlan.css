@@ -1,93 +1,82 @@
 .change-plan-wrapper {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-  }
-  
-  .change-plan-container {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    max-width: 900px;
     width: 100%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  }
-  
-  .change-plan-title {
+    min-height: 100vh;
+    margin-top: 5vh;
+}
+
+.change-plan-container {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 0px 15px rgba(0, 255, 255, 0.6);
+    width: 90%;
+    max-width: 800px;
     text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 2.5rem;
-    font-weight: 700;
-  }
-  
-  .current-plan-info {
-    text-align: center;
-    font-size: 1.2rem;
-    color: #666;
-    margin-bottom: 40px;
-  }
-  
-  .current-plan-badge {
-    background: #667eea;
-    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.change-plan-title {
+    color: #8f9dff;
+    margin-bottom: 10px;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.current-plan-info {
+    font-size: 1rem;
+    color: #ddd;
+    margin-bottom: 25px;
+}
+
+.current-plan-badge {
+    background: #00ffff;
+    color: black;
     padding: 5px 15px;
     border-radius: 20px;
-    font-weight: 600;
-    display: inline-block;
+    font-weight: bold;
     margin-left: 10px;
-  }
-  
-  .plans-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 30px;
-    margin-bottom: 40px;
-  }
-  
-  .plan-card {
-    border: 3px solid #e0e0e0;
-    border-radius: 15px;
-    padding: 30px;
-    position: relative;
+}
+
+/* Plan Cards */
+.plans-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.plan-card {
+    padding: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #c0c3d7;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0px 0px 8px rgba(0, 255, 255, 0.4);
+    text-align: left;
     cursor: pointer;
-    transition: all 0.3s ease;
-    background: #fff;
-  }
-  
-  .plan-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  }
-  
-  .plan-card.selected {
-    border-color: #667eea;
-    background: #f8f9ff;
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-  }
-  
-  .plan-card.current {
+    position: relative;
+}
+
+.plan-card:hover {
+    border-color: #00ffff;
+    box-shadow: 0px 0px 12px rgba(0, 255, 255, 0.6);
+}
+
+.plan-card.selected {
+    border-color: #00ffff;
+    background: rgba(0, 255, 255, 0.2);
+}
+
+.plan-card.current {
     border-color: #28a745;
-  }
-  
-  .current-label {
-    position: absolute;
-    top: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #28a745;
-    color: white;
-    padding: 5px 20px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-  
-  .premium-badge {
+}
+
+.current-label,
+.premium-badge {
     position: absolute;
     top: -15px;
     right: 20px;
@@ -97,142 +86,100 @@
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 600;
-  }
-  
-  .plan-card h3 {
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 1.8rem;
-  }
-  
-  .plan-price {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #667eea;
-    margin-bottom: 25px;
-  }
-  
-  .plan-price span {
-    font-size: 1rem;
-    color: #999;
-  }
-  
-  .plan-features {
+}
+
+.plan-card h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #7b88df;
+    text-shadow: 0px 0px 5px rgba(85, 84, 84, 0.8);
+}
+
+.plan-price {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #797bf1;
+    margin-top: 5px;
+}
+
+.plan-features {
     list-style: none;
     padding: 0;
-    margin: 0 0 20px 0;
-  }
-  
-  .plan-features li {
-    padding: 10px 0;
-    color: #666;
-    font-size: 1rem;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  
-  .plan-features li:last-child {
-    border-bottom: none;
-  }
-  
-  .plan-action {
-    background: #667eea;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    border-radius: 8px;
-    font-weight: 600;
+    margin-top: 10px;
+}
+
+.plan-features li {
+    font-size: 14px;
+    margin: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 4px;
+}
+
+/* Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
     margin-top: 20px;
-  }
-  
-  .message {
+}
+
+.cancel-button,
+.update-button {
+    background-color: #00ffff;
+    color: black;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0px 0px 10px rgba(0, 255, 255, 0.8);
+    width: 150px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif; /* 👈 Customize this */
+
+}
+
+.update-button:hover,
+.cancel-button:hover {
+    background-color: #008b8b;
+    box-shadow: 0px 0px 12px rgba(0, 255, 255, 1);
+}
+
+/* Messages */
+.message {
     padding: 15px;
     border-radius: 8px;
     text-align: center;
     margin-bottom: 20px;
     font-weight: 500;
-  }
-  
-  .message.success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-  
-  .message.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-  
-  .action-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-  }
-  
-  .cancel-button,
-  .update-button {
-    padding: 12px 40px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  
-  .cancel-button {
-    background: #f0f0f0;
-    color: #666;
-  }
-  
-  .cancel-button:hover {
-    background: #e0e0e0;
-  }
-  
-  .update-button {
-    background: #667eea;
-    color: white;
-  }
-  
-  .update-button:hover {
-    background: #5a67d8;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-  }
-  
-  .update-button:disabled,
-  .cancel-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  /* Mobile responsiveness */
-  @media (max-width: 768px) {
-    .change-plan-container {
-      padding: 20px;
-    }
-  
-    .change-plan-title {
-      font-size: 2rem;
-    }
-  
+}
+
+.message.success {
+  background: rgba(0, 255, 128, 0.15); /* optional: transparent green */
+  color: #00ffaa; /* ✅ light greenish-cyan */
+  border: 1px solid #00ffaa;
+}
+
+.message.error {
+  background: rgba(255, 0, 0, 0.1); /* optional: light transparent red */
+  color: #ff4d4d; /* ✅ neon red or bright crimson */
+  border: 1px solid #ff4d4d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
     .plans-container {
-      grid-template-columns: 1fr;
+        flex-direction: column;
     }
-  
-    .plan-card {
-      padding: 20px;
-    }
-  
+
     .action-buttons {
-      flex-direction: column;
-      width: 100%;
+        flex-direction: column;
+        width: 100%;
     }
-  
+
     .cancel-button,
     .update-button {
-      width: 100%;
+        width: 100%;
     }
-  }
+}
