@@ -1,22 +1,43 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
 import "./SelectPlan.css";
 
 const SelectPlan = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = new URLSearchParams(location.search).get("email");
+
+  useEffect(() => {
+    if (!email) {
+      alert("Please sign up first");
+      navigate("/signup");
+    }
+  }, [email, navigate]);
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
-    localStorage.setItem('selectedPlan', plan.toLowerCase());
   };
 
-  const handleProceed = () => {
-    if (selectedPlan) {
-      alert(`You have selected the ${selectedPlan} plan.`);
-      navigate("/login"); // Redirect to login after selection
-    } else {
+  const handleProceed = async () => {
+    if (!selectedPlan) {
       alert("Please select a plan to proceed.");
+      return;
+    }
+
+    try {
+      // Update the user's plan in the backend
+      await axios.post("https://localhost:5000/api/auth/update-plan", {
+        email: email,
+        plan: selectedPlan.toLowerCase()
+      });
+
+      alert(`You have selected the ${selectedPlan} plan. Please check your email for verification.`);
+      navigate(`/verify?email=${email}`);
+    } catch (error) {
+      alert("Failed to update plan. Please try again.");
+      console.error("Error updating plan:", error);
     }
   };
 
@@ -38,7 +59,6 @@ const SelectPlan = () => {
             <p>✔ URL and Email file scanning with VirusTotal API</p>
             <p>✔ Access to security reports</p>
             <p>✔ Limited scanning (10 scans per day)</p>
-    
             <p className="price">💰 Free</p>
           </div>
 
@@ -56,7 +76,9 @@ const SelectPlan = () => {
           </div>
         </div>
 
-        <button className="select-plan-button" onClick={handleProceed}>Proceed to Login</button>
+        <button className="select-plan-button" onClick={handleProceed}>
+          Proceed to Verification
+        </button>
       </div>
     </div>
   );

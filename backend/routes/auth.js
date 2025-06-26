@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Sign Up Route with Email Verification (unchanged)
 router.post("/signup", async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body; // No role here
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
@@ -21,12 +21,7 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    if (password.startsWith("$2b$")) {
-      return res.status(400).json({ message: "Password is already hashed!" });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const verificationCode = crypto.randomInt(100000, 999999);
 
     const newUser = new User({
@@ -35,18 +30,57 @@ router.post("/signup", async (req, res) => {
       password: hashedPassword,
       verificationCode,
       verified: false,
-      role: role === "premium" ? "premium" : "standard", // Default to standard, allow premium if specified
+      // role will default to "standard" from schema
     });
 
     await newUser.save();
+    // Don't send verification email here - wait until after plan selection
 
-    await sendVerificationEmail(email, verificationCode);
-
-    res
-      .status(201)
-      .json({ message: "User created. Verification code sent to email." });
+    res.status(201).json({ 
+      message: "User created successfully. Please select a plan."
+    });
   } catch (error) {
     console.error("Signup Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+// Add this route to handle plan updates
+router.post("/update-plan", async (req, res) => {
+  const { email, plan } = req.body;
+
+  if (!email || !plan) {
+    return res.status(400).json({ message: "Email and plan are required" });
+  }
+
+  try {
+    // Find user by email
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Validate plan
+    const validPlans = ['standard', 'premium'];
+    if (!validPlans.includes(plan)) {
+      return res.status(400).json({ message: "Invalid plan selected" });
+    }
+
+    // Update user's role/plan
+    user.role = plan;
+    await user.save();
+
+    // Send verification email if not already sent
+    if (!user.verified && user.verificationCode) {
+      await sendVerificationEmail(email, user.verificationCode);
+    }
+
+    res.status(200).json({ 
+      message: "Plan updated successfully", 
+      role: user.role 
+    });
+  } catch (error) {
+    console.error("Update Plan Error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });

@@ -25,11 +25,10 @@ const App = () => {
       <Routes>
         {/* RootPage (No Navbar) */}
         <Route path="/" element={<RootPage />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/verify" element={<Verify />} />
         <Route path="/select-plan" element={<SelectPlan />} />
-
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/login" element={<Login />} />
         {/* Other Pages (With Navbar) */}
         <Route
           path="/*"

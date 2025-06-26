@@ -506,12 +506,13 @@ async function handleAskAI(chatId, question, session) {
             conversationHistory: session.chatHistory.slice(-10)
         });
 
-        const answer = response.data.answer;
+        // Fix: Changed from response.data.answer to response.data.message
+        const answer = response.data.message || "No response received";
         session.chatHistory.push({ role: 'assistant', content: answer });
 
         // Split long messages if needed (Telegram limit is 4096 characters)
-        if (answer.length > 4000) {
-            const chunks = answer.match(/.{1,4000}/g);
+        if (answer && answer.length > 4000) {
+            const chunks = answer.match(/.{1,4000}/g) || [];
             for (const chunk of chunks) {
                 await bot.sendMessage(chatId, chunk);
             }

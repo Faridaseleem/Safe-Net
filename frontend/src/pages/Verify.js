@@ -20,7 +20,7 @@ const Verify = () => {
     try {
       await axios.post("https://localhost:5000/api/auth/verify", { email, code });
       alert("Email verified successfully! Please select your plan.");
-      navigate("/select-plan"); // Redirect to plan selection page
+      navigate("/login"); // Redirect to plan selection page
     } catch (err) {
       setError(err.response?.data?.message || "Verification failed. Try again.");
     } finally {
