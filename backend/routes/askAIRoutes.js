@@ -4,87 +4,128 @@ const router = express.Router();
 require("dotenv").config();
 const User = require("../models/User");
 
-// Helper: Get user role from session or request
 async function getUserRole(req) {
+  console.log("Session user:", req.session?.user);
+  console.log("Body userId:", req.body?.userId);
+
+  // ✅ First check session
   if (req.session && req.session.user) {
+    console.log("✅ Got user from session:", req.session.user);
     return req.session.user.role;
   }
-  if (req.body && req.body.userId) {
+
+  // ✅ Then check body userId
+  if (req.body?.userId) {
     const user = await User.findById(req.body.userId);
+    console.log("✅ Fetched from DB:", user?.email, user?.role);
     return user?.role || "standard";
   }
+
+  // ❌ Fallback
+  console.log("❌ No session or userId. Defaulting to standard.");
   return "standard";
 }
 
+
 router.post("/ask-ai", async (req, res) => {
-  const { question, conversationHistory } = req.body;
+  const { question, conversationHistory, userId } = req.body;
+
+  console.log("📥 Incoming question:", question);
+  console.log("🧠 User ID:", userId);
+  console.log("🧠 Session user:", req.session?.user);
+
   if (!question) {
     return res.status(400).json({ error: "Question is required." });
   }
 
-  // Restrict to premium or admin users
   const role = await getUserRole(req);
+
+  console.log("🛡️ Resolved user role:", role);
+
   if (role !== "premium" && role !== "admin") {
     return res.status(403).json({ error: "AI-powered chatbot is available for premium users only." });
   }
 
+
   try {
-    const API_KEY = process.env.GEMINI_API_KEY;
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+  const API_KEY = process.env.GEMINI_API_KEY;
+  const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
 
-    // Build conversation context
-    let conversationContext = "";
-    if (conversationHistory && conversationHistory.length > 0) {
-      conversationContext = "Previous conversation:\n";
-      conversationHistory.forEach(msg => {
-        conversationContext += `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}\n`;
-      });
-      conversationContext += "\n";
-    }
 
-    // System prompt with conversation context
-    const systemPrompt = `You are a helpful cybersecurity expert assistant. Your role is to ONLY answer questions related to cybersecurity, information security, and related topics.
+  // System prompt (persistent role)
+  // Cybersecurity instruction prefix
+  const systemInstructions = `You are a helpful cybersecurity expert assistant. 
+  Only answer questions related to cybersecurity, information security, or related fields. 
+  If a question is outside that scope, politely decline.`;
 
-IMPORTANT INSTRUCTIONS:
-- If a question is about cybersecurity topics (network security, encryption, vulnerabilities, ethical hacking, malware, security protocols, data protection, etc.), provide a helpful and detailed answer.
-- If a question is NOT about cybersecurity, politely decline with a response like: "I appreciate your question, but I'm specifically designed to help with cybersecurity-related topics. I can assist you with questions about network security, encryption, vulnerabilities, ethical hacking, malware protection, security best practices, and other information security topics. Is there anything cybersecurity-related I can help you with?"
-- Remember the conversation context and provide coherent follow-up answers.
+  // Combine with conversation history and question
+  let conversationContext = "";
+  if (conversationHistory && conversationHistory.length > 0) {
+    conversationContext = conversationHistory.map(msg => {
+      const speaker = msg.role === 'user' ? 'User' : 'Assistant';
+      return `${speaker}: ${msg.content}`;
+    }).join('\n') + '\n\n';
+  }
 
-${conversationContext}Current User Question: ${question}`;
-
-    const payload = {
-      contents: [
-        {
-          parts: [
-            {
-              text: systemPrompt
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 1000,
+  // ✅ Payload without system role
+  const payload = {
+    contents: [
+      {
+        parts: [
+          {
+            text: `${systemInstructions}\n\n${conversationContext}${question}`
+          }
+        ]
       }
-    };
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 1000
+    }
+  };
 
-    const headers = {
-      "Content-Type": "application/json",
-    };
 
-    const response = await axios.post(geminiEndpoint, payload, { headers });
-    
-    // Extract the response text from Gemini's response structure
-    const answer = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "No answer provided";
+  const headers = { "Content-Type": "application/json" };
 
-    return res.json({ answer });
-  } catch (error) {
-    console.error("Error in Ask AI route:", error.response?.data || error.message);
-    return res.status(500).json({ 
-      error: "Failed to get answer from AI.",
-      details: error.response?.data?.error?.message || error.message 
+  // ✅ API request
+  const response = await axios.post(geminiEndpoint, payload, { headers });
+
+  // ✅ Log actual response
+  console.log("🤖 Gemini raw response:", response.data);
+
+  const answer = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "No answer provided";
+
+  return res.json({ message: answer });
+
+} catch (error) {
+  console.error("❌ Error in Ask AI route");
+  console.error("🔴 Full error object:", error);
+
+  if (error.response) {
+    console.error("🔴 Error status:", error.response.status);
+    console.error("🔴 Error data:", error.response.data);
+    return res.status(500).json({
+      error: "Failed to get answer from AI (response error).",
+      status: error.response.status,
+      details: error.response.data
+    });
+  } else if (error.request) {
+    console.error("🔴 No response received from Gemini API.");
+    console.error(error.request);
+    return res.status(500).json({
+      error: "No response from Gemini API.",
+      details: error.message
+    });
+  } else {
+    console.error("🔴 Error setting up the request:", error.message);
+    return res.status(500).json({
+      error: "Unexpected error during AI request setup.",
+      details: error.message
     });
   }
+}
+
+
 });
 
 module.exports = router;

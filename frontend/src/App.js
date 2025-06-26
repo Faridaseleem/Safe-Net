@@ -19,6 +19,7 @@ import "./App.css";
 
 const App = () => {
   const { user } = useUser();
+  console.log("Current user in Chatbot:", user);
   return (
     <Router>
       <Routes>

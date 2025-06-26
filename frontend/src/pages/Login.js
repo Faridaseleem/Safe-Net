@@ -30,6 +30,7 @@ const Login = () => {
 
       localStorage.setItem("token", token);
       login(user); // Save user info (including role) in context
+      localStorage.setItem("user", JSON.stringify(response.data.user)); // or whatever your backend returns
 
       // Redirect based on role
       if (user.role === "admin") {
