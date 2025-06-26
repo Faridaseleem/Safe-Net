@@ -21,7 +21,7 @@ const ReportURL = () => {
     setMessage(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/report-url", {
+      const res = await fetch("https://localhost:5000/api/report-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

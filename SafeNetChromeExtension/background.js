@@ -9,7 +9,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId === "scan-url") {
     chrome.tabs.create({
-      url: `http://localhost:5000/scan-result?url=${encodeURIComponent(info.linkUrl)}`
+      url: `https://localhost:5000/scan-result?url=${encodeURIComponent(info.linkUrl)}`
     });
   }
 });

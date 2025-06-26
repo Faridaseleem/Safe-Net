@@ -306,8 +306,8 @@ async function handleURL(chatId, url, mode, session) {
 
     try {
         const endpoint = mode === 'scan_url' 
-            ? 'http://localhost:5000/api/scan-url'
-            : 'http://localhost:5000/api/report-url';
+            ? 'https://localhost:5000/api/scan-url'
+            : 'https://localhost:5000/api/report-url';
 
         const response = await axios.post(endpoint, { url });
         
@@ -391,7 +391,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         });
 
         // Send to your scan API
-        const scanResponse = await axios.post('http://localhost:5000/api/scan-eml-file', formData, {
+        const scanResponse = await axios.post('https://localhost:5000/api/scan-eml-file', formData, {
             headers: {
                 ...formData.getHeaders()
             }
@@ -423,7 +423,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         let errorMessage = '❌ *Email Scan Failed*\n\n';
         errorMessage += 'Unable to scan the email file.\n\n';
         errorMessage += '📊 *Try scanning it on our webpage:*\n';
-        errorMessage += '🔗 [Visit SafeNet Scanner](http://localhost:3000/scan-email)';
+        errorMessage += '🔗 [Visit SafeNet Scanner](https://localhost:3000/scan-email)';
         
         bot.sendMessage(chatId, errorMessage, {
             parse_mode: 'Markdown',
@@ -456,7 +456,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         });
 
         // Send to your scan API
-        const scanResponse = await axios.post('http://localhost:5000/api/scan-eml-file', formData, {
+        const scanResponse = await axios.post('https://localhost:5000/api/scan-eml-file', formData, {
             headers: {
                 ...formData.getHeaders()
             }
@@ -501,7 +501,7 @@ async function handleAskAI(chatId, question, session) {
     bot.sendChatAction(chatId, 'typing');
 
     try {
-        const response = await axios.post('http://localhost:5000/api/ask-ai', {
+        const response = await axios.post('https://localhost:5000/api/ask-ai', {
             question,
             conversationHistory: session.chatHistory.slice(-10)
         });

@@ -160,7 +160,7 @@ router.post("/logout", async (req, res) => {
       res.clearCookie("connect.sid", {
         path: "/",
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: true,
         sameSite: "strict",
       });
 

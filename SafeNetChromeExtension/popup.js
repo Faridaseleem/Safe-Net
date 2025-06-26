@@ -1,6 +1,6 @@
 chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
   const currentUrl = tabs[0].url;
-  fetch("http://localhost:5000/api/scan-url", {
+  fetch("https://localhost:5000/api/scan-url", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url: currentUrl })

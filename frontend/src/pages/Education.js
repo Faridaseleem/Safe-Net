@@ -49,9 +49,9 @@ function Education() {
                 link: "https://portswigger.net/daily-swig/phishing"
             },
             {
-                title: "10 Cyber Security Trends For 2025",
-                summary: "Zero trust is one of the top cyber security trends in 2025, with more and more organizations adopting micro-segmentation, user context checks, ...",
-                link: "https://www.sentinelone.com/cybersecurity-101/cybersecurity/cyber-security-trends/"
+                title: "Cybersecurity trends: IBM's predictions for 2025",
+                summary: "With AI and gen AI likely taking the cybersecurity spotlight in 2025, there are still more trends to consider as we look to the new year.",
+                link: "https://www.ibm.com/think/insights/cybersecurity-trends-ibm-predictions-2025"
             },
             {
                 title: "The Anatomy of a Phishing Email",

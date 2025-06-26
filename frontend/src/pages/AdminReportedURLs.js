@@ -9,7 +9,7 @@ const AdminReportUrls = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/reported-urls");
+      const res = await fetch("https://localhost:5000/api/admin/reported-urls");
       if (!res.ok) throw new Error("Failed to fetch reports");
       const data = await res.json();
       setReports(data);
@@ -21,7 +21,7 @@ const AdminReportUrls = () => {
 
   const updateDecision = async (id, decision) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/reported-urls/${id}/decision`, {
+      const res = await fetch(`https://localhost:5000/api/admin/reported-urls/${id}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision }),

@@ -10,25 +10,39 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const askAIRoutes = require("./routes/askAIRoutes");
 const telegramBotRoutes = require("./routes/telegramBotRoutes");
-const educationRoutes = require("./routes/educationRoutes"); // <<-- 1. ADD THIS LINE
+const educationRoutes = require("./routes/educationRoutes");
+
+const https = require("https");
+const fs = require("fs");
+
+// ✅ Allow self-signed certs in development
+if (process.env.NODE_ENV !== "production") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
 
 dotenv.config();
 connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 443;
 
-// ✅ Allow frontend access (make sure this matches your frontend port!)
+// ✅ Load HTTPS certificate and key
+const sslOptions = {
+  key: fs.readFileSync("../localhost-key.pem"),
+  cert: fs.readFileSync("../localhost.pem"),
+};
+
+// ✅ CORS config
 app.use(
   cors({
-    origin: "http://localhost:3000", // or the domain of your frontend (e.g. chrome-extension://...)
+    origin: "https://localhost:3000",
     credentials: true,
   })
 );
 
 app.use(express.json());
 
-// ✅ Setup session middleware
+// ✅ Sessions
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -42,7 +56,7 @@ app.use(
       autoRemoveInterval: 1,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       httpOnly: true,
       sameSite: "Lax",
       maxAge: 10 * 60 * 1000,
@@ -50,7 +64,7 @@ app.use(
   })
 );
 
-// 🔍 Debug session
+// 🔍 Session Debugging
 app.get("/session-status", (req, res) => {
   res.json({ session: req.session });
 });
@@ -63,14 +77,14 @@ app.use((req, res, next) => {
 app.use("/api", askAIRoutes);
 app.use("/api", scanRoutes);
 app.use("/api", reportRoutes);
-app.use("/api", educationRoutes); // <<-- 2. ADD THIS LINE
+app.use("/api", educationRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/telegram", telegramBotRoutes);
 
 // ✅ Default route
 app.get("/", (req, res) => {
-  res.send("✅ Server is running and connected to MongoDB!");
+  res.send("✅ HTTPS Server is running and connected to MongoDB!");
 });
 
 // ✅ 404 fallback
@@ -78,7 +92,7 @@ app.use((req, res) => {
   res.status(404).json({ error: "404 Not Found - Invalid Route" });
 });
 
-// ✅ Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+// ✅ Start HTTPS Server
+https.createServer(sslOptions, app).listen(PORT, () => {
+  console.log(`🔒 HTTPS Server running at https://localhost:${PORT}`);
 });

@@ -56,7 +56,7 @@ const ScanEmail = () => {
     const formData = new FormData();
     formData.append("emlFile", file);
 
-    fetch("http://localhost:5000/api/scan-eml-file", {
+    fetch("https://localhost:5000/api/scan-eml-file", {
       method: "POST",
       body: formData,
     })

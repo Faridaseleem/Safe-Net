@@ -18,7 +18,7 @@ const Verify = () => {
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:5000/api/auth/verify", { email, code });
+      await axios.post("https://localhost:5000/api/auth/verify", { email, code });
       alert("Email verified successfully! Please select your plan.");
       navigate("/select-plan"); // Redirect to plan selection page
     } catch (err) {

@@ -13,11 +13,8 @@ const Home = () => {
     <p>🛡️ <strong>SafeNet:</strong> Your First Line of Defense Against Online Threats! <br />
     🔍 One click, instant results—because your online security matters! <br />
     🚀 Browse with confidence, let SafeNet be your digital shield!</p>
-     </div>
+     </div><br /><br />
 
-      
-     <p><strong>Choose a service below:</strong></p>
-      
       <div className="home-buttons">
         <button onClick={() => navigate("/scan-url")}>🔍 Scan a URL</button>
         <button onClick={() => navigate("/scan-email")}>📧 Scan an Email</button>

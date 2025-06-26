@@ -83,7 +83,7 @@ const Chatbot = () => {
   // Fetch Telegram link from backend
   const fetchTelegramLink = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/telegram/bot-info');
+      const response = await axios.get('https://localhost:5000/api/telegram/bot-info');
       if (response.data.success) {
         setTelegramLink(response.data.botLink);
       }
@@ -131,7 +131,7 @@ const Chatbot = () => {
     { name: "Scan URL", type: "scan_url" },
     { name: "Scan Email", type: "scan_email" },
     { name: "Report URL", type: "report_url" },
-    { name: "Education", type: "education" }
+    
   ];
 
   // When a service is selected from the services mode, clear previous data.
@@ -169,7 +169,7 @@ const Chatbot = () => {
       }));
 
       const response = await axios.post(
-        "http://localhost:5000/api/ask-ai",
+        "https://localhost:5000/api/ask-ai",
         { 
           question,
           conversationHistory 
@@ -223,7 +223,7 @@ const Chatbot = () => {
         <div className="email-info-box">
           <p className="email-info-title">📊 <strong>For more details scan it on our webpage:</strong></p>
           <a 
-            href="http://localhost:3000/scan-email" 
+            href="https://localhost:3000/scan-email" 
             target="_blank" 
             rel="noopener noreferrer"
             className="email-info-link"
@@ -250,7 +250,7 @@ const Chatbot = () => {
       if (selectedService.type === "scan_url") {
         axios
           .post(
-            "http://localhost:5000/api/scan-url",
+            "https://localhost:5000/api/scan-url",
             { url: userText },
             { withCredentials: true }
           )
@@ -265,7 +265,7 @@ const Chatbot = () => {
       } else if (selectedService.type === "report_url") {
         axios
           .post(
-            "http://localhost:5000/api/report-url",
+            "https://localhost:5000/api/report-url",
             { url: userText },
             { withCredentials: true }
           )
@@ -290,7 +290,7 @@ const Chatbot = () => {
         setResult({ loading: true });
         
         axios
-          .post("http://localhost:5000/api/scan-eml-file", formData, {
+          .post("https://localhost:5000/api/scan-eml-file", formData, {
             withCredentials: true
           })
           .then((res) => {
@@ -301,20 +301,7 @@ const Chatbot = () => {
             console.error("Error in scan_eml_file axios call:", err);
             setResult({ error: "Failed to scan email. Please try scanning it on our webpage." });
           });
-      } else if (selectedService.type === "education") {
-        axios
-          .get("http://localhost:5000/api/education/phishing", {
-            withCredentials: true
-          })
-          .then((res) => {
-            console.log("Response from education:", res.data);
-            setResult(res.data);
-          })
-          .catch((err) => {
-            console.error(err);
-            setResult({ error: "Failed to load education content." });
-          });
-      }
+      } 
     }
   };
 
@@ -484,9 +471,7 @@ const Chatbot = () => {
             className="service-input"
           />
         );
-      } else if (selectedService.type === "education") {
-        inputComponent = <p>No input required. Press Submit to view content.</p>;
-      }
+      } 
       return (
         <div className="service-input-container">
           <p>Selected: {selectedService.name}</p>
@@ -526,7 +511,7 @@ const Chatbot = () => {
                 <div className="error-info-box">
                   <p className="error-info-text">📊 <strong>Try scanning it on our webpage:</strong></p>
                   <a 
-                    href="http://localhost:3000/scan-email"
+                    href="https://localhost:3000/home"
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="error-info-link"
@@ -555,8 +540,6 @@ const Chatbot = () => {
           reportText = result.scan_report
             ? result.scan_report
             : JSON.stringify(result, null, 2);
-        } else if (selectedService && selectedService.type === "education") {
-          reportText = JSON.stringify(result, null, 2);
         } else {
           reportText = JSON.stringify(result, null, 2);
         }
