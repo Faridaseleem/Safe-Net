@@ -1,4 +1,5 @@
 import React from "react";
+import axios from 'axios';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -17,6 +18,7 @@ import Chatbot from "./components/Chatbot"; // NEW: Import Chatbot component**
 import { useUser } from "./contexts/UserContext";
 import "./App.css";
 
+axios.defaults.withCredentials = true;
 const App = () => {
   const { user } = useUser();
   console.log("Current user in Chatbot:", user);

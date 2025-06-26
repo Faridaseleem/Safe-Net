@@ -28,7 +28,7 @@ const Navbar = () => {
       </div>
       <ul className="nav-links">
         <li><Link to="/home"><strong>HOME</strong></Link></li>
-        {/* Removed Scan URL, Scan Email, Report URL, Education links */}
+        <li><Link to="/change-plan"><strong>CHANGE PLAN</strong></Link></li>
         <li><button className="logout-btn" onClick={handleLogout}><strong>Logout</strong></button></li>
       </ul>
     </nav>

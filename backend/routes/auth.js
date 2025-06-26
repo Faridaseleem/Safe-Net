@@ -167,6 +167,110 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Add this route to handle plan changes
+// Route to change user plan (for logged-in users)
+router.post("/change-plan", async (req, res) => {
+  console.log("Change plan request received:", req.body);
+  console.log("Session user:", req.session?.user);
+
+  // Check if user is logged in via session
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ message: "Please login first" });
+  }
+
+  const { newPlan } = req.body;
+  const userId = req.session.user.id;
+
+  if (!newPlan) {
+    return res.status(400).json({ message: "New plan is required" });
+  }
+
+  // Validate plan
+  const validPlans = ['standard', 'premium'];
+  if (!validPlans.includes(newPlan)) {
+    return res.status(400).json({ message: "Invalid plan selected" });
+  }
+
+  try {
+    // Find and update user in database
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user's role in database
+    user.role = newPlan;
+    await user.save();
+
+    // Update session with new role
+    req.session.user.role = newPlan;
+    
+    // Save session
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Failed to update session" });
+      }
+
+      console.log("Plan updated successfully for user:", user.email, "New plan:", newPlan);
+      
+      res.status(200).json({ 
+        success: true,
+        message: "Plan updated successfully", 
+        role: newPlan,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: newPlan
+        }
+      });
+    });
+
+  } catch (error) {
+    console.error("Change Plan Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Add a route to check current plan
+router.get("/current-plan", async (req, res) => {
+  if (!req.session || !req.session.user) {
+    return res.status(401).json({ message: "Not logged in" });
+  }
+
+  try {
+    const user = await User.findById(req.session.user.id);
+    res.json({ 
+      currentPlan: user.role,
+      user: {
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+// Get current user from session
+// In your backend auth routes
+router.get('/current-user', (req, res) => {
+  console.log('Current user endpoint hit');
+  console.log('Session:', req.session);
+  console.log('Session user:', req.session.user);
+  
+  if (!req.session.user) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+  
+  res.json({ 
+    user: req.session.user,
+    sessionID: req.sessionID 
+  });
+});
+
 // Logout Route (unchanged)
 router.post("/logout", async (req, res) => {
   console.log("🔍 Current Session Before Logout:", req.session);
@@ -206,5 +310,6 @@ router.post("/logout", async (req, res) => {
     }
   });
 });
+
 
 module.exports = router;

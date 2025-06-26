@@ -1,3 +1,4 @@
+// Login.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -10,7 +11,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useUser();
+  const { setUser } = useUser(); // Make sure we're using setUser
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -18,28 +19,41 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log("Attempting login for:", email);
+      
       const response = await axios.post(
         "https://localhost:5000/api/auth/login",
         {
           email: email.trim(),
           password: password.trim(),
+        },
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+          }
         }
       );
 
-      const { token, user } = response.data;
+      console.log("Login response:", response.data);
 
-      localStorage.setItem("token", token);
-      login(user); // Save user info (including role) in context
-      localStorage.setItem("user", JSON.stringify(response.data.user)); // or whatever your backend returns
-
-      // Redirect based on role
-      if (user.role === "admin") {
-        navigate("/admin/reports");
-      } else {
+      if (response.data.user) {
+        // Set user in context with all the data
+        setUser({
+          id: response.data.user.id,
+          name: response.data.user.name,
+          email: response.data.user.email,
+          role: response.data.user.role
+        });
+        
+        console.log("User set in context:", response.data.user);
+        
+        alert("Login successful!");
         navigate("/home");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Try again.");
+      console.error("Login error:", err);
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -71,6 +85,9 @@ const Login = () => {
           </button>
         </form>
         {error && <p className="login-error">{error}</p>}
+        <div className="login-links">
+          <p>Don't have an account? <a href="/signup">Sign up</a></p>
+        </div>
       </div>
     </div>
   );

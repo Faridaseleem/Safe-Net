@@ -1,0 +1,238 @@
+.change-plan-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .change-plan-container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 900px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+  
+  .change-plan-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2.5rem;
+    font-weight: 700;
+  }
+  
+  .current-plan-info {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 40px;
+  }
+  
+  .current-plan-badge {
+    background: #667eea;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+    margin-left: 10px;
+  }
+  
+  .plans-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+  }
+  
+  .plan-card {
+    border: 3px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 30px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fff;
+  }
+  
+  .plan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .plan-card.selected {
+    border-color: #667eea;
+    background: #f8f9ff;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  }
+  
+  .plan-card.current {
+    border-color: #28a745;
+  }
+  
+  .current-label {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #28a745;
+    color: white;
+    padding: 5px 20px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .premium-badge {
+    position: absolute;
+    top: -15px;
+    right: 20px;
+    background: #ff6b6b;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .plan-card h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+  }
+  
+  .plan-price {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 25px;
+  }
+  
+  .plan-price span {
+    font-size: 1rem;
+    color: #999;
+  }
+  
+  .plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+  }
+  
+  .plan-features li {
+    padding: 10px 0;
+    color: #666;
+    font-size: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .plan-features li:last-child {
+    border-bottom: none;
+  }
+  
+  .plan-action {
+    background: #667eea;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-top: 20px;
+  }
+  
+  .message {
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  
+  .message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  
+  .message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+  
+  .action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .cancel-button,
+  .update-button {
+    padding: 12px 40px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .cancel-button {
+    background: #f0f0f0;
+    color: #666;
+  }
+  
+  .cancel-button:hover {
+    background: #e0e0e0;
+  }
+  
+  .update-button {
+    background: #667eea;
+    color: white;
+  }
+  
+  .update-button:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  }
+  
+  .update-button:disabled,
+  .cancel-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .change-plan-container {
+      padding: 20px;
+    }
+  
+    .change-plan-title {
+      font-size: 2rem;
+    }
+  
+    .plans-container {
+      grid-template-columns: 1fr;
+    }
+  
+    .plan-card {
+      padding: 20px;
+    }
+  
+    .action-buttons {
+      flex-direction: column;
+      width: 100%;
+    }
+  
+    .cancel-button,
+    .update-button {
+      width: 100%;
+    }
+  }
