@@ -36,7 +36,14 @@ const Scan = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
+        credentials: "include"
       });
+
+      if (response.status === 429) {
+        setResult({ error: "You have reached your daily scan limit (10 per day for standard users). Please try again tomorrow or upgrade your plan." });
+        setLoading(false);
+        return;
+      }
 
       const data = await response.json();
       setResult({ ...data, timestamp: data.scan_time || new Date().toLocaleString() });
@@ -121,11 +128,17 @@ const Scan = () => {
       </p>
       <input
         type="text"
-        placeholder="Enter URL..."
+        placeholder="Enter URL to scan..."
         value={url}
         onChange={(e) => setUrl(e.target.value)}
+        disabled={loading || (result && result.error && result.error.includes('daily scan limit'))}
+        className="scan-input"
       />
-      <button onClick={handleScan} disabled={loading}>
+      <button
+        className="scan-btn"
+        onClick={handleScan}
+        disabled={loading || !url || (result && result.error && result.error.includes('daily scan limit'))}
+      >
         {loading ? "Scanning..." : "Scan Now"}
       </button>
 
@@ -252,10 +265,7 @@ const Scan = () => {
       )}
 
       {result && result.error && (
-        <div className="scan-error">
-          <h3>❌ Error</h3>
-          <p>{result.error}</p>
-        </div>
+        <div className="scan-error">{result.error}</div>
       )}
     </div>
   );

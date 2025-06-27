@@ -61,8 +61,16 @@ const ScanEmail = () => {
     fetch("https://localhost:5000/api/scan-eml-file", {
       method: "POST",
       body: formData,
+      credentials: "include"
     })
       .then((res) => {
+        if (res.status === 429) {
+          setError("You have reached your daily scan limit (10 per day for standard users). Please try again tomorrow or upgrade your plan.");
+          setLoading(false);
+          setScanResults(null);
+          setFileName("");
+          return Promise.reject(new Error("quota"));
+        }
         if (!res.ok) throw new Error("Failed to scan .eml file");
         return res.json();
       })
@@ -73,6 +81,7 @@ const ScanEmail = () => {
         setLoading(false);
       })
       .catch((err) => {
+        if (err.message === "quota") return;
         setError(err.message);
         setLoading(false);
       });
@@ -184,16 +193,16 @@ const downloadReport = async () => {
           accept=".eml"
           onChange={handleFileUpload}
           aria-label="Upload .eml email file"
-          disabled={loading}
+          disabled={loading || error?.includes('daily scan limit')}
           className="file-input"
         />
-        <button disabled={loading || !fileName} className="scan-btn">
+        <button disabled={loading || !fileName || error?.includes('daily scan limit')} className="scan-btn">
           {loading ? "Scanning..." : "Scan Now"}
         </button>
       </div>
 
       {fileName && <p className="uploaded-file">Selected file: {fileName}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="scan-error">{error}</p>}
 
       {emailBody && (
         <section className="email-preview" aria-label="Email body preview">
