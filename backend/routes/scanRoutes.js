@@ -187,7 +187,7 @@ async function submitFileToHybridAnalysis(fileBuffer, filename) {
     formData.append('environment_id', '110'); // Windows 7 64-bit environment
     
     const response = await axios.post(
-      'https://www.hybrid-analysis.com/api/v2/submit/file',
+      'https://hybrid-analysis.com/api/v2/submit/file',
       formData,
       {
         headers: {

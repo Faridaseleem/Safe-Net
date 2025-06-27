@@ -484,7 +484,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         let errorMessage = '❌ *Email Scan Failed*\n\n';
         errorMessage += 'Unable to scan the email file.\n\n';
         errorMessage += '📊 *Try scanning it on our webpage:*\n';
-        errorMessage += '🔗 [Visit SafeNet Scanner](https://your-website.com/email-scanner)';
+        errorMessage += '🔗 [Visit SafeNet Scanner](https://localhost:3000/home)';
         
         bot.sendMessage(chatId, errorMessage, {
             parse_mode: 'Markdown',
