@@ -48,7 +48,11 @@ const Login = () => {
         console.log("User set in context:", response.data.user);
         
         alert("Login successful!");
-        navigate("/home");
+        if (response.data.user.role === 'admin') {
+          navigate("/admin/reports");
+        } else {
+          navigate("/home");
+        }
       }
     } catch (err) {
       console.error("Login error:", err);
