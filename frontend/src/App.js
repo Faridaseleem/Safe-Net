@@ -1,7 +1,8 @@
 import React from "react";
 import axios from 'axios';
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import ScanURL from "./pages/ScanURL";
 import ScanEmail from "./pages/ScanEmail";
@@ -19,38 +20,136 @@ import { useUser } from "./contexts/UserContext";
 import "./App.css";
 
 axios.defaults.withCredentials = true;
+
 const App = () => {
-  const { user } = useUser();
-  console.log("Current user in Chatbot:", user);
+  const { user, loading } = useUser();
+  console.log("Current user in App:", user);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#121629',
+        color: '#F8F8F2'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔒</div>
+          <div>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <Routes>
-        {/* RootPage (No Navbar) */}
-        <Route path="/" element={<RootPage />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/select-plan" element={<SelectPlan />} />
-        <Route path="/verify" element={<Verify />} />
-        <Route path="/login" element={<Login />} />
-        {/* Other Pages (With Navbar) */}
-        <Route
-          path="/*"
-          element={
+        {/* Public routes - no authentication required */}
+        <Route path="/" element={
+          <ProtectedRoute requireAuth={false}>
+            <RootPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/signup" element={
+          <ProtectedRoute requireAuth={false}>
+            <Signup />
+          </ProtectedRoute>
+        } />
+        <Route path="/select-plan" element={
+          <ProtectedRoute requireAuth={false}>
+            <SelectPlan />
+          </ProtectedRoute>
+        } />
+        <Route path="/verify" element={
+          <ProtectedRoute requireAuth={false}>
+            <Verify />
+          </ProtectedRoute>
+        } />
+        <Route path="/login" element={
+          <ProtectedRoute requireAuth={false}>
+            <Login />
+          </ProtectedRoute>
+        } />
+
+        {/* Protected routes - require authentication */}
+        <Route path="/home" element={
+          <ProtectedRoute>
             <>
               <Navbar />
               {(user && (user.role === 'premium' || user.role === 'admin')) && <Chatbot />}
-              <Routes>
-                <Route path="/home" element={<Home />} />
-                <Route path="/scan-url" element={<ScanURL />} />
-                <Route path="/scan-email" element={<ScanEmail />} />
-                <Route path="/education" element={<Education />} />
-                <Route path="/change-plan" element={<ChangePlan />} />
-                <Route path="/report-url" element={<ReportURL />} />  {/* User report */}
-                <Route path="/admin/reports" element={<AdminReportURLs />} /> {/* Admin manage */}
-              </Routes>
-               {/* NEW: Mount Chatbot on pages with Navbar** */}
+              <Home />
             </>
-          }
-        />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/scan-url" element={
+          <ProtectedRoute>
+            <>
+              <Navbar />
+              {(user && (user.role === 'premium' || user.role === 'admin')) && <Chatbot />}
+              <ScanURL />
+            </>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/scan-email" element={
+          <ProtectedRoute>
+            <>
+              <Navbar />
+              {(user && (user.role === 'premium' || user.role === 'admin')) && <Chatbot />}
+              <ScanEmail />
+            </>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/education" element={
+          <ProtectedRoute>
+            <>
+              <Navbar />
+              {(user && (user.role === 'premium' || user.role === 'admin')) && <Chatbot />}
+              <Education />
+            </>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/change-plan" element={
+          <ProtectedRoute>
+            <>
+              <Navbar />
+              {(user && (user.role === 'premium' || user.role === 'admin')) && <Chatbot />}
+              <ChangePlan />
+            </>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/report-url" element={
+          <ProtectedRoute>
+            <>
+              <Navbar />
+              {(user && (user.role === 'premium' || user.role === 'admin')) && <Chatbot />}
+              <ReportURL />
+            </>
+          </ProtectedRoute>
+        } />
+
+        {/* Admin-only routes */}
+        <Route path="/admin/reports" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <>
+              <Navbar />
+              <Chatbot />
+              <AdminReportURLs />
+            </>
+          </ProtectedRoute>
+        } />
+
+        {/* Catch all other routes and redirect to home if authenticated, or login if not */}
+        <Route path="*" element={
+          user ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />
+        } />
       </Routes>
     </Router>
   );

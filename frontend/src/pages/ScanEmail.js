@@ -179,7 +179,6 @@ const downloadReport = async () => {
   const finalVerdict = scanResults?.finalVerdict || "⚪ Unknown";
   const finalVerdictExplanation = scanResults?.finalVerdictExplanation || "";
 
-
   return (
     <div className="scan-container">
       <h2 className="scan-title">Scan an Email</h2>
@@ -234,32 +233,245 @@ const downloadReport = async () => {
 
       {scanResults && (
         user && user.role === 'standard' ? (
-          <div ref={reportRef} className="scan-result">
+          <section
+            ref={reportRef}
+            className="scan-result"
+            tabIndex={-1}
+            aria-live="polite"
+            aria-atomic="true"
+         >
             <h3>📄 Scan Report</h3>
-            {/* Only show VirusTotal for standard users */}
-            <>
-              <h4>URL Scan Results (VirusTotal Only):</h4>
-              {scanResults.urlScanResults && scanResults.urlScanResults.length > 0 ? (
-                scanResults.urlScanResults.map((urlObj, idx) => (
-                  <div key={idx} className="url-scan-result">
-                    <p><strong>URL:</strong> {urlObj.url}</p>
-                    <p><strong>Risk Score:</strong> {urlObj.vt_results ? Math.round(urlObj.vt_results.risk_score) : 'N/A'}/100</p>
-                    <p><strong>Malicious Detections:</strong> {urlObj.vt_results ? urlObj.vt_results.malicious_detections : 'N/A'}</p>
-                    <p><strong>Verdict:</strong> {urlObj.vt_results ? urlObj.vt_results.verdict || urlObj.verdict : urlObj.verdict}</p>
+            <div>
+              <strong>🕒 Scan Time:</strong> {new Date().toLocaleString()}
+            </div>
+            <div>
+              <strong>📊 Total Attachments:</strong> {scanResults.attachmentScanResults?.length || 0}
+            </div>
+            <div>
+              <strong>🔗 URLs:</strong>
+              {scanResults.urlScanResults?.length > 0 ? (
+                <ul className="summary-url-list">
+                  {scanResults.urlScanResults.map((urlObj) => (
+                    <li key={urlObj.url}>{urlObj.url}</li>
+                  ))}
+                </ul>
+              ) : (
+                " None"
+              )}
+            </div>
+
+            {/* Final Verdict - Moved above Why? section */}
+            <div style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>
+              <h4 style={{ marginBottom: "0.5rem", color: "#F8F8F2" }}>Final Verdict:</h4>
+              <p style={{ fontSize: "1.2rem", fontWeight: "600", color: "#F8F8F2" }}>
+                {finalVerdict}
+              </p>
+            </div>
+
+            {finalVerdictExplanation && (
+              <div className="verdict-explanation" style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#ccc" }}>
+                <strong style={{ fontSize: "1.2rem", fontWeight: "600", color: "#F8F8F2" }}>Why?</strong><br />
+                <pre style={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
+                  {finalVerdictExplanation}
+                </pre>
+              </div>
+            )}
+
+            {/* Email Header Analysis - Side by Side */}
+            {(scanResults.emailHeaderScanResult || scanResults.heuristicResult) && (
+              <>
+                <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
+                
+                {/* Final Header Verdict */}
+                {scanResults.emailHeaderFinalVerdict && (
+                  <div style={{ marginBottom: "15px" }}>
+                    <h4>Final Header Verdict:</h4>
+                    <p style={{ fontSize: "1.1rem", fontWeight: "600", color: "#F8F8F2" }}>
+                      {scanResults.emailHeaderFinalVerdict}
+                    </p>
                   </div>
-                ))
-              ) : <p>No URLs found in email.</p>}
-              <h4>Attachment Scan Results (VirusTotal Only):</h4>
-              {scanResults.attachmentScanResults && scanResults.attachmentScanResults.length > 0 ? (
-                scanResults.attachmentScanResults.map((att, idx) => (
-                  <div key={idx} className="attachment-scan-result">
-                    <p><strong>Filename:</strong> {att.filename}</p>
-                    <p><strong>Risk Score:</strong> {att.vt_results && att.vt_results.verdict && att.vt_results.verdict.includes('Malicious') ? '100' : '0'}/100</p>
-                    <p><strong>Verdict:</strong> {att.vt_results ? att.vt_results.verdict : att.verdict}</p>
+                )}
+
+                {/* Buttons */}
+                <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "15px" }}>
+                  {scanResults.emailHeaderScanResult && (
+                    <button
+                      className={`details-toggle ${showHeaderDetails ? "active" : ""}`}
+                      onClick={() => setShowHeaderDetails(!showHeaderDetails)}
+                    >
+                      {showHeaderDetails ? "🔼 Hide Header Scan" : "🔽 Show Header Scan"}
+                    </button>
+                  )}
+
+                  {scanResults.heuristicResult && (
+                    <button
+                      className={`details-toggle ${showHeuristicDetails ? "active" : ""}`}
+                      onClick={toggleHeuristicDetails}
+                    >
+                      {showHeuristicDetails ? "🔼 Hide Heuristic Scan" : "🔽 Show Heuristic Scan"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Details Sections */}
+                <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                  {/* Email Header Scan Results */}
+                  {scanResults.emailHeaderScanResult && showHeaderDetails && (
+                    <div style={{ flex: "1", minWidth: "300px" }}>
+                      <div className="api-details header-details">
+                        <p>
+                          <strong>Sender:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.sanitized_email || "Unknown"}
+                        </p>
+                        <p>
+                          <strong>Data Leak:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.leaked ? "Yes" : "No"}
+                        </p>
+                        <p>
+                          <strong>Domain Age:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.domain_age?.human || "N/A"}
+                        </p>
+                        <p>
+                          <strong>Fraud Score:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.fraud_score ?? "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Heuristic Scan */}
+                  {scanResults.heuristicResult && showHeuristicDetails && (
+                    <div style={{ flex: "1", minWidth: "300px" }}>
+                      <div className="api-details heuristic-details">
+                        <h4>Heuristic Scan Results</h4>
+                        <p>
+                          <strong>Suspicious:</strong>{" "}
+                          {scanResults.heuristicResult.suspicious ? "Yes" : "No"}
+                        </p>
+                        <p>
+                          <strong>Score:</strong> {scanResults.heuristicResult.score}
+                        </p>
+                        <p>
+                          <strong>Reasons:</strong>
+                        </p>
+                        <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                          {scanResults.heuristicResult.reasons.map((reason, idx) => {
+                            const [reasonTitle, ...descParts] = reason.split(":");
+                            const description = descParts.join(":").trim();
+                            return (
+                              <li
+                                key={idx}
+                                style={{
+                                  marginBottom: "0.5em",
+                                  background: "rgba(255, 255, 255, 0.05)",
+                                  padding: "0.4em 0.6em",
+                                  borderRadius: "0.25em"
+                                }}
+                              >
+                                <strong style={{ color: "#F8F8F2" }}>{reasonTitle}:</strong>{" "}
+                                <span style={{ color: "#D6D6D6" }}>{description}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* URL Scan Results */}
+            <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
+            <h4>URL Scan Results (VirusTotal Only):</h4>
+            <ul>
+              {scanResults.urlScanResults.map((res, idx) => (
+                <li key={idx} style={{ marginBottom: 16 }}>
+                  <strong>{res.url}</strong>:<br />
+                  <div>Verdict: {res.verdict}</div>
+                  <div>Risk Score: {res.aggregated_risk_score}/100</div>
+
+                  <div className="details-buttons">
+                    {res.vt_results && (
+                      <button
+                        className={`details-toggle ${showVTDetails ? "active" : ""}`}
+                        onClick={() => setShowVTDetails(!showVTDetails)}
+                      >
+                        {showVTDetails ? "🔼 Hide VirusTotal Details" : "🔽 Show VirusTotal Details"}
+                      </button>
+                    )}
                   </div>
-                ))
-              ) : <p>No attachments found or scanned.</p>}
-            </>
+
+                  {showVTDetails && res.vt_results && (
+                    <div className="api-details vt-details">
+                      <h4>VirusTotal Results</h4>
+                      <p><strong>Total Sources:</strong> {res.vt_results.total_sources}</p>
+                      <p><strong>Malicious Detections:</strong> {res.vt_results.malicious_detections}</p>
+                      <p><strong>Risk Score:</strong> {Math.round(res.vt_results.risk_score)}/100</p>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <h4>Attachment Scan Results (VirusTotal Only):</h4>
+            {scanResults.attachmentScanResults?.length === 0 && (
+              <p>No attachments found or scanned.</p>
+            )}
+            <ul className="attachment-results-list">
+              {scanResults.attachmentScanResults?.map((att, idx) => (
+                <li key={idx} className="attachment-item">
+                  <div className="attachment-header">
+                    <strong>{att.filename}</strong>
+                    {att.error ? (
+                      <span style={{ color: "red" }}>Error: {att.error}</span>
+                    ) : (
+                      <div className="attachment-summary">
+                        <div><strong>Verdict:</strong> {att.verdict || "Pending"}</div>
+                        {att.aggregated_risk_score !== undefined && (
+                          <div><strong>Risk Score:</strong> {att.aggregated_risk_score}/100</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {!att.error && (
+                    <div className="details-buttons">
+                      {att.vt_results && (
+                        <button
+                          className={`details-toggle ${showAttachmentVTDetails[idx] ? "active" : ""}`}
+                          onClick={() => toggleAttachmentVTDetails(idx)}
+                        >
+                          {showAttachmentVTDetails[idx] ? "🔼 Hide VirusTotal Details" : "🔽 Show VirusTotal Details"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {showAttachmentVTDetails[idx] && att.vt_results && (
+                    <div className="api-details vt-details">
+                      <h4>VirusTotal Results</h4>
+                      <p><strong>Verdict:</strong> {att.vt_results.verdict}</p>
+                      {att.vt_results.scan_id && (
+                        <p><strong>Scan ID:</strong> {att.vt_results.scan_id}</p>
+                      )}
+                      {att.vt_results.note && (
+                        <p><strong>Note:</strong> {att.vt_results.note}</p>
+                      )}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <button
+              type="button"
+              className="learn-more-btn"
+              onClick={() => navigate("/education")}
+              aria-label="Learn More About Phishing Protection"
+            >
+              📖 Learn More About Phishing Protection
+            </button>
             <button
               onClick={downloadReport}
               disabled={loading}
@@ -268,7 +480,7 @@ const downloadReport = async () => {
             >
               📥 Download Report (Image)
             </button>
-          </div>
+          </section>
         ) : (
           <section
             ref={reportRef}
@@ -297,107 +509,124 @@ const downloadReport = async () => {
               )}
             </div>
 
-            <div>
-              <strong>⚠️ Final Verdict:</strong> {finalVerdict}
+            {/* Final Verdict - Moved above Why? section */}
+            <div style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>
+              <h4 style={{ marginBottom: "0.5rem", color: "#F8F8F2" }}>Final Verdict:</h4>
+              <p style={{ fontSize: "1.2rem", fontWeight: "600", color: "#F8F8F2" }}>
+                {finalVerdict}
+              </p>
             </div>
 
             {finalVerdictExplanation && (
               <div className="verdict-explanation" style={{ marginTop: "0.5rem", fontSize: "0.85rem", color: "#ccc" }}>
-                <strong>Why?</strong><br />
+                <strong style={{ fontSize: "1.2rem", fontWeight: "600", color: "#F8F8F2" }}>Why?</strong><br />
                 <pre style={{ whiteSpace: "pre-wrap", fontFamily: "monospace" }}>
                   {finalVerdictExplanation}
                 </pre>
               </div>
             )}
 
-
-
-            {/* Add separator and header for Email Header Scan */}
-            <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
-            <h4>Email Header Scan Results:</h4>
-
-            {scanResults.emailHeaderScanResult && (
+            {/* Email Header Analysis - Side by Side */}
+            {(scanResults.emailHeaderScanResult || scanResults.heuristicResult) && (
               <>
-                <button
-                  className={`details-toggle ${showHeaderDetails ? "active" : ""}`}
-                  onClick={() => setShowHeaderDetails(!showHeaderDetails)}
-                >
-                  {showHeaderDetails ? "🔼 Hide Header Scan" : "🔽 Show Header Scan"}
-                </button>
-                {showHeaderDetails && (
-                  <div className="api-details header-details">
-                    <p>
-                      <strong>Sender:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.sanitized_email || "Unknown"}
-                    </p>
-                    <p>
-                      <strong>Data Leak:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.leaked ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      <strong>Domain Age:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.domain_age?.human || "N/A"}
-                    </p>
-                    <p>
-                      <strong>Fraud Score:</strong>{" "}
-                      {scanResults.emailHeaderScanResult.fraud_score ?? "N/A"}
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-
-    
-
-
-            {/* Heuristic Scan */}
-            {scanResults.heuristicResult && (
-              <>
-                <button
-                  className={`details-toggle ${showHeuristicDetails ? "active" : ""}`}
-                  onClick={toggleHeuristicDetails}
-                >
-                  {showHeuristicDetails ? "🔼 Hide Heuristic Scan" : "🔽 Show Heuristic Scan"}
-                </button>
-                {showHeuristicDetails && (
-                  <div className="api-details heuristic-details">
-                    <h4>Heuristic Scan Results</h4>
-                    <p>
-                      <strong>Suspicious:</strong>{" "}
-                      {scanResults.heuristicResult.suspicious ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      <strong>Score:</strong> {scanResults.heuristicResult.score}
-                    </p>
-                    <p>
-                      <strong>Reasons:</strong>
-                    </p>
-                    <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
-                      {scanResults.heuristicResult.reasons.map((reason, idx) => {
-                        const [reasonTitle, ...descParts] = reason.split(":");
-                        const description = descParts.join(":").trim();
-                        return (
-                          <li
-                            key={idx}
-                            style={{
-                              marginBottom: "0.5em",
-                              background: "rgba(255, 255, 255, 0.05)",
-                              padding: "0.4em 0.6em",
-                              borderRadius: "0.25em"
-                            }}
-                          >
-                            <strong style={{ color: "#F8F8F2" }}>{reasonTitle}:</strong>{" "}
-                            <span style={{ color: "#D6D6D6" }}>{description}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
+                <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
+                
+                {/* Final Header Verdict */}
                 {scanResults.emailHeaderFinalVerdict && (
-                  <p><strong>Final Header Verdict:</strong> {scanResults.emailHeaderFinalVerdict}</p>
+                  <div style={{ marginBottom: "15px" }}>
+                    <h4>Final Header Verdict:</h4>
+                    <p style={{ fontSize: "1.1rem", fontWeight: "600", color: "#F8F8F2" }}>
+                      {scanResults.emailHeaderFinalVerdict}
+                    </p>
+                  </div>
                 )}
 
+                {/* Buttons */}
+                <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "15px" }}>
+                  {scanResults.emailHeaderScanResult && (
+                    <button
+                      className={`details-toggle ${showHeaderDetails ? "active" : ""}`}
+                      onClick={() => setShowHeaderDetails(!showHeaderDetails)}
+                    >
+                      {showHeaderDetails ? "🔼 Hide Header Scan" : "🔽 Show Header Scan"}
+                    </button>
+                  )}
+
+                  {scanResults.heuristicResult && (
+                    <button
+                      className={`details-toggle ${showHeuristicDetails ? "active" : ""}`}
+                      onClick={toggleHeuristicDetails}
+                    >
+                      {showHeuristicDetails ? "🔼 Hide Heuristic Scan" : "🔽 Show Heuristic Scan"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Details Sections */}
+                <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                  {/* Email Header Scan Results */}
+                  {scanResults.emailHeaderScanResult && showHeaderDetails && (
+                    <div style={{ flex: "1", minWidth: "300px" }}>
+                      <div className="api-details header-details">
+                        <p>
+                          <strong>Sender:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.sanitized_email || "Unknown"}
+                        </p>
+                        <p>
+                          <strong>Data Leak:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.leaked ? "Yes" : "No"}
+                        </p>
+                        <p>
+                          <strong>Domain Age:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.domain_age?.human || "N/A"}
+                        </p>
+                        <p>
+                          <strong>Fraud Score:</strong>{" "}
+                          {scanResults.emailHeaderScanResult.fraud_score ?? "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Heuristic Scan */}
+                  {scanResults.heuristicResult && showHeuristicDetails && (
+                    <div style={{ flex: "1", minWidth: "300px" }}>
+                      <div className="api-details heuristic-details">
+                        <h4>Heuristic Scan Results</h4>
+                        <p>
+                          <strong>Suspicious:</strong>{" "}
+                          {scanResults.heuristicResult.suspicious ? "Yes" : "No"}
+                        </p>
+                        <p>
+                          <strong>Score:</strong> {scanResults.heuristicResult.score}
+                        </p>
+                        <p>
+                          <strong>Reasons:</strong>
+                        </p>
+                        <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
+                          {scanResults.heuristicResult.reasons.map((reason, idx) => {
+                            const [reasonTitle, ...descParts] = reason.split(":");
+                            const description = descParts.join(":").trim();
+                            return (
+                              <li
+                                key={idx}
+                                style={{
+                                  marginBottom: "0.5em",
+                                  background: "rgba(255, 255, 255, 0.05)",
+                                  padding: "0.4em 0.6em",
+                                  borderRadius: "0.25em"
+                                }}
+                              >
+                                <strong style={{ color: "#F8F8F2" }}>{reasonTitle}:</strong>{" "}
+                                <span style={{ color: "#D6D6D6" }}>{description}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
