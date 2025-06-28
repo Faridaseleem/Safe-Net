@@ -539,46 +539,65 @@ const Chatbot = () => {
             {formatEmailScanResult(result)}
           </div>
         );
-      } else if (selectedService && selectedService.type === "report_url") {
-        // Custom formatting for reported URL result
-        resultContent = (
-          <div className="result-area">
-            <div className="report-url-result">
-              <h3>🚨 URL Report Submitted</h3>
-              {result.message && (
-                <p><strong>Status:</strong> {result.message}</p>
-              )}
-              {result.url && (
-                <p><strong>Reported URL:</strong> {result.url}</p>
-              )}
-              {result.reportId && (
-                <p><strong>Report ID:</strong> {result.reportId}</p>
-              )}
-              <p><em>Thank you for contributing to a safer web.</em> 🛡️</p>
-            </div>
+      } else if (selectedService && selectedService.type === "scan_url") {
+      // Separate handling for Scan URL
+      resultContent = (
+        <div className="result-area">
+          <div className="scan-url-result">
+            {result.scan_report && (
+              <div>
+                <pre className="scan-url-report">{result.scan_report}</pre>
+              </div>
+            )}
+            {!result.scan_report && (
+              <div>
+                <strong>Raw Response:</strong>
+                <pre className="scan-url-report">{JSON.stringify(result, null, 2)}</pre>
+              </div>
+            )}
           </div>
-        );
-      } else {
-        // Fallback for other services
-        const reportText = JSON.stringify(result, null, 2);
-        resultContent = (
-          <div className="result-area">
-            <pre
-              style={{
-                overflowY: "auto",
-                maxHeight: "250px",
-                backgroundColor: "#111",
-                color: "#eee",
-                padding: "10px",
-                borderRadius: "4px",
-                fontSize: "0.9em"
-              }}
-            >
-              {reportText}
-            </pre>
+        </div>
+      );
+    } else if (selectedService && selectedService.type === "report_url") {
+      // Already formatted nicely — keep this block as-is
+      resultContent = (
+        <div className="result-area">
+          <div className="report-url-result">
+            <h3>🚨 URL Report Submitted</h3>
+            {result.message && (
+              <p><strong>Status:</strong> {result.message}</p>
+            )}
+            {result.url && (
+              <p><strong>Reported URL:</strong> {result.url}</p>
+            )}
+            {result.reportId && (
+              <p><strong>Report ID:</strong> {result.reportId}</p>
+            )}
+            <p><em>Thank you for contributing to a safer web.</em> 🛡️</p>
           </div>
-        );
-      }
+        </div>
+      );
+    } else {
+      // Fallback for any other service
+      const reportText = JSON.stringify(result, null, 2);
+      resultContent = (
+        <div className="result-area">
+          <pre
+            style={{
+              overflowY: "auto",
+              maxHeight: "250px",
+              backgroundColor: "#111",
+              color: "#eee",
+              padding: "10px",
+              borderRadius: "4px",
+              fontSize: "0.9em"
+            }}
+          >
+            {reportText}
+          </pre>
+        </div>
+      );
+    }
 
     }
   
