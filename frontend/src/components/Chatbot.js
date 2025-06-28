@@ -257,6 +257,7 @@ const Chatbot = () => {
       console.log("User input:", userText, "Selected File:", selectedFile);
       
       if (selectedService.type === "scan_url") {
+        setResult({ loading: true });
         axios
           .post(
             "https://localhost:5000/api/scan-url",
@@ -509,7 +510,7 @@ const Chatbot = () => {
       if (result.loading) {
         resultContent = (
           <div className="result-area" style={{ textAlign: 'center', padding: '20px' }}>
-            <div className="loading-spinner">🔍 Scanning email file...</div>
+            <div className="loading-spinner">🔍 Scanning{selectedService && selectedService.type === 'scan_url' ? ' URL' : ' email file'}...</div>
           </div>
         );
       } else if (result.error) {
@@ -538,21 +539,28 @@ const Chatbot = () => {
             {formatEmailScanResult(result)}
           </div>
         );
+      } else if (selectedService && selectedService.type === "report_url") {
+        // Custom formatting for reported URL result
+        resultContent = (
+          <div className="result-area">
+            <div className="report-url-result">
+              <h3>🚨 URL Report Submitted</h3>
+              {result.message && (
+                <p><strong>Status:</strong> {result.message}</p>
+              )}
+              {result.url && (
+                <p><strong>Reported URL:</strong> {result.url}</p>
+              )}
+              {result.reportId && (
+                <p><strong>Report ID:</strong> {result.reportId}</p>
+              )}
+              <p><em>Thank you for contributing to a safer web.</em> 🛡️</p>
+            </div>
+          </div>
+        );
       } else {
-        // Default formatting for other services
-        let reportText = "";
-        if (
-          selectedService &&
-          (selectedService.type === "scan_url" ||
-            selectedService.type === "report_url")
-        ) {
-          reportText = result.scan_report
-            ? result.scan_report
-            : JSON.stringify(result, null, 2);
-        } else {
-          reportText = JSON.stringify(result, null, 2);
-        }
-        
+        // Fallback for other services
+        const reportText = JSON.stringify(result, null, 2);
         resultContent = (
           <div className="result-area">
             <pre
@@ -571,6 +579,7 @@ const Chatbot = () => {
           </div>
         );
       }
+
     }
   
     // Compose final content based on chatMode.
