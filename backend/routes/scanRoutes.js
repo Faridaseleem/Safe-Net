@@ -802,19 +802,22 @@ function generateEmailScanFinalVerdict({
   headerHeuristicScore,
   headerIPQSFraudScore,
   urlScanResults = [],
-  attachmentScanResults = []
+  attachmentScanResults = [],
+  userRole = "premium"
 }) {
   const sources = [];
   const verdicts = [];
 
-  // Header score (weighted)
-  const headerScore = Math.min(
-    (headerHeuristicScore * 0.7) + (headerIPQSFraudScore * 0.3),
-    100
-  );
-  const headerVerdict = getVerdictFromScore(headerScore);
-  verdicts.push(headerVerdict);
-  sources.push(`📬 Header: ${headerVerdict} (${Math.round(headerScore)}/100)`);
+  // Header score (weighted) - only include if there are actual header scores
+  if (headerHeuristicScore > 0 || headerIPQSFraudScore > 0) {
+    const headerScore = Math.min(
+      (headerHeuristicScore * 0.7) + (headerIPQSFraudScore * 0.3),
+      100
+    );
+    const headerVerdict = getVerdictFromScore(headerScore, userRole);
+    verdicts.push(headerVerdict);
+    sources.push(`📬 Header: ${headerVerdict} (${Math.round(headerScore)}/100)`);
+  }
 
   // URLs
   for (const url of urlScanResults) {
@@ -853,9 +856,8 @@ function generateEmailScanFinalVerdict({
       (heuristicScore * weights.heuristic)
     );
 
-
     url.aggregated_risk_score = Math.round(urlScore);
-    url.verdict = getVerdictFromScore(urlScore);
+    url.verdict = getVerdictFromScore(urlScore, userRole);
 
     verdicts.push(url.verdict);
     sources.push(`🔗 URL: ${url.url} → ${url.verdict} (${url.aggregated_risk_score}/100)`);
@@ -872,7 +874,7 @@ function generateEmailScanFinalVerdict({
     );
 
     file.aggregated_risk_score = Math.round(attachmentScore);
-    file.verdict = getVerdictFromScore(attachmentScore);
+    file.verdict = getVerdictFromScore(attachmentScore, userRole);
 
     verdicts.push(file.verdict);
     sources.push(`📎 Attachment: ${file.filename} → ${file.verdict} (${file.aggregated_risk_score}/100)`);
@@ -882,13 +884,13 @@ function generateEmailScanFinalVerdict({
   const verdictOrder = ["🔴 High Risk (Likely Malicious)","🔴 Malicious (Blocked by admin)", "🟠 Medium Risk (Potentially Unsafe)", "🟡 Low Risk (Exercise Caution)", "🟢 Very Low Risk (Likely Safe)"];
   const finalVerdict = verdictOrder.find(v => verdicts.includes(v)) || "⚪ Unknown";
 
-  return {
+  const finalVerdictSummary = {
     final_verdict: finalVerdict,
     final_score: "Weighted",
     summary: `${finalVerdict} — Based on:\n` + sources.join("\n"),
     details: {
-      header_score: headerScore,
-      header_verdict: headerVerdict,
+      header_score: (headerHeuristicScore > 0 || headerIPQSFraudScore > 0) ? Math.min((headerHeuristicScore * 0.7) + (headerIPQSFraudScore * 0.3), 100) : 0,
+      header_verdict: (headerHeuristicScore > 0 || headerIPQSFraudScore > 0) ? getVerdictFromScore(Math.min((headerHeuristicScore * 0.7) + (headerIPQSFraudScore * 0.3), 100), userRole) : "N/A",
       url_verdicts: urlScanResults.map(u => ({
         url: u.url,
         verdict: u.verdict,
@@ -901,6 +903,11 @@ function generateEmailScanFinalVerdict({
       }))
     }
   };
+
+  console.log(`🎯 Final verdict for ${userRole} user: ${finalVerdictSummary.final_verdict}`);
+  console.log(`📊 Verdict summary: ${finalVerdictSummary.summary}`);
+
+  return finalVerdictSummary;
 }
 
 // Middleware to check user role and enforce scan limits
@@ -1079,7 +1086,7 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
       heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
       heuristicReasons = [...heuristicStatic.reasons];
       if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
-      heuristicVerdict = getVerdictFromScore(heuristicScore);
+      heuristicVerdict = getVerdictFromScore(heuristicScore, userRole);
     }
 
     // Extract scores with fallbacks
@@ -1222,6 +1229,8 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
 
     // Scan URLs concurrently
     const userRole = await getUserRole(req);
+    console.log(`🔍 Email scan - User role: ${userRole}`);
+    
     const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
       const blocked = await BlockedUrl.findOne({ url: u });
       if (blocked?.status === "malicious") {
@@ -1242,12 +1251,16 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
       let scamalyticsRes = { success: false };
       
       if (userRole === "premium" || userRole === "admin") {
+        console.log(`🎯 Premium user - running all scans for URL: ${u}`);
+        // Premium users: run all scans
         [vtRes, ipqsRes, scamalyticsRes] = await Promise.all([
           scanUrlVT(u),
           scanUrlIPQS(u),
           scanWithScamalytics(u)
         ]);
       } else {
+        console.log(`📊 Standard user - running VirusTotal only for URL: ${u}`);
+        // Standard users: VirusTotal only
         vtRes = await scanUrlVT(u, userRole);
       }
       
@@ -1255,16 +1268,23 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
       const ipqsRisk = ipqsRes?.risk_score || 0;
       const scamalyticsRisk = scamalyticsRes?.risk_score || 0;
       
-      const heuristicStatic = analyzeUrlHeuristically(u);
-      const heuristicDynamic = await analyzeDomainAge(u);
-      const heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
-      const heuristicReasons = [...heuristicStatic.reasons];
-      if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
-      const heuristicVerdict = getVerdictFromScore(heuristicScore);
+      let heuristicScore = 0;
+      let heuristicReasons = [];
+      let heuristicVerdict = "N/A";
+      
+      // Only run heuristic analysis for premium users
+      if (userRole === "premium" || userRole === "admin") {
+        const heuristicStatic = analyzeUrlHeuristically(u);
+        const heuristicDynamic = await analyzeDomainAge(u);
+        heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
+        heuristicReasons = [...heuristicStatic.reasons];
+        if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
+        heuristicVerdict = getVerdictFromScore(heuristicScore, userRole);
+      }
       
       let finalScore;
       if (userRole === "premium" || userRole === "admin") {
-        // Match scan-url route weights
+        // Premium: weighted scoring with all sources
         const weights = {
           vt: vtRes.success ? 0.2 : 0,
           ipqs: ipqsRes.success ? 0.4 : 0,
@@ -1284,21 +1304,22 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
           (heuristicScore * weights.heuristic)
         );
       } else {
-        finalScore = vtRisk; // standard users use VT only
+        // Standard users: VirusTotal score only
+        finalScore = vtRisk;
       }
       
-    finalVerdict = getVerdictFromScore(finalScore, userRole);
+      const finalVerdict = getVerdictFromScore(finalScore, userRole);
       
       return {
         url: u,
         vt_results: vtRes.success ? vtRes : null,
-        ipqs_results: ipqsRes.success ? ipqsRes : null,
-        scamalytics_results: scamalyticsRes.success ? scamalyticsRes : null,
-        heuristic_analysis: {
+        ipqs_results: (userRole === "premium" || userRole === "admin") && ipqsRes.success ? ipqsRes : null,
+        scamalytics_results: (userRole === "premium" || userRole === "admin") && scamalyticsRes.success ? scamalyticsRes : null,
+        heuristic_analysis: (userRole === "premium" || userRole === "admin") ? {
           score: heuristicScore,
           reasons: heuristicReasons,
           verdict: heuristicVerdict
-        },
+        } : null,
         aggregated_risk_score: finalScore,
         verdict: finalVerdict
       };
@@ -1309,10 +1330,21 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
     const attachmentScanResults = [];
 
     for (const att of attachments) {
-      const [vtScanRes, hybridSubmitRes] = await Promise.all([
-        scanFileVT(att.filename, att.content),
-        submitFileToHybridAnalysis(att.content, att.filename)
-      ]);
+      let vtScanRes = { success: false };
+      let hybridSubmitRes = { success: false };
+      
+      if (userRole === "premium" || userRole === "admin") {
+        console.log(`🎯 Premium user - running VT + Hybrid Analysis for attachment: ${att.filename}`);
+        // Premium users: run both VT and Hybrid Analysis
+        [vtScanRes, hybridSubmitRes] = await Promise.all([
+          scanFileVT(att.filename, att.content),
+          submitFileToHybridAnalysis(att.content, att.filename)
+        ]);
+      } else {
+        console.log(`📊 Standard user - running VirusTotal only for attachment: ${att.filename}`);
+        // Standard users: VirusTotal only
+        vtScanRes = await scanFileVT(att.filename, att.content);
+      }
 
       let vtRiskScore = 0;
       if (vtScanRes.verdict && vtScanRes.verdict.includes("Malicious")) {
@@ -1321,18 +1353,22 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
       }
 
       let hybridResults = { success: false, risk_score: 0 };
-      if (hybridSubmitRes.success && hybridSubmitRes.sha256) {
-        hybridResults = await getHybridAnalysisResults(hybridSubmitRes.sha256);
+      if (userRole === "premium" || userRole === "admin") {
+        if (hybridSubmitRes.success && hybridSubmitRes.sha256) {
+          hybridResults = await getHybridAnalysisResults(hybridSubmitRes.sha256);
+        }
       }
 
       const hybridRiskScore = hybridResults.success ? hybridResults.risk_score : 0;
-      const aggregatedScore = calculateFileRiskScore(vtRiskScore, hybridRiskScore);
-      const aggregatedVerdict = getVerdictFromScore(aggregatedScore);
+      const aggregatedScore = userRole === "premium" || userRole === "admin" 
+        ? calculateFileRiskScore(vtRiskScore, hybridRiskScore)
+        : vtRiskScore; // Standard users: VT score only
+      const aggregatedVerdict = getVerdictFromScore(aggregatedScore, userRole);
 
       attachmentScanResults.push({
         filename: att.filename,
         vt_results: vtScanRes,
-        hybrid_analysis_results: hybridResults.success ? hybridResults : null,
+        hybrid_analysis_results: (userRole === "premium" || userRole === "admin") && hybridResults.success ? hybridResults : null,
         aggregated_risk_score: aggregatedScore,
         verdict: aggregatedVerdict
       });
@@ -1342,27 +1378,42 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
     const senderEmail = parsedEmail.from?.value?.[0]?.address || "";
 
     let emailHeaderScanResult = null;
-    if (senderEmail) {
-      emailHeaderScanResult = await scanEmailHeaderWithIPQS(senderEmail);
+    let heuristicResult = null;
+    
+    if (userRole === "premium" || userRole === "admin") {
+      console.log(`🎯 Premium user - running header analysis`);
+      // Premium users: run header analysis
+      if (senderEmail) {
+        emailHeaderScanResult = await scanEmailHeaderWithIPQS(senderEmail);
+      }
+
+      const headersObject = {};
+      for (const [key, value] of parsedEmail.headers) {
+        headersObject[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : value;
+      }
+
+      heuristicResult = analyzeHeadersHeuristically(headersObject);
+    } else {
+      console.log(`📊 Standard user - skipping header analysis`);
     }
 
-    const headersObject = {};
-    for (const [key, value] of parsedEmail.headers) {
-      headersObject[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : value;
-    }
-
-    const heuristicResult = analyzeHeadersHeuristically(headersObject);
-    const headerFinalVerdict = calculateEmailHeaderVerdict(
-      heuristicResult.score,
-      emailHeaderScanResult?.fraud_score || 0
-    );
+    const headerFinalVerdict = userRole === "premium" || userRole === "admin"
+      ? calculateEmailHeaderVerdict(
+          heuristicResult?.score || 0,
+          emailHeaderScanResult?.fraud_score || 0
+        )
+      : "N/A";
 
     const finalVerdictSummary = generateEmailScanFinalVerdict({
-      headerHeuristicScore: heuristicResult.score,
-      headerIPQSFraudScore: emailHeaderScanResult?.fraud_score || 0,
+      headerHeuristicScore: (userRole === "premium" || userRole === "admin") ? (heuristicResult?.score || 0) : 0,
+      headerIPQSFraudScore: (userRole === "premium" || userRole === "admin") ? (emailHeaderScanResult?.fraud_score || 0) : 0,
       urlScanResults,
-      attachmentScanResults
+      attachmentScanResults,
+      userRole
     });
+
+    console.log(`🎯 Final verdict for ${userRole} user: ${finalVerdictSummary.final_verdict}`);
+    console.log(`📊 Verdict summary: ${finalVerdictSummary.summary}`);
 
     res.json({
       emailBody: parsedEmail.text || parsedEmail.html || "",
@@ -1392,14 +1443,17 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
 // Helper: Get user role from session or request
 async function getUserRole(req) {
   if (req.session && req.session.user) {
+    console.log(`🔍 User role from session: ${req.session.user.role}`);
     return req.session.user.role;
   }
   // Optionally, allow passing userId in body for API clients
   if (req.body && req.body.userId) {
     const user = await User.findById(req.body.userId);
-    return user?.role || "premium";
+    console.log(`🔍 User role from userId: ${user?.role || "standard"}`);
+    return user?.role || "standard";
   }
-  return "premium";
+  console.log(`🔍 No user found, defaulting to standard`);
+  return "standard";
 }
 
 module.exports = router;
