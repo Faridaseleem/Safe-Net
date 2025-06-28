@@ -538,21 +538,28 @@ const Chatbot = () => {
             {formatEmailScanResult(result)}
           </div>
         );
+      } else if (selectedService && selectedService.type === "report_url") {
+        // Custom formatting for reported URL result
+        resultContent = (
+          <div className="result-area">
+            <div className="report-url-result">
+              <h3>🚨 URL Report Submitted</h3>
+              {result.message && (
+                <p><strong>Status:</strong> {result.message}</p>
+              )}
+              {result.url && (
+                <p><strong>Reported URL:</strong> {result.url}</p>
+              )}
+              {result.reportId && (
+                <p><strong>Report ID:</strong> {result.reportId}</p>
+              )}
+              <p><em>Thank you for contributing to a safer web.</em> 🛡️</p>
+            </div>
+          </div>
+        );
       } else {
-        // Default formatting for other services
-        let reportText = "";
-        if (
-          selectedService &&
-          (selectedService.type === "scan_url" ||
-            selectedService.type === "report_url")
-        ) {
-          reportText = result.scan_report
-            ? result.scan_report
-            : JSON.stringify(result, null, 2);
-        } else {
-          reportText = JSON.stringify(result, null, 2);
-        }
-        
+        // Fallback for other services
+        const reportText = JSON.stringify(result, null, 2);
         resultContent = (
           <div className="result-area">
             <pre
@@ -571,6 +578,7 @@ const Chatbot = () => {
           </div>
         );
       }
+
     }
   
     // Compose final content based on chatMode.
