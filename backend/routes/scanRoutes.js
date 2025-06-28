@@ -329,7 +329,7 @@ async function pollFileScanResult(scanId, retries = 15, delay = 5000) {
 }
 
 // Fixed VirusTotal URL scanning
-async function scanUrlVT(rawUrl) {
+async function scanUrlVT(rawUrl, role = "premium") {
   try {
     const url = rawUrl
       .replace(/["'><)\]]+$/g, '')
@@ -362,12 +362,7 @@ async function scanUrlVT(rawUrl) {
       total_sources: totalSources,
       malicious_detections: maliciousCount,
       risk_score: vtRiskScore,
-      verdict:
-        maliciousCount > 2
-          ? "🔴 High Risk (Likely Malicious)"
-          : maliciousCount > 0
-          ? "🟠 Medium Risk (Potentially Unsafe)"
-          : "🟢 Low Risk (Likely Safe)",
+      verdict: getVerdictFromScore(vtRiskScore, role),
       success: true
     };
 
@@ -616,7 +611,17 @@ function calculateFileRiskScore(vtScore, hybridScore) {
 }
 
 // Helper to determine verdict based on aggregated score
-function getVerdictFromScore(score) {
+function getVerdictFromScore(score, role = "premium") {
+  if (role === "standard") {
+    if (score < 10) {
+      return "🟢 Low Risk (Likely Safe)";
+    } else if (score < 15) {
+      return "🟠 Medium Risk (Potentially Unsafe)";
+    } else {
+      return "🔴 High Risk (Likely Malicious)";
+    }
+  }
+
   if (score >= 50) {
     return "🔴 High Risk (Likely Malicious)";
   } else if (score >= 30) {
@@ -627,6 +632,7 @@ function getVerdictFromScore(score) {
     return "🟢 Very Low Risk (Likely Safe)";
   }
 }
+
 
 // Format date for scan report
 function formatDateForReport(date) {
@@ -825,13 +831,28 @@ function generateEmailScanFinalVerdict({
     const scamalyticsScore = url.scamalytics_results?.risk_score || 0;
     const heuristicScore = url.heuristic_analysis?.score || 0;
 
-    const urlScore = Math.min(
-      (vtScore * 0.2) +
-      (ipqsScore * 0.4) +
-      (scamalyticsScore * 0.1) +
-      (heuristicScore * 0.3),
-      100
+    // Dynamically calculate based on available results
+    const weights = {
+      vt: vtScore > 0 ? 0.2 : 0,
+      ipqs: ipqsScore > 0 ? 0.4 : 0,
+      scamalytics: scamalyticsScore > 0 ? 0.1 : 0,
+      heuristic: heuristicScore > 0 ? 0.3 : 0
+    };
+
+    const totalWeight = weights.vt + weights.ipqs + weights.scamalytics + weights.heuristic;
+    if (totalWeight > 0) {
+      Object.keys(weights).forEach(key => {
+        weights[key] = weights[key] / totalWeight;
+      });
+    }
+
+    const urlScore = Math.round(
+      (vtScore * weights.vt) +
+      (ipqsScore * weights.ipqs) +
+      (scamalyticsScore * weights.scamalytics) +
+      (heuristicScore * weights.heuristic)
     );
+
 
     url.aggregated_risk_score = Math.round(urlScore);
     url.verdict = getVerdictFromScore(urlScore);
@@ -943,7 +964,7 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
     }
 
     // Role-based scan logic
-    const userRole = await getUserRole(req);
+    let userRole = await getUserRole(req);
     let vtResults = { success: false };
     let ipqsResults = { success: false };
     let scamalyticsResults = { success: false };
@@ -1047,21 +1068,27 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
       }
     }
 
-    // Heuristic Analysis (for all users)
-    const heuristicStatic = analyzeUrlHeuristically(url);
-    const heuristicDynamic = await analyzeDomainAge(url);
-    const heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
-    const heuristicReasons = [...heuristicStatic.reasons];
-    if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
-    const heuristicVerdict = getVerdictFromScore(heuristicScore);
+    // Heuristic Analysis (only used for premium users)
+    let heuristicScore = 0;
+    let heuristicReasons = [];
+    let heuristicVerdict = "N/A";
+
+    if (userRole === "premium" || userRole === "admin") {
+      const heuristicStatic = analyzeUrlHeuristically(url);
+      const heuristicDynamic = await analyzeDomainAge(url);
+      heuristicScore = Math.min(heuristicStatic.score + heuristicDynamic.score, 100);
+      heuristicReasons = [...heuristicStatic.reasons];
+      if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
+      heuristicVerdict = getVerdictFromScore(heuristicScore);
+    }
 
     // Extract scores with fallbacks
     const vtScore = vtResults?.risk_score || 0;
     const ipqsScore = ipqsResults?.risk_score || 0;
     const scamalyticsScore = scamalyticsResults?.risk_score || 0;
     
-    // Calculate weighted score based on available data
     let customScore;
+
     if (userRole === "premium" || userRole === "admin") {
       // Premium: all sources
       const weights = {
@@ -1070,15 +1097,14 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
         scamalytics: scamalyticsResults.success ? 0.1 : 0,
         heuristic: 0.3
       };
-      
-      // Normalize weights if some APIs failed
+
       const totalWeight = weights.vt + weights.ipqs + weights.scamalytics + weights.heuristic;
       if (totalWeight > 0) {
         Object.keys(weights).forEach(key => {
           weights[key] = weights[key] / totalWeight;
         });
       }
-      
+
       customScore = Math.min(
         (vtScore * weights.vt) +
         (ipqsScore * weights.ipqs) +
@@ -1087,18 +1113,17 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
         100
       );
     } else {
-      // Standard: VT + heuristic only
-      const vtWeight = vtResults.success ? 0.7 : 0;
-      const heuristicWeight = vtResults.success ? 0.3 : 1.0;
-      
-      customScore = Math.min(
-        (vtScore * vtWeight) + (heuristicScore * heuristicWeight),
-        100
-      );
+      // ✅ For standard users, only use VT score
+      customScore = vtScore;
     }
+
     
     const finalScore = Math.round(customScore);
-    const finalVerdict = getVerdictFromScore(finalScore);
+    //userRole = "standard"; // 🔧 Force standard role for testing
+    //console.log("🧪 Score Check:", finalScore);    // should print the final score like 19
+
+    const finalVerdict = getVerdictFromScore(finalScore, userRole);
+
 
     const successfulAPIs = [
       vtResults.success,
@@ -1136,11 +1161,11 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
         risk_score: scamalyticsScore,
         verdict: scamalyticsResults.verdict
       } : null,
-      heuristic_analysis: {
+      heuristic_analysis: (userRole === "premium" || userRole === "admin") ? {
         score: heuristicScore,
         reasons: heuristicReasons,
         verdict: heuristicVerdict
-      },
+      } : null,
       aggregated_risk_score: finalScore,
       verdict: finalVerdict,
       more_info: `If you want to learn more about phishing awareness and protection, visit our education page: ${educationLink}`,
@@ -1223,7 +1248,7 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
           scanWithScamalytics(u)
         ]);
       } else {
-        vtRes = await scanUrlVT(u);
+        vtRes = await scanUrlVT(u, userRole);
       }
       
       const vtRisk = vtRes?.risk_score || 0;
@@ -1237,35 +1262,32 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
       if (heuristicDynamic.reason) heuristicReasons.push(heuristicDynamic.reason);
       const heuristicVerdict = getVerdictFromScore(heuristicScore);
       
-      // Calculate aggregated score based on available data
-      const availableScores = [];
-      const weights = [];
-      
-      if (vtRes.success) {
-        availableScores.push(vtRisk);
-        weights.push(0.3);
+      let finalScore;
+      if (userRole === "premium" || userRole === "admin") {
+        // Match scan-url route weights
+        const weights = {
+          vt: vtRes.success ? 0.2 : 0,
+          ipqs: ipqsRes.success ? 0.4 : 0,
+          scamalytics: scamalyticsRes.success ? 0.1 : 0,
+          heuristic: 0.3
+        };
+
+        const totalWeight = weights.vt + weights.ipqs + weights.scamalytics + weights.heuristic;
+        if (totalWeight > 0) {
+          Object.keys(weights).forEach(key => weights[key] = weights[key] / totalWeight);
+        }
+
+        finalScore = Math.round(
+          (vtRisk * weights.vt) +
+          (ipqsRisk * weights.ipqs) +
+          (scamalyticsRisk * weights.scamalytics) +
+          (heuristicScore * weights.heuristic)
+        );
+      } else {
+        finalScore = vtRisk; // standard users use VT only
       }
-      if (ipqsRes.success) {
-        availableScores.push(ipqsRisk);
-        weights.push(0.4);
-      }
-      if (scamalyticsRes.success) {
-        availableScores.push(scamalyticsRisk);
-        weights.push(0.1);
-      }
-      availableScores.push(heuristicScore);
-      weights.push(0.2);
       
-      // Normalize weights
-      const totalWeight = weights.reduce((a, b) => a + b, 0);
-      const normalizedWeights = weights.map(w => w / totalWeight);
-      
-      // Calculate weighted average
-      const finalScore = Math.round(
-        availableScores.reduce((sum, score, idx) => sum + (score * normalizedWeights[idx]), 0)
-      );
-      
-      const finalVerdict = getVerdictFromScore(finalScore);
+    finalVerdict = getVerdictFromScore(finalScore, userRole);
       
       return {
         url: u,
@@ -1344,16 +1366,22 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
 
     res.json({
       emailBody: parsedEmail.text || parsedEmail.html || "",
-      urlScanResults,
+      urlScanResults: urlScanResults.map(result => ({
+        ...result,
+        heuristic_analysis: (userRole === "premium" || userRole === "admin") ? result.heuristic_analysis : null,
+        ipqs_results: (userRole === "premium" || userRole === "admin") ? result.ipqs_results : null,
+        scamalytics_results: (userRole === "premium" || userRole === "admin") ? result.scamalytics_results : null
+      })),
       attachmentScanResults,
-      emailHeaderScanResult,
-      heuristicResult,
+      emailHeaderScanResult: (userRole === "premium" || userRole === "admin") ? emailHeaderScanResult : null,
+      heuristicResult: (userRole === "premium" || userRole === "admin") ? heuristicResult : null,
       emailHeaderFinalVerdict: finalVerdictSummary.details.header_verdict,
       finalScore: finalVerdictSummary.final_score,
       finalVerdict: finalVerdictSummary.final_verdict,
       finalVerdictExplanation: finalVerdictSummary.summary,
       verdictBreakdown: finalVerdictSummary.details
     });
+
 
   } catch (err) {
     console.error("Error parsing or scanning .eml file:", err);
