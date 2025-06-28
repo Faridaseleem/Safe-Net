@@ -257,6 +257,7 @@ const Chatbot = () => {
       console.log("User input:", userText, "Selected File:", selectedFile);
       
       if (selectedService.type === "scan_url") {
+        setResult({ loading: true });
         axios
           .post(
             "https://localhost:5000/api/scan-url",
@@ -509,7 +510,7 @@ const Chatbot = () => {
       if (result.loading) {
         resultContent = (
           <div className="result-area" style={{ textAlign: 'center', padding: '20px' }}>
-            <div className="loading-spinner">🔍 Scanning email file...</div>
+            <div className="loading-spinner">🔍 Scanning{selectedService && selectedService.type === 'scan_url' ? ' URL' : ' email file'}...</div>
           </div>
         );
       } else if (result.error) {
