@@ -11,6 +11,8 @@ const MongoStore = require("connect-mongo");
 const askAIRoutes = require("./routes/askAIRoutes");
 const telegramBotRoutes = require("./routes/telegramBotRoutes");
 const educationRoutes = require("./routes/educationRoutes");
+const logRoutes = require("./routes/logRoutes");
+const securityMiddleware = require("./middleware/security");
 
 const https = require("https");
 const fs = require("fs");
@@ -41,6 +43,9 @@ app.use(
 );
 
 app.use(express.json());
+
+// Add security middleware
+app.use(securityMiddleware);
 
 // ✅ Sessions
 app.use(
@@ -81,6 +86,7 @@ app.use("/api", educationRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/telegram", telegramBotRoutes);
+app.use("/api/log", logRoutes);
 
 // ✅ Default route
 app.get("/", (req, res) => {

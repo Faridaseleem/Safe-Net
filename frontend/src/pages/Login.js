@@ -1,6 +1,6 @@
 // Login.js
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useUser } from "../contexts/UserContext";
 import "./Login.css";
@@ -11,7 +11,11 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUser } = useUser(); // Make sure we're using setUser
+
+  // Get the intended destination from location state
+  const from = location.state?.from?.pathname || "/home";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -48,10 +52,12 @@ const Login = () => {
         console.log("User set in context:", response.data.user);
         
         alert("Login successful!");
+        
+        // Navigate to the intended destination or default based on role
         if (response.data.user.role === 'admin') {
           navigate("/admin/reports");
         } else {
-          navigate("/home");
+          navigate(from);
         }
       }
     } catch (err) {
@@ -66,6 +72,11 @@ const Login = () => {
     <div className="login-wrapper">
       <div className="login-container">
         <h2>Login</h2>
+        {from !== "/home" && (
+          <p style={{ color: "#F8F8F2", marginBottom: "1rem", fontSize: "0.9rem" }}>
+            Please log in to access {from}
+          </p>
+        )}
         <form className="login-form" onSubmit={handleLogin}>
           <input
             className="login-input"

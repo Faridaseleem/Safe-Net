@@ -32,6 +32,8 @@ export const UserProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching current user:', error);
+      // Clear user if session is invalid
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -42,8 +44,8 @@ export const UserProvider = ({ children }) => {
     fetchCurrentUser();
   }, []);
 
-  // Login function
-  const login = (userData) => {
+  // Login function - updated to handle the login process
+  const login = async (userData) => {
     console.log('Setting user in context:', userData);
     setUser(userData);
   };
@@ -59,9 +61,18 @@ export const UserProvider = ({ children }) => {
     await fetchCurrentUser();
   };
 
-  const logout = () => {
+  const logout = async () => {
     console.log('Logging out user');
-    setUser(null);
+    try {
+      // Call logout endpoint to clear session
+      await axios.post('https://localhost:5000/api/auth/logout', {}, {
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
   // Log current state
