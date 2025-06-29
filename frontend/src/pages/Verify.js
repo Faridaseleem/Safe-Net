@@ -10,7 +10,7 @@ const Verify = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const email = new URLSearchParams(location.search).get("email");
+  const [email] = useState(localStorage.getItem("pendingEmail") || "");
 
   const handleVerify = async (e) => {
     e.preventDefault();

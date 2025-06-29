@@ -36,14 +36,11 @@ router.post("/signup", async (req, res) => {
       // role will default to "standard" from schema
     });
 
-    // 🔒 SECURITY: Use secure database method to save user
-    // SECURITY MEASURE: Safe save operation with sanitized data
-    await SecureDatabase.safeSave(newUser);
-    
+    await newUser.save();
     // Don't send verification email here - wait until after plan selection
 
     res.status(201).json({ 
-      message: "User created successfully. Please select a plan."
+      message: "User created successfully. Please check your email for the verification code."
     });
   } catch (error) {
     console.error("Signup Error:", error);

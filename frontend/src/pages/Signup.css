@@ -43,7 +43,8 @@
     text-align: center;
     font-size: 16px;
     box-shadow: 0px 0px 8px #4b538b(0, 255, 255, 0.4);
-    width: 90%;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .signup-input::placeholder {
@@ -90,4 +91,108 @@
 .login-link a:hover {
     color: #6c7bd9; /* Slightly darker shade on hover */
     text-decoration: underline;
+}
+
+/* Password Input Container */
+.password-input-container {
+    position: relative;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.password-input-container .signup-input {
+    width: 100%;
+    margin: 0;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 5px;
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: #8f9dff;
+}
+
+/* Password Requirements */
+.password-requirements {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px 0;
+    width: 90%;
+    text-align: left;
+}
+
+.password-requirements h4 {
+    color: #8f9dff;
+    margin: 0 0 8px 0;
+    font-size: 14px;
+}
+
+.password-requirements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.password-requirements li {
+    font-size: 12px;
+    margin: 3px 0;
+    padding: 2px 0;
+    transition: color 0.3s ease;
+}
+
+.password-requirements li.valid {
+    color: #4CAF50;
+}
+
+.password-requirements li.invalid {
+    color: #f44336;
+}
+
+/* Password Match Indicator */
+.password-match {
+    font-size: 12px;
+    margin: 5px 0;
+    padding: 5px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.password-match.valid {
+    color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.password-match.invalid {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+}
+
+/* Error States */
+.signup-input.error {
+    border: 2px solid #f44336;
+    box-shadow: 0px 0px 8px rgba(244, 67, 54, 0.4);
+}
+
+/* Disabled Button */
+.signup-button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.signup-button:disabled:hover {
+    background-color: #666;
+    box-shadow: none;
 }
