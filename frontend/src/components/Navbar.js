@@ -11,7 +11,7 @@ const Navbar = () => {
     try {
       const response = await axios.post("https://localhost:5000/api/auth/logout", {}, { withCredentials: true });
       if (response.status === 200) {
-        alert("You have been logged out!");
+        
         navigate("/");
       } else {
         alert("Logout failed: " + response.data.message);

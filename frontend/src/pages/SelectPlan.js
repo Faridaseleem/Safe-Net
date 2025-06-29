@@ -33,7 +33,7 @@ const SelectPlan = () => {
         plan: selectedPlan.toLowerCase()
       });
 
-      alert(`You have selected the ${selectedPlan} plan. Please check your email for verification.`);
+      
       navigate(`/verify?email=${email}`);
     } catch (error) {
       alert("Failed to update plan. Please try again.");
