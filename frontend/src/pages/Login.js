@@ -51,7 +51,7 @@ const Login = () => {
         
         console.log("User set in context:", response.data.user);
         
-        alert("Login successful!");
+    
         
         // Navigate to the intended destination or default based on role
         if (response.data.user.role === 'admin') {
