@@ -1453,6 +1453,19 @@ async function getUserRole(req) {
     console.log(`🔍 User role from session: ${req.session.user.role}`);
     return req.session.user.role;
   }
+  
+  // Check for userRole in request body (for Telegram bot)
+  if (req.body && req.body.userRole) {
+    console.log(`🔍 User role from request body: ${req.body.userRole}`);
+    return req.body.userRole;
+  }
+  
+  // Check for X-User-Role header (for Telegram bot)
+  if (req.headers['x-user-role']) {
+    console.log(`🔍 User role from header: ${req.headers['x-user-role']}`);
+    return req.headers['x-user-role'];
+  }
+  
   // Optionally, allow passing userId in body for API clients
   if (req.body && req.body.userId) {
     // 🔒 SECURITY: Use secure database method to find user by ID
@@ -1461,6 +1474,7 @@ async function getUserRole(req) {
     console.log(`🔍 User role from userId: ${user?.role || "standard"}`);
     return user?.role || "standard";
   }
+  
   console.log(`🔍 No user found, defaulting to standard`);
   return "standard";
 }

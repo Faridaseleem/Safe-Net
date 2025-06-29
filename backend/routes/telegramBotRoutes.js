@@ -309,7 +309,7 @@ async function handleURL(chatId, url, mode, session) {
             ? 'https://localhost:5000/api/scan-url'
             : 'https://localhost:5000/api/report-url';
 
-        const response = await axios.post(endpoint, { url });
+        const response = await axios.post(endpoint, { url, userRole: 'premium' });
         
         let resultMessage = `✅ *${mode === 'scan_url' ? 'URL Scan' : 'URL Report'} Results*\n\n`;
         resultMessage += `🔗 *URL:* \`${url}\`\n\n`;
@@ -391,7 +391,8 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         // Send to your scan API
         const scanResponse = await axios.post('https://localhost:5000/api/scan-eml-file', formData, {
             headers: {
-                ...formData.getHeaders()
+                ...formData.getHeaders(),
+                'X-User-Role': 'premium'
             }
         });
 
@@ -456,7 +457,8 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         // Send to your scan API
         const scanResponse = await axios.post('https://localhost:5000/api/scan-eml-file', formData, {
             headers: {
-                ...formData.getHeaders()
+                ...formData.getHeaders(),
+                'X-User-Role': 'premium'
             }
         });
 
@@ -501,7 +503,8 @@ async function handleAskAI(chatId, question, session) {
     try {
         const response = await axios.post('https://localhost:5000/api/ask-ai', {
             question,
-            conversationHistory: session.chatHistory.slice(-10)
+            conversationHistory: session.chatHistory.slice(-10),
+            userRole: 'premium'
         });
 
         // Fix: Changed from response.data.answer to response.data.message
