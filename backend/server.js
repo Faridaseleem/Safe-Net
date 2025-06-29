@@ -13,6 +13,7 @@ const telegramBotRoutes = require("./routes/telegramBotRoutes");
 const educationRoutes = require("./routes/educationRoutes");
 const logRoutes = require("./routes/logRoutes");
 const securityMiddleware = require("./middleware/security");
+const nosqlInjectionProtection = require("./middleware/nosqlInjectionProtection");
 
 const https = require("https");
 const fs = require("fs");
@@ -44,8 +45,13 @@ app.use(
 
 app.use(express.json());
 
-// Add security middleware
+// 🔒 SECURITY MIDDLEWARE: Add comprehensive security protection
+// SECURITY MEASURE 1: General security middleware (rate limiting, pattern detection)
 app.use(securityMiddleware);
+
+// SECURITY MEASURE 2: NoSQL injection protection middleware
+// This middleware sanitizes all request data to prevent NoSQL injection attacks
+app.use(nosqlInjectionProtection);
 
 // ✅ Sessions
 app.use(

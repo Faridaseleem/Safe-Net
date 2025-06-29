@@ -8,6 +8,7 @@ const BlockedUrl = require("../models/BlockedUrl");
 const whois = require("whois-json");
 const User = require("../models/User");
 const mongoose = require("mongoose");
+const SecureDatabase = require("../utils/secureDatabase"); // Import secure database utility
 require("dotenv").config();
 
 const upload = multer(); // Multer memory storage (no disk save)
@@ -914,7 +915,10 @@ function generateEmailScanFinalVerdict({
 async function enforceScanLimit(req, res, next) {
   let userId = req.session?.user?.id || req.body.userId;
   if (!userId) return next();
-  const user = await User.findById(userId);
+  
+  // 🔒 SECURITY: Use secure database method to find user by ID
+  // SECURITY MEASURE: Safe findById operation with validated ObjectId
+  const user = await SecureDatabase.safeFindById(User, userId);
   if (!user) return res.status(403).json({ error: "User not found" });
   if (user.role === "premium" || user.role === "admin") return next();
 
@@ -947,8 +951,9 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
   console.log(`👤 User role: ${await getUserRole(req)}`);
 
   try {
-    // Check blocked URLs first
-    const blocked = await BlockedUrl.findOne({ url });
+    // 🔒 SECURITY: Use secure database method to check blocked URLs
+    // SECURITY MEASURE: Safe findOne operation with sanitized URL query
+    const blocked = await SecureDatabase.safeFindOne(BlockedUrl, { url });
     if (blocked && blocked.status === "malicious") {
       console.log(`🚫 URL is blocked by admin: ${url}`);
       const blockedReport = formatScanReport(
@@ -1232,7 +1237,9 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
     console.log(`🔍 Email scan - User role: ${userRole}`);
     
     const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
-      const blocked = await BlockedUrl.findOne({ url: u });
+      // 🔒 SECURITY: Use secure database method to check blocked URLs
+      // SECURITY MEASURE: Safe findOne operation with sanitized URL query
+      const blocked = await SecureDatabase.safeFindOne(BlockedUrl, { url: u });
       if (blocked?.status === "malicious") {
         return {
           url: u,
@@ -1448,7 +1455,9 @@ async function getUserRole(req) {
   }
   // Optionally, allow passing userId in body for API clients
   if (req.body && req.body.userId) {
-    const user = await User.findById(req.body.userId);
+    // 🔒 SECURITY: Use secure database method to find user by ID
+    // SECURITY MEASURE: Safe findById operation with validated ObjectId
+    const user = await SecureDatabase.safeFindById(User, req.body.userId);
     console.log(`🔍 User role from userId: ${user?.role || "standard"}`);
     return user?.role || "standard";
   }

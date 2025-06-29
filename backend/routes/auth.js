@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const User = require("../models/User"); // Import your User model
 const sendVerificationEmail = require("../config/mailer"); // Import mailer
+const SecureDatabase = require("../utils/secureDatabase"); // Import secure database utility
 
 const router = express.Router();
 
@@ -16,7 +17,9 @@ router.post("/signup", async (req, res) => {
   }
 
   try {
-    const existingUser = await User.findOne({ email });
+    // 🔒 SECURITY: Use secure database method to prevent NoSQL injection
+    // SECURITY MEASURE: Safe findOne operation with sanitized query
+    const existingUser = await SecureDatabase.safeFindOne(User, { email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -33,7 +36,10 @@ router.post("/signup", async (req, res) => {
       // role will default to "standard" from schema
     });
 
-    await newUser.save();
+    // 🔒 SECURITY: Use secure database method to save user
+    // SECURITY MEASURE: Safe save operation with sanitized data
+    await SecureDatabase.safeSave(newUser);
+    
     // Don't send verification email here - wait until after plan selection
 
     res.status(201).json({ 
@@ -44,6 +50,7 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
 // Add this route to handle plan updates
 router.post("/update-plan", async (req, res) => {
   const { email, plan } = req.body;
@@ -53,8 +60,9 @@ router.post("/update-plan", async (req, res) => {
   }
 
   try {
-    // Find user by email
-    const user = await User.findOne({ email });
+    // 🔒 SECURITY: Use secure database method to find user
+    // SECURITY MEASURE: Safe findOne operation with sanitized email query
+    const user = await SecureDatabase.safeFindOne(User, { email });
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -68,7 +76,10 @@ router.post("/update-plan", async (req, res) => {
 
     // Update user's role/plan
     user.role = plan;
-    await user.save();
+    
+    // 🔒 SECURITY: Use secure database method to save updated user
+    // SECURITY MEASURE: Safe save operation with sanitized data
+    await SecureDatabase.safeSave(user);
 
     // Send verification email if not already sent
     if (!user.verified && user.verificationCode) {
@@ -96,14 +107,19 @@ router.post("/verify", async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email, verificationCode: code });
+    // 🔒 SECURITY: Use secure database method to find user
+    // SECURITY MEASURE: Safe findOne operation with sanitized query
+    const user = await SecureDatabase.safeFindOne(User, { email, verificationCode: code });
     if (!user) {
       return res.status(400).json({ message: "Invalid verification code" });
     }
 
     user.verified = true;
     user.verificationCode = null;
-    await user.save();
+    
+    // 🔒 SECURITY: Use secure database method to save updated user
+    // SECURITY MEASURE: Safe save operation with sanitized data
+    await SecureDatabase.safeSave(user);
 
     res.status(200).json({ message: "Email verified successfully" });
   } catch (error) {
@@ -120,7 +136,9 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email });
+    // 🔒 SECURITY: Use secure database method to find user
+    // SECURITY MEASURE: Safe findOne operation with sanitized email query
+    const user = await SecureDatabase.safeFindOne(User, { email });
 
     if (!user) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -192,8 +210,9 @@ router.post("/change-plan", async (req, res) => {
   }
 
   try {
-    // Find and update user in database
-    const user = await User.findById(userId);
+    // 🔒 SECURITY: Use secure database method to find user by ID
+    // SECURITY MEASURE: Safe findById operation with validated ObjectId
+    const user = await SecureDatabase.safeFindById(User, userId);
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -201,7 +220,10 @@ router.post("/change-plan", async (req, res) => {
 
     // Update user's role in database
     user.role = newPlan;
-    await user.save();
+    
+    // 🔒 SECURITY: Use secure database method to save updated user
+    // SECURITY MEASURE: Safe save operation with sanitized data
+    await SecureDatabase.safeSave(user);
 
     // Update session with new role
     req.session.user.role = newPlan;
@@ -241,7 +263,9 @@ router.get("/current-plan", async (req, res) => {
   }
 
   try {
-    const user = await User.findById(req.session.user.id);
+    // 🔒 SECURITY: Use secure database method to find user by ID
+    // SECURITY MEASURE: Safe findById operation with validated ObjectId
+    const user = await SecureDatabase.safeFindById(User, req.session.user.id);
     res.json({ 
       currentPlan: user.role,
       user: {
@@ -254,6 +278,7 @@ router.get("/current-plan", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 // Get current user from session
 // In your backend auth routes
 router.get('/current-user', (req, res) => {
@@ -310,6 +335,5 @@ router.post("/logout", async (req, res) => {
     }
   });
 });
-
 
 module.exports = router;
