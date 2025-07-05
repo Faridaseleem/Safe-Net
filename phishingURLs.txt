@@ -13,5 +13,7 @@
 
 12 95 br-icloud.com.br
 
+https://www.weebly.com/app/front-door/signin?path=login#/ ---------->blocked
+
 http://secure-login-update-bank-alerts-info-payments-fraud-detect-system-safety-account.com ------------------>83 
 http://185.220.101.1/verify-update-login?session=xyz ------------------------>64 +scamalytics
