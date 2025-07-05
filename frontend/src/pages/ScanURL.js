@@ -4,6 +4,7 @@ import "./ScanURL.css";
 import logo from "../assets/logo.png";
 import html2canvas from "html2canvas";
 import { useUser } from "../contexts/UserContext";
+import ScanCounter from "../components/ScanCounter";
 
 const Scan = () => {
   const [url, setUrl] = useState("");
@@ -11,7 +12,7 @@ const Scan = () => {
   const [loading, setLoading] = useState(false);
   const reportRef = useRef(null);
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, refreshScanCount } = useUser();
   
   // State to track which details are expanded
   const [showVTDetails, setShowVTDetails] = useState(false);
@@ -47,6 +48,9 @@ const Scan = () => {
 
       const data = await response.json();
       setResult({ ...data, timestamp: data.scan_time || new Date().toLocaleString() });
+      
+      // Refresh scan count after successful scan
+      await refreshScanCount();
     } catch (error) {
       console.error("Error scanning URL:", error);
       setResult({ error: "Failed to scan URL. Please try again." });
@@ -126,6 +130,10 @@ const Scan = () => {
       <p className="scan-tagline">
         "🔍 Stay Safe, Surf Smart! Scan Your URL Now to Detect Phishing & Threats Instantly! 🛡️"
       </p>
+      
+      {/* Scan Counter for Standard Users */}
+      <ScanCounter />
+      
       <input
         type="text"
         placeholder="Enter URL to scan..."

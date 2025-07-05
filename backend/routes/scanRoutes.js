@@ -1479,4 +1479,63 @@ async function getUserRole(req) {
   return "standard";
 }
 
+// GET /api/scan-count - Get user's remaining scan count for the day
+router.get("/scan-count", async (req, res) => {
+  try {
+    // Check if user is authenticated
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    // Get user ID from session - handle both _id and id properties
+    const userId = req.session.user._id || req.session.user.id;
+    if (!userId) {
+      return res.status(401).json({ error: "User ID not found in session" });
+    }
+
+    // 🔒 SECURITY: Use secure database method to find user by ID
+    // SECURITY MEASURE: Safe findById operation with validated ObjectId
+    const user = await SecureDatabase.safeFindById(User, userId);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    // Premium and admin users have unlimited scans
+    if (user.role === "premium" || user.role === "admin") {
+      return res.json({
+        remainingScans: -1, // -1 indicates unlimited
+        totalScans: -1,
+        dailyLimit: -1,
+        userRole: user.role
+      });
+    }
+
+    // Standard users have a daily limit of 10 scans
+    const ScanLog = mongoose.connection.collection("scanlogs");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    
+    const count = await ScanLog.countDocuments({
+      userId: user._id.toString(),
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+
+    const dailyLimit = 10;
+    const remainingScans = Math.max(0, dailyLimit - count);
+
+    res.json({
+      remainingScans,
+      totalScans: count,
+      dailyLimit,
+      userRole: user.role
+    });
+
+  } catch (error) {
+    console.error("Error getting scan count:", error);
+    res.status(500).json({ error: "Failed to get scan count" });
+  }
+});
+
 module.exports = router;

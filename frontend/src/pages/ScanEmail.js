@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import html2canvas from "html2canvas";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
+import ScanCounter from "../components/ScanCounter";
 
 const ScanEmail = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const ScanEmail = () => {
   const [scanResults, setScanResults] = useState(null);
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
-  const { user } = useUser();
+  const { user, refreshScanCount } = useUser();
 
   // URL detail toggles
   const [showVTDetails, setShowVTDetails] = useState(false);
@@ -79,6 +80,8 @@ const ScanEmail = () => {
         setScanResults(data);
         setFileName(file.name);
         setLoading(false);
+        // Refresh scan count after successful scan
+        refreshScanCount();
       })
       .catch((err) => {
         if (err.message === "quota") return;
@@ -185,6 +188,9 @@ const downloadReport = async () => {
       <p className="scan-tagline" aria-live="polite">
         📧 Scan your email to detect phishing and malicious content!
       </p>
+
+      {/* Scan Counter for Standard Users */}
+      <ScanCounter />
 
       <div className="file-upload-wrapper">
         <input

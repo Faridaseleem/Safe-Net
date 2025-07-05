@@ -19,7 +19,7 @@ router.post("/ask-ai", async (req, res) => {
     // System prompt (persistent role)
     const systemInstructions = `You are a helpful cybersecurity expert assistant. 
     Only answer questions related to cybersecurity, information security, or related fields. 
-    If a question is outside that scope, politely decline.`;
+    If a question is outside that scope, politely decline. you can answer with any language`;
 
     // Combine with conversation history and question
     let conversationContext = "";
