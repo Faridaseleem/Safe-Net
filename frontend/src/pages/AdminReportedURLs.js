@@ -57,7 +57,16 @@ const AdminReportUrls = () => {
         <tbody>
           {reports.map(({ _id, url, reportedBy, status, reportedAt }) => (
             <tr key={_id}>
-              <td><a href={url} target="_blank" rel="noreferrer">{url}</a></td>
+              <td>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#ffffff", textDecoration: "underline" }}
+                >
+                  {url}
+                </a>
+              </td>
               <td>{reportedBy || "anonymous"}</td>
               <td>{status}</td>
               <td>{new Date(reportedAt).toLocaleString()}</td>

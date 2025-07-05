@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
+import ScanCounter from "../components/ScanCounter";
 
 const ScanEmail = () => {
   const navigate = useNavigate();
@@ -14,35 +15,7 @@ const ScanEmail = () => {
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
   const { user } = useUser();
-  useEffect(() => {
-  const logSuspiciousAccess = async () => {
-    if (!user) {
-      try {
-        await axios.post("https://localhost:5000/api/log/suspicious-activity", {
-          activity: "Unauthorized access attempt",
-          details: {
-            description: "User tried to access /scan-email without authentication"
-          },
-          timestamp: new Date().toISOString(),
-          path: "/scan-email",
-          userId: null,
-          userAgent: navigator.userAgent
-        }, {
-          withCredentials: true
-        });
 
-        console.log("✅ Suspicious access to /scan-email logged");
-      } catch (err) {
-        console.error("❌ Failed to log suspicious activity:", err);
-      }
-
-      // Optional redirect
-      window.location.href = "/login";
-    }
-  };
-
-  logSuspiciousAccess();
-}, [user]);
   // URL detail toggles
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
@@ -66,11 +39,16 @@ const ScanEmail = () => {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     if (!file.name.toLowerCase().endsWith(".eml")) {
-      alert("Please upload a valid .eml file.");
+      setUploadError("⚠️ Please upload a valid .eml file.");
       e.target.value = "";
       return;
     }
+
+    // Clear error if valid
+    setUploadError("");
+
 
     setLoading(true);
     setScanResults(null);
@@ -109,6 +87,8 @@ const ScanEmail = () => {
         setScanResults(data);
         setFileName(file.name);
         setLoading(false);
+        // Refresh scan count after successful scan
+        refreshScanCount();
       })
       .catch((err) => {
         if (err.message === "quota") return;
@@ -216,6 +196,9 @@ const downloadReport = async () => {
         📧 Scan your email to detect phishing and malicious content!
       </p>
 
+      {/* Scan Counter for Standard Users */}
+      <ScanCounter />
+
       <div className="file-upload-wrapper">
         <input
           type="file"
@@ -225,10 +208,12 @@ const downloadReport = async () => {
           disabled={loading || error?.includes('daily scan limit')}
           className="file-input"
         />
+        
         <button disabled={loading || !fileName || error?.includes('daily scan limit')} className="scan-btn">
           {loading ? "Scanning..." : "Scan Now"}
         </button>
       </div>
+      {uploadError && <p className="upload-error">{uploadError}</p>}
 
       {fileName && <p className="uploaded-file">Selected file: {fileName}</p>}
       {error && <p className="scan-error">{error}</p>}

@@ -360,7 +360,7 @@ function formatEmailReport(data) {
     
     // Add the webpage link
     report += `📊 *For more details scan it on our webpage:*\n`;
-    report += `[Visit SafeNet Scanner](https://127.0.0.1:3000/home)\n\n`;
+    report += `[Visit SafeNet Scanner](https://192.168.56.1:3000/home)\n\n`;
     report += `_Stay safe online!_ 🛡️`;
     
     return report;
@@ -422,7 +422,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         let errorMessage = '❌ *Email Scan Failed*\n\n';
         errorMessage += 'Unable to scan the email file.\n\n';
         errorMessage += '📊 *Try scanning it on our webpage:*\n';
-        errorMessage += '[Visit SafeNet Scanner](https://127.0.0.1:3000/home)';
+        errorMessage += '[Visit SafeNet Scanner](https://192.168.56.1:3000/home)';
         
         bot.sendMessage(chatId, errorMessage, {
             parse_mode: 'Markdown',
@@ -484,7 +484,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         let errorMessage = '❌ *Email Scan Failed*\n\n';
         errorMessage += 'Unable to scan the email file.\n\n';
         errorMessage += '📊 *Try scanning it on our webpage:*\n';
-        errorMessage += '[Visit SafeNet Scanner](https://127.0.0.1:3000/home)';
+        errorMessage += '[Visit SafeNet Scanner](https://192.168.56.1:3000/home)';
         
         bot.sendMessage(chatId, errorMessage, {
             parse_mode: 'Markdown',

@@ -17,6 +17,7 @@ import ReportURL from "./pages/ReportURL";  // User URL report page
 import AdminReportURLs from "./pages/AdminReportedURLs"; // Admin report management page
 import Chatbot from "./components/Chatbot"; // NEW: Import Chatbot component**
 import { useUser } from "./contexts/UserContext";
+import InactivityHandler from "./components/InactivityHandler";
 import "./App.css";
 
 axios.defaults.withCredentials = true;
@@ -46,6 +47,7 @@ const App = () => {
 
   return (
     <Router>
+      <InactivityHandler />
       <Routes>
         {/* Public routes - no authentication required */}
         <Route path="/" element={
