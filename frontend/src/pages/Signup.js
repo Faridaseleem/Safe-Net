@@ -87,7 +87,7 @@ const Signup = () => {
         role,
       });
   
-      alert("Signup successful! Please select your plan.");
+      
       navigate(`/select-plan?email=${email}`); // Pass email to select-plan
     } catch (err) {
       setError(err.response?.data?.message || "Signup failed. Try again.");

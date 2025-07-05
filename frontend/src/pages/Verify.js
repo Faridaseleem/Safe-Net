@@ -10,7 +10,7 @@ const Verify = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const [email] = useState(localStorage.getItem("pendingEmail") || "");
+  const email = new URLSearchParams(location.search).get("email");
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -19,7 +19,6 @@ const Verify = () => {
 
     try {
       await axios.post("https://localhost:5000/api/auth/verify", { email, code });
-      alert("Email verified successfully!.");
       navigate("/login"); // Redirect to plan selection page
     } catch (err) {
       setError(err.response?.data?.message || "Verification failed. Try again.");

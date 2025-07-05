@@ -211,6 +211,29 @@ button:hover {
   color: #ff4f4f;
   margin-top: 0;
 }
+.upload-error {
+  color: #ff4d4d;
+  background: rgba(255, 0, 0, 0.08);
+  border-left: 3px solid #ff4d4d;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin: 20px auto 0 auto;
+  font-weight: 500;
+  font-size: 13px;
+  box-shadow: 0 0 8px rgba(255, 77, 77, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 320px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+}
+
+
+
+
+
 
 /* Animations */
 @keyframes fadeIn {

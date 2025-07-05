@@ -150,13 +150,7 @@ const ChangePlan = () => {
         )}
 
         <div className="action-buttons">
-          <button 
-            className="cancel-button" 
-            onClick={() => navigate("/home")}
-            disabled={loading}
-          >
-            Cancel
-          </button>
+          
           <button 
             className="update-button" 
             onClick={handleUpdatePlan}
@@ -166,6 +160,13 @@ const ChangePlan = () => {
              selectedPlan === "premium" && currentPlan === "standard" ? "Upgrade to Premium" :
              selectedPlan === "standard" && currentPlan === "premium" ? "Downgrade to Standard" :
              "Update Plan"}
+          </button>
+          <button 
+            className="cancel-button" 
+            onClick={() => navigate("/home")}
+            disabled={loading}
+          >
+            Cancel
           </button>
         </div>
       </div>
