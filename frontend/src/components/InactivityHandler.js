@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 
-const INACTIVITY_LIMIT = 0.2 * 60 * 1000; // 30 minutes
+const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
 // For testing, you can change this value (e.g., 0.25 * 60 * 1000 for 15 seconds)
 
 const InactivityHandler = () => {

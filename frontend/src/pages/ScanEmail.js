@@ -12,6 +12,8 @@ const ScanEmail = () => {
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
   const { user } = useUser();
+  const [uploadError, setUploadError] = useState("");
+
 
   // URL detail toggles
   const [showVTDetails, setShowVTDetails] = useState(false);
@@ -36,11 +38,16 @@ const ScanEmail = () => {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     if (!file.name.toLowerCase().endsWith(".eml")) {
-      alert("Please upload a valid .eml file.");
+      setUploadError("⚠️ Please upload a valid .eml file.");
       e.target.value = "";
       return;
     }
+
+    // Clear error if valid
+    setUploadError("");
+
 
     setLoading(true);
     setScanResults(null);
@@ -195,10 +202,12 @@ const downloadReport = async () => {
           disabled={loading || error?.includes('daily scan limit')}
           className="file-input"
         />
+        
         <button disabled={loading || !fileName || error?.includes('daily scan limit')} className="scan-btn">
           {loading ? "Scanning..." : "Scan Now"}
         </button>
       </div>
+      {uploadError && <p className="upload-error">{uploadError}</p>}
 
       {fileName && <p className="uploaded-file">Selected file: {fileName}</p>}
       {error && <p className="scan-error">{error}</p>}
