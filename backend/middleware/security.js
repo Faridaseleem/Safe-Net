@@ -1,10 +1,12 @@
-const securityMiddleware = (req, res, next) => {
+const securityMiddleware = async (req, res, next) => {
   const timestamp = new Date().toISOString();
   const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
   const userAgent = req.headers['user-agent'];
   const method = req.method;
   const path = req.path;
   const userId = req.session?.user?.id || 'anonymous';
+  const SuspiciousLog = require("../models/SuspiciousLog");
+
 
   // Log all requests
   console.log(`🔍 ${timestamp} - ${method} ${path} - IP: ${ip} - User: ${userId}`);
@@ -34,11 +36,30 @@ const securityMiddleware = (req, res, next) => {
         query: req.query
       });
       console.log('='.repeat(80));
-      
-      // You could also send alerts here
-      break;
+
+      try {
+        await SuspiciousLog.create({
+          timestamp,
+          activity: "SUSPICIOUS_PATTERN_DETECTED",
+          details: {
+            pattern: pattern.toString(),
+            body: req.body,
+            query: req.query,
+            reason: "Blocked pattern detected in request"
+          },
+          userId,
+          path,
+          ip,
+          userAgent
+        });
+      } catch (err) {
+        console.error("❌ Failed to log suspicious pattern:", err);
+      }
+
+      break; // Stop checking after first match
     }
-  }
+}
+
 
   // Rate limiting check (simple implementation)
   const key = `${ip}-${path}`;

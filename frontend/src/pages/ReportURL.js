@@ -8,7 +8,7 @@ const ReportURL = () => {
   const [loading, setLoading] = useState(false);
 
   const { user } = useUser(); // get logged-in user info
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -28,7 +28,8 @@ const ReportURL = () => {
           url,
           reportedBy: user?.email || "anonymous",  // send reporter email or fallback
         }),
-      });
+          credentials: "include" // ✅ REQUIRED to send session
+        });
 
       const data = await res.json();
 

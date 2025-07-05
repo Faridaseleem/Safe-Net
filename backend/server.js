@@ -45,13 +45,8 @@ app.use(
 
 app.use(express.json());
 
-// 🔒 SECURITY MIDDLEWARE: Add comprehensive security protection
-// SECURITY MEASURE 1: General security middleware (rate limiting, pattern detection)
-app.use(securityMiddleware);
-
-// SECURITY MEASURE 2: NoSQL injection protection middleware
-// This middleware sanitizes all request data to prevent NoSQL injection attacks
-app.use(nosqlInjectionProtection);
+// ✅ Trust proxy if behind something like Nginx or a tunnel
+app.set("trust proxy", 1);
 
 // ✅ Sessions
 app.use(
@@ -74,6 +69,18 @@ app.use(
     },
   })
 );
+app.use((req, res, next) => {
+  console.log("🧪 Session inside middleware BEFORE security:", req.session?.user);
+  next();
+});
+
+// 🔒 SECURITY MIDDLEWARE: Add comprehensive security protection
+// SECURITY MEASURE 1: General security middleware (rate limiting, pattern detection)
+app.use(securityMiddleware);
+
+// SECURITY MEASURE 2: NoSQL injection protection middleware
+// This middleware sanitizes all request data to prevent NoSQL injection attacks
+app.use(nosqlInjectionProtection);
 
 // 🔍 Session Debugging
 app.get("/session-status", (req, res) => {
