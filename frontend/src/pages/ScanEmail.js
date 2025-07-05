@@ -14,8 +14,37 @@ const ScanEmail = () => {
   const [scanResults, setScanResults] = useState(null);
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
-  const { user } = useUser();
+  const [uploadError, setUploadError] = useState("");
+  const { user, refreshScanCount } = useUser();
+useEffect(() => {
+  const logSuspiciousAccess = async () => {
+    if (!user) {
+      try {
+        await axios.post("https://localhost:5000/api/log/suspicious-activity", {
+          activity: "Unauthorized access attempt",
+          details: {
+            description: "User tried to access /scan-email without authentication"
+          },
+          timestamp: new Date().toISOString(),
+          path: "/scan-email",
+          userId: null,
+          userAgent: navigator.userAgent
+        }, {
+          withCredentials: true
+        });
 
+        console.log("✅ Suspicious access to /scan-email logged");
+      } catch (err) {
+        console.error("❌ Failed to log suspicious activity:", err);
+      }
+
+      // Optional redirect
+      window.location.href = "/login";
+    }
+  };
+
+  logSuspiciousAccess();
+}, [user]);
   // URL detail toggles
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
@@ -41,10 +70,13 @@ const ScanEmail = () => {
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith(".eml")) {
-      setUploadError("⚠️ Please upload a valid .eml file.");
+      setUploadError("⚠ Please upload a valid .eml file.");
       e.target.value = "";
       return;
     }
+
+    // Clear error if valid
+    setUploadError("");
 
     // Clear error if valid
     setUploadError("");

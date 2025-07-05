@@ -14,8 +14,32 @@ const Scan = () => {
   const [loading, setLoading] = useState(false);
   const reportRef = useRef(null);
   const navigate = useNavigate();
-  const { user } = useUser();
-  
+  const { user, refreshScanCount } = useUser();
+  useEffect(() => {
+  const logSuspiciousAccess = async () => {
+    if (!user) {
+      try {
+        await axios.post("https://localhost:5000/api/log/suspicious-activity", {
+          activity: "Unauthorized access attempt",
+          details: { description: "User tried to access /scan-url without being logged in" },
+          timestamp: new Date().toISOString(),
+          path: "/scan-url",
+          userId: null,
+          userAgent: navigator.userAgent
+        }, {
+          withCredentials: true   // ✅ THIS is the missing piece
+        });
+      } catch (err) {
+        console.error("❌ Failed to log suspicious activity:", err);
+      }
+
+      window.location.href = "/login";
+    }
+  };
+
+  logSuspiciousAccess();
+}, [user]);
+
   // State to track which details are expanded
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
