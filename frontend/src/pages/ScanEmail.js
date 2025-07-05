@@ -1,5 +1,7 @@
 import React, { useState, useRef } from "react";
 import html2canvas from "html2canvas";
+import axios from 'axios';
+import { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 
@@ -12,7 +14,35 @@ const ScanEmail = () => {
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
   const { user } = useUser();
+  useEffect(() => {
+  const logSuspiciousAccess = async () => {
+    if (!user) {
+      try {
+        await axios.post("https://localhost:5000/api/log/suspicious-activity", {
+          activity: "Unauthorized access attempt",
+          details: {
+            description: "User tried to access /scan-email without authentication"
+          },
+          timestamp: new Date().toISOString(),
+          path: "/scan-email",
+          userId: null,
+          userAgent: navigator.userAgent
+        }, {
+          withCredentials: true
+        });
 
+        console.log("✅ Suspicious access to /scan-email logged");
+      } catch (err) {
+        console.error("❌ Failed to log suspicious activity:", err);
+      }
+
+      // Optional redirect
+      window.location.href = "/login";
+    }
+  };
+
+  logSuspiciousAccess();
+}, [user]);
   // URL detail toggles
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);

@@ -1,69 +1,79 @@
 const express = require('express');
 const router = express.Router();
+const AccessLog = require('../models/AccessLog');
+const SuspiciousLog = require('../models/SuspiciousLog');
 
-// Log access attempts
 router.post('/access', async (req, res) => {
   try {
     const { userId, userRole, path, timestamp, userAgent } = req.body;
     const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
 
-    console.log('🔍 ACCESS LOG:', {
-      timestamp: new Date(timestamp).toLocaleString(),
+    console.log("🟢 /access called with:", {
+      userId,
+      userRole,
+      path,
+      timestamp,
+      ip,
+      userAgent
+    });
+
+    await AccessLog.create({
+      timestamp,
       userId,
       userRole,
       path,
       ip,
-      userAgent: userAgent?.substring(0, 100) // Truncate for readability
+      userAgent
     });
 
-    // Here you could save to database if needed
-    // const accessLog = new AccessLog({ userId, userRole, path, timestamp, ip, userAgent });
-    // await accessLog.save();
+    console.log("✅ Log inserted successfully");
 
     res.status(200).json({ message: 'Access logged successfully' });
   } catch (error) {
-    console.error('Error logging access:', error);
+    console.error('❌ Error logging access:', error);
     res.status(500).json({ message: 'Failed to log access' });
   }
 });
 
-// Log suspicious activity
+
 router.post('/suspicious-activity', async (req, res) => {
   try {
     const { activity, details, timestamp, userAgent, path, userId } = req.body;
     const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
 
-    console.log('🚨 SUSPICIOUS ACTIVITY DETECTED:', {
-      timestamp: new Date(timestamp).toLocaleString(),
+    await SuspiciousLog.create({
+      timestamp,
       activity,
       details,
       userId,
       path,
       ip,
-      userAgent: userAgent?.substring(0, 100)
+      userAgent
     });
-
-    // Log with more prominent formatting for security events
-    console.log('='.repeat(80));
-    console.log('🚨 SECURITY ALERT 🚨');
-    console.log('Activity:', activity);
-    console.log('Details:', JSON.stringify(details, null, 2));
-    console.log('User ID:', userId);
-    console.log('Path:', path);
-    console.log('IP:', ip);
-    console.log('User Agent:', userAgent);
-    console.log('='.repeat(80));
-
-    // Here you could:
-    // 1. Save to database
-    // 2. Send email alert to admin
-    // 3. Trigger security measures
-    // 4. Rate limit the IP if needed
 
     res.status(200).json({ message: 'Suspicious activity logged successfully' });
   } catch (error) {
     console.error('Error logging suspicious activity:', error);
     res.status(500).json({ message: 'Failed to log suspicious activity' });
+  }
+});
+// View latest 100 access logs
+router.get('/admin/access-logs', async (req, res) => {
+  try {
+    const logs = await AccessLog.find().sort({ timestamp: -1 }).limit(100);
+    res.status(200).json(logs);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch access logs' });
+  }
+});
+
+// View latest 100 suspicious activity logs
+router.get('/admin/suspicious-logs', async (req, res) => {
+  try {
+    const logs = await SuspiciousLog.find().sort({ timestamp: -1 }).limit(100);
+    res.status(200).json(logs);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch suspicious logs' });
   }
 });
 

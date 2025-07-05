@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "./ScanURL.css";
 import logo from "../assets/logo.png";
 import html2canvas from "html2canvas";
+import axios from 'axios';
+import { useEffect } from 'react';
 import { useUser } from "../contexts/UserContext";
 
 const Scan = () => {
@@ -12,7 +14,32 @@ const Scan = () => {
   const reportRef = useRef(null);
   const navigate = useNavigate();
   const { user } = useUser();
-  
+  useEffect(() => {
+  const logSuspiciousAccess = async () => {
+    if (!user) {
+      try {
+        await axios.post("/api/log/suspicious-activity", {
+          activity: "Unauthorized access attempt",
+          details: { description: "User tried to access /scan-url without being logged in" },
+          timestamp: new Date().toISOString(),
+          path: "/scan-url",
+          userId: null,
+          userAgent: navigator.userAgent
+        }, {
+          withCredentials: true   // ✅ THIS is the missing piece
+        });
+      } catch (err) {
+        console.error("❌ Failed to log suspicious activity:", err);
+      }
+
+      // Optional: redirect to login
+      window.location.href = "/login";
+    }
+  };
+
+  logSuspiciousAccess();
+}, [user]);
+
   // State to track which details are expanded
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
