@@ -18,7 +18,6 @@ const SCAMALYTICS_API_KEY = process.env.SCAMALYTICS_API_KEY;
 const SCAMALYTICS_ACCOUNT = process.env.SCAMALYTICS_ACCOUNT || 'mostafaheshamsheref';
 const HYBRID_ANALYSIS_API_KEY = process.env.HYBRID_ANALYSIS_API_KEY;
 
-// Helper: VirusTotal URL-safe base64 encoding
 const base64UrlEncode = (str) =>
   Buffer.from(str)
     .toString("base64")
@@ -89,7 +88,7 @@ async function extractIpFromUrl(url) {
   }
 }
 
-// Fixed Scamalytics function
+// Scamalytics function
 async function scanWithScamalytics(input) {
   try {
     let ip = input;
@@ -329,7 +328,7 @@ async function pollFileScanResult(scanId, retries = 15, delay = 5000) {
   return { verdict: "Scan result not ready yet." };
 }
 
-// Fixed VirusTotal URL scanning
+//VirusTotal URL scanning
 async function scanUrlVT(rawUrl, role = "premium") {
   try {
     const url = rawUrl
@@ -393,7 +392,7 @@ async function scanUrlVT(rawUrl, role = "premium") {
   }
 }
 
-// Fixed IPQS URL scanning
+//IPQS URL scanning
 async function scanUrlIPQS(url) {
   try {
     console.log(`🔍 IPQS scanning URL: ${url}`);
@@ -464,12 +463,11 @@ async function scanUrlIPQS(url) {
   }
 }
 
-// Fixed email header scanning with IPQS
+//Email header scanning with IPQS
 async function scanEmailHeaderWithIPQS(email) {
   try {
     console.log(`🔍 IPQS scanning email: ${email}`);
     
-    // Use GET request, not POST
     const response = await axios.get(
       `https://ipqualityscore.com/api/json/email/${IPQS_API_KEY}/${encodeURIComponent(email)}`,
       {
@@ -917,7 +915,6 @@ async function enforceScanLimit(req, res, next) {
   if (!userId) return next();
   
   // 🔒 SECURITY: Use secure database method to find user by ID
-  // SECURITY MEASURE: Safe findById operation with validated ObjectId
   const user = await SecureDatabase.safeFindById(User, userId);
   if (!user) return res.status(403).json({ error: "User not found" });
   if (user.role === "premium" || user.role === "admin") return next();
@@ -938,7 +935,7 @@ async function enforceScanLimit(req, res, next) {
   next();
 }
 
-// Fixed POST /api/scan-url endpoint with better error handling
+//POST /api/scan-url endpoint with better error handling
 router.post("/scan-url", enforceScanLimit, async (req, res) => {
   if (!req.body || !req.body.url) {
     return res.status(400).json({ error: "URL is required." });
@@ -952,7 +949,6 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
 
   try {
     // 🔒 SECURITY: Use secure database method to check blocked URLs
-    // SECURITY MEASURE: Safe findOne operation with sanitized URL query
     const blocked = await SecureDatabase.safeFindOne(BlockedUrl, { url });
     if (blocked && blocked.status === "malicious") {
       console.log(`🚫 URL is blocked by admin: ${url}`);
@@ -1131,8 +1127,6 @@ router.post("/scan-url", enforceScanLimit, async (req, res) => {
 
     
     const finalScore = Math.round(customScore);
-    //userRole = "standard"; // 🔧 Force standard role for testing
-    //console.log("🧪 Score Check:", finalScore);    // should print the final score like 19
 
     const finalVerdict = getVerdictFromScore(finalScore, userRole);
 
@@ -1238,7 +1232,6 @@ router.post("/scan-eml-file", enforceScanLimit, upload.single("emlFile"), async 
     
     const urlScanResults = await Promise.all(uniqueUrls.map(async (u) => {
       // 🔒 SECURITY: Use secure database method to check blocked URLs
-      // SECURITY MEASURE: Safe findOne operation with sanitized URL query
       const blocked = await SecureDatabase.safeFindOne(BlockedUrl, { url: u });
       if (blocked?.status === "malicious") {
         return {
@@ -1469,7 +1462,6 @@ async function getUserRole(req) {
   // Optionally, allow passing userId in body for API clients
   if (req.body && req.body.userId) {
     // 🔒 SECURITY: Use secure database method to find user by ID
-    // SECURITY MEASURE: Safe findById operation with validated ObjectId
     const user = await SecureDatabase.safeFindById(User, req.body.userId);
     console.log(`🔍 User role from userId: ${user?.role || "standard"}`);
     return user?.role || "standard";
@@ -1494,7 +1486,6 @@ router.get("/scan-count", async (req, res) => {
     }
 
     // 🔒 SECURITY: Use secure database method to find user by ID
-    // SECURITY MEASURE: Safe findById operation with validated ObjectId
     const user = await SecureDatabase.safeFindById(User, userId);
     if (!user) {
       return res.status(401).json({ error: "User not found" });

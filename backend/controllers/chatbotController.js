@@ -21,7 +21,7 @@ exports.handleInteraction = async (req, res) => {
       });
 
     } else if (type === 'ask_ai') {
-      // ✅ Forward userId to /ask-ai
+      // Forward userId to /ask-ai
       const aiResponse = await axios.post(
         'http://localhost:5000/api/ask-ai',
         { question, conversationHistory, userId: user?._id },

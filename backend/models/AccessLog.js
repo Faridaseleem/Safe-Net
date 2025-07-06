@@ -1,4 +1,3 @@
-// models/AccessLog.js
 const mongoose = require('mongoose');
 
 const AccessLogSchema = new mongoose.Schema({

@@ -18,7 +18,6 @@ router.post("/signup", async (req, res) => {
 
   try {
     // 🔒 SECURITY: Use secure database method to prevent NoSQL injection
-    // SECURITY MEASURE: Safe findOne operation with sanitized query
     const existingUser = await SecureDatabase.safeFindOne(User, { email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -33,7 +32,6 @@ router.post("/signup", async (req, res) => {
       password: hashedPassword,
       verificationCode,
       verified: false,
-      // role will default to "standard" from schema
     });
 
     await newUser.save();
@@ -58,7 +56,6 @@ router.post("/update-plan", async (req, res) => {
 
   try {
     // 🔒 SECURITY: Use secure database method to find user
-    // SECURITY MEASURE: Safe findOne operation with sanitized email query
     const user = await SecureDatabase.safeFindOne(User, { email });
     
     if (!user) {
@@ -75,7 +72,6 @@ router.post("/update-plan", async (req, res) => {
     user.role = plan;
     
     // 🔒 SECURITY: Use secure database method to save updated user
-    // SECURITY MEASURE: Safe save operation with sanitized data
     await SecureDatabase.safeSave(user);
 
     // Send verification email if not already sent
@@ -105,7 +101,6 @@ router.post("/verify", async (req, res) => {
 
   try {
     // 🔒 SECURITY: Use secure database method to find user
-    // SECURITY MEASURE: Safe findOne operation with sanitized query
     const user = await SecureDatabase.safeFindOne(User, { email, verificationCode: code });
     if (!user) {
       return res.status(400).json({ message: "Invalid verification code" });
@@ -115,7 +110,6 @@ router.post("/verify", async (req, res) => {
     user.verificationCode = null;
     
     // 🔒 SECURITY: Use secure database method to save updated user
-    // SECURITY MEASURE: Safe save operation with sanitized data
     await SecureDatabase.safeSave(user);
 
     res.status(200).json({ message: "Email verified successfully" });
@@ -124,7 +118,7 @@ router.post("/verify", async (req, res) => {
   }
 });
 
-// Login Route - UPDATED to include role in session and response
+// Login Route 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -134,7 +128,6 @@ router.post("/login", async (req, res) => {
 
   try {
     // 🔒 SECURITY: Use secure database method to find user
-    // SECURITY MEASURE: Safe findOne operation with sanitized email query
     const user = await SecureDatabase.safeFindOne(User, { email });
 
     if (!user) {
@@ -158,7 +151,7 @@ router.post("/login", async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role || "user", // Add role here
+      role: user.role || "user",
     };
 
     console.log("✅ Storing user in session:", req.session.user);
@@ -170,7 +163,6 @@ router.post("/login", async (req, res) => {
       }
 
       console.log("✅ Session successfully saved:", req.session);
-      // Return user info with role in response
       res.status(200).json({
         message: "Login successful",
         user: req.session.user,
@@ -182,7 +174,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Add this route to handle plan changes
 // Route to change user plan (for logged-in users)
 router.post("/change-plan", async (req, res) => {
   console.log("Change plan request received:", req.body);
@@ -208,7 +199,6 @@ router.post("/change-plan", async (req, res) => {
 
   try {
     // 🔒 SECURITY: Use secure database method to find user by ID
-    // SECURITY MEASURE: Safe findById operation with validated ObjectId
     const user = await SecureDatabase.safeFindById(User, userId);
     
     if (!user) {
@@ -219,7 +209,6 @@ router.post("/change-plan", async (req, res) => {
     user.role = newPlan;
     
     // 🔒 SECURITY: Use secure database method to save updated user
-    // SECURITY MEASURE: Safe save operation with sanitized data
     await SecureDatabase.safeSave(user);
 
     // Update session with new role
@@ -253,7 +242,7 @@ router.post("/change-plan", async (req, res) => {
   }
 });
 
-// Add a route to check current plan
+// A route to check current plan
 router.get("/current-plan", async (req, res) => {
   if (!req.session || !req.session.user) {
     return res.status(401).json({ message: "Not logged in" });
@@ -261,7 +250,6 @@ router.get("/current-plan", async (req, res) => {
 
   try {
     // 🔒 SECURITY: Use secure database method to find user by ID
-    // SECURITY MEASURE: Safe findById operation with validated ObjectId
     const user = await SecureDatabase.safeFindById(User, req.session.user.id);
     res.json({ 
       currentPlan: user.role,
@@ -277,7 +265,6 @@ router.get("/current-plan", async (req, res) => {
 });
 
 // Get current user from session
-// In your backend auth routes
 router.get('/current-user', (req, res) => {
   console.log('Current user endpoint hit');
   console.log('Session:', req.session);
@@ -293,7 +280,7 @@ router.get('/current-user', (req, res) => {
   });
 });
 
-// Logout Route (unchanged)
+// Logout Route
 router.post("/logout", async (req, res) => {
   console.log("🔍 Current Session Before Logout:", req.session);
 

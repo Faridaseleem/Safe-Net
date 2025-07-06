@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-// --- Mock Data for Blog/News ---
-// In a real application, this might come from a 'articles' collection in your MongoDB
 const articles = [
     {
         title: "New Phishing Scam Mimics Your Company's IT Help Desk",
@@ -21,10 +19,6 @@ const articles = [
     }
 ];
 
-// --- API Route for the Education Page ---
-// @route   GET /api/articles
-// @desc    Get a list of cybersecurity articles
-// @access  Public
 router.get("/articles", (req, res) => {
     console.log("✅ Request received for /api/articles");
     res.json(articles);

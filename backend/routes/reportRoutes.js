@@ -3,8 +3,6 @@ const router = express.Router();
 const BlockedUrl = require("../models/BlockedUrl");
 const SecureDatabase = require("../utils/secureDatabase"); // Import secure database utility
 
-// 🔒 SECURITY: All routes now use secure database methods to prevent NoSQL injection
-
 // User reports a URL
 router.post("/report-url", async (req, res) => {
   try {
@@ -15,7 +13,6 @@ router.post("/report-url", async (req, res) => {
     }
 
     // 🔒 SECURITY: Use secure database method to check if URL already exists
-    // SECURITY MEASURE: Safe findOne operation with sanitized URL query
     let blocked = await SecureDatabase.safeFindOne(BlockedUrl, { url });
     
     if (blocked) {
@@ -42,7 +39,6 @@ router.post("/report-url", async (req, res) => {
       });
 
       // 🔒 SECURITY: Use secure database method to save new blocked URL
-      // SECURITY MEASURE: Safe save operation with sanitized data
       await SecureDatabase.safeSave(newBlockedUrl);
 
       res.status(201).json({ 
@@ -60,7 +56,6 @@ router.post("/report-url", async (req, res) => {
 router.get("/admin/reported-urls", async (req, res) => {
   try {
     // 🔒 SECURITY: Use secure database method to get all reported URLs
-    // SECURITY MEASURE: Safe find operation with sanitized query and limited results
     const reports = await SecureDatabase.safeFind(BlockedUrl, {}, { 
       sort: { reportedAt: -1 },
       limit: 100 // Limit results to prevent DoS
@@ -84,7 +79,6 @@ router.post("/admin/reported-urls/:id/decision", async (req, res) => {
     }
 
     // 🔒 SECURITY: Use secure database method to find URL by ID
-    // SECURITY MEASURE: Safe findById operation with validated ObjectId
     const report = await SecureDatabase.safeFindById(BlockedUrl, id);
     
     if (!report) {
@@ -94,7 +88,6 @@ router.post("/admin/reported-urls/:id/decision", async (req, res) => {
     report.status = decision;
     
     // 🔒 SECURITY: Use secure database method to save updated report
-    // SECURITY MEASURE: Safe save operation with sanitized data
     await SecureDatabase.safeSave(report);
 
     res.json({ message: "Decision updated successfully", report });

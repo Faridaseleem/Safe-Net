@@ -35,9 +35,8 @@ const nosqlInjectionProtection = (req, res, next) => {
   next();
 };
 
-/**
+/*
  * SECURITY FUNCTION: Sanitize objects to prevent NoSQL injection
- * This function recursively sanitizes objects and removes dangerous MongoDB operators
  */
 function sanitizeObject(obj) {
   if (obj === null || obj === undefined) {
@@ -62,13 +61,13 @@ function sanitizeObject(obj) {
       // SECURITY MEASURE: Block MongoDB operators in keys
       if (isMongoOperator(key)) {
         console.log('🚨 BLOCKED: MongoDB operator in key:', key);
-        continue; // Skip this property entirely
+        continue;
       }
 
       // SECURITY MEASURE: Block MongoDB operators in values
       if (typeof value === 'object' && value !== null && isMongoOperatorObject(value)) {
         console.log('🚨 BLOCKED: MongoDB operator object:', value);
-        continue; // Skip this property entirely
+        continue; 
       }
 
       // SECURITY MEASURE: Recursively sanitize nested objects
@@ -83,7 +82,6 @@ function sanitizeObject(obj) {
 
 /**
  * SECURITY FUNCTION: Sanitize strings to prevent injection
- * Removes or escapes dangerous characters and patterns
  */
 function sanitizeString(str) {
   if (typeof str !== 'string') {
@@ -137,7 +135,6 @@ function sanitizeString(str) {
 
 /**
  * SECURITY FUNCTION: Check if a key is a MongoDB operator
- * Blocks all MongoDB query operators to prevent injection
  */
 function isMongoOperator(key) {
   if (typeof key !== 'string') {
@@ -186,7 +183,6 @@ function isMongoOperatorObject(obj) {
 
 /**
  * SECURITY FUNCTION: Detect suspicious patterns in requests
- * Identifies potential NoSQL injection attempts
  */
 function detectSuspiciousPatterns(req) {
   const suspiciousPatterns = [];
@@ -260,7 +256,6 @@ function detectSuspiciousPatterns(req) {
 
 /**
  * SECURITY FUNCTION: Log suspicious activity for monitoring
- * Records potential NoSQL injection attempts
  */
 function logSuspiciousActivity(req, patterns) {
   const timestamp = new Date().toISOString();
@@ -283,7 +278,7 @@ function logSuspiciousActivity(req, patterns) {
   console.log('='.repeat(80));
 
   // SECURITY MEASURE: You could also send alerts here
-  // sendSecurityAlert('NoSQL Injection Attempt', { ip, userId, patterns });
+  
 }
 
 module.exports = nosqlInjectionProtection; 

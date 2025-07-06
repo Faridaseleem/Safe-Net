@@ -1,22 +1,13 @@
 /**
  * Secure Database Utility
- * 
- * This utility provides safe database operations that protect against NoSQL injection.
- * All database queries should use these methods instead of direct Mongoose operations.
  */
 
 const mongoose = require('mongoose');
 
-/**
- * SECURITY CLASS: Secure Database Operations
- * Provides safe methods for common database operations
- */
+// SECURITY CLASS: Secure Database Operations
 class SecureDatabase {
   
-  /**
-   * SECURITY METHOD: Safe findOne operation
-   * Validates and sanitizes query parameters before execution
-   */
+  //Validates and sanitizes query parameters before execution
   static async safeFindOne(model, query, options = {}) {
     try {
       // SECURITY CHECK: Validate model
@@ -60,10 +51,7 @@ class SecureDatabase {
     }
   }
 
-  /**
-   * SECURITY METHOD: Safe findById operation
-   * Validates ObjectId format and prevents injection
-   */
+  //Validates ObjectId format and prevents injection
   static async safeFindById(model, id, options = {}) {
     try {
       // SECURITY CHECK: Validate model
@@ -122,10 +110,7 @@ class SecureDatabase {
     }
   }
 
-  /**
-   * SECURITY METHOD: Safe find operation
-   * Validates and sanitizes query parameters for multiple document retrieval
-   */
+  //Validates and sanitizes query parameters for multiple document retrieval
   static async safeFind(model, query = {}, options = {}) {
     try {
       // SECURITY CHECK: Validate model
@@ -169,10 +154,7 @@ class SecureDatabase {
     }
   }
 
-  /**
-   * SECURITY METHOD: Safe update operation
-   * Validates and sanitizes update data
-   */
+  //Validates and sanitizes update data
   static async safeUpdateOne(model, filter, update, options = {}) {
     try {
       // SECURITY CHECK: Validate model
@@ -227,10 +209,7 @@ class SecureDatabase {
     }
   }
 
-  /**
-   * SECURITY METHOD: Safe save operation for new documents
-   * Validates and sanitizes document data before saving
-   */
+  //Validates and sanitizes document data before saving
   static async safeSave(document) {
     try {
       // SECURITY CHECK: Validate document
@@ -264,10 +243,7 @@ class SecureDatabase {
     }
   }
 
-  /**
-   * SECURITY FUNCTION: Sanitize query objects
-   * Removes dangerous MongoDB operators and validates query structure
-   */
+  //Removes dangerous MongoDB operators and validates query structure
   static sanitizeQuery(query) {
     if (!query || typeof query !== 'object') {
       return {};
@@ -295,10 +271,7 @@ class SecureDatabase {
     return sanitized;
   }
 
-  /**
-   * SECURITY FUNCTION: Sanitize update objects
-   * Ensures update operations are safe and don't contain dangerous operators
-   */
+  //Ensures update operations are safe and don't contain dangerous operators
   static sanitizeUpdate(update) {
     if (!update || typeof update !== 'object') {
       return {};
@@ -331,10 +304,7 @@ class SecureDatabase {
     return sanitized;
   }
 
-  /**
-   * SECURITY FUNCTION: Sanitize document data
-   * Ensures document data is safe before saving
-   */
+  //Ensures document data is safe before saving
   static sanitizeDocument(document) {
     if (!document || typeof document !== 'object') {
       return {};
@@ -361,10 +331,7 @@ class SecureDatabase {
     return sanitized;
   }
 
-  /**
-   * SECURITY FUNCTION: Sanitize individual values
-   * Handles different data types safely
-   */
+  //Handles different data types safely
   static sanitizeValue(value) {
     if (value === null || value === undefined) {
       return value;
@@ -385,10 +352,7 @@ class SecureDatabase {
     return value;
   }
 
-  /**
-   * SECURITY FUNCTION: Sanitize strings
-   * Removes dangerous characters and patterns
-   */
+  //Sanitize strings
   static sanitizeString(str) {
     if (typeof str !== 'string') {
       return str;
@@ -473,9 +437,7 @@ class SecureDatabase {
     return str;
   }
 
-  /**
-   * SECURITY FUNCTION: Check if a key is a MongoDB operator
-   */
+  //SECURITY FUNCTION: Check if a key is a MongoDB operator
   static isMongoOperator(key) {
     if (typeof key !== 'string') {
       return false;
@@ -492,9 +454,7 @@ class SecureDatabase {
     return mongoOperators.includes(key);
   }
 
-  /**
-   * SECURITY FUNCTION: Check if a key is an update operator
-   */
+  //SECURITY FUNCTION: Check if a key is an update operator
   static isUpdateOperator(key) {
     if (typeof key !== 'string') {
       return false;
@@ -508,9 +468,7 @@ class SecureDatabase {
     return updateOperators.includes(key);
   }
 
-  /**
-   * SECURITY FUNCTION: Check if an object contains MongoDB operators
-   */
+  //SECURITY FUNCTION: Check if an object contains MongoDB operators
   static isMongoOperatorObject(obj) {
     if (typeof obj !== 'object' || obj === null) {
       return false;

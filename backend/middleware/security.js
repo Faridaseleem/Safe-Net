@@ -56,12 +56,12 @@ const securityMiddleware = async (req, res, next) => {
         console.error("❌ Failed to log suspicious pattern:", err);
       }
 
-      break; // Stop checking after first match
+      break;
     }
 }
 
 
-  // Rate limiting check (simple implementation)
+  // Rate limiting check
   const key = `${ip}-${path}`;
   if (!req.app.locals.rateLimit) {
     req.app.locals.rateLimit = {};

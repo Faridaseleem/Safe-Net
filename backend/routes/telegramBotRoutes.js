@@ -33,7 +33,6 @@ const userSessions = new Map();
 
 // Initialize bot commands and handlers
 if (bot) {
-    // Set bot commands
     bot.setMyCommands([
         { command: '/start', description: 'Start the bot' },
         { command: '/menu', description: 'Show main menu' },
@@ -226,7 +225,6 @@ if (bot) {
 
     // Handle regular messages
     bot.on('message', async (msg) => {
-        // Skip if it's a command or document
         if ((msg.text && msg.text.startsWith('/')) || msg.document) return;
 
         const chatId = msg.chat.id;
@@ -335,8 +333,7 @@ async function handleURL(chatId, url, mode, session) {
     }
 }
 
-// Replace your formatEmailReport function with this simplified version
-// Replace your formatEmailReport function with this version
+// Email report format
 function formatEmailReport(data) {
     let report = '';
     
@@ -353,12 +350,11 @@ function formatEmailReport(data) {
     // Display the explanation/why
     report += `*Why?*\n${explanation}\n\n`;
     
-    // Optional: Include email header verdict if you want to show both
+    //display email header verdict
     if (data.emailHeaderFinalVerdict) {
         report += `*Email Header Analysis:* ${data.emailHeaderFinalVerdict}\n\n`;
     }
     
-    // Add the webpage link
     report += `📊 *For more details scan it on our webpage:*\n`;
     report += `[Visit SafeNet Scanner](https://192.168.56.1:3000/home)\n\n`;
     report += `_Stay safe online!_ 🛡️`;
@@ -366,7 +362,7 @@ function formatEmailReport(data) {
     return report;
 }
 
-// Update handleEmailScan to ensure we're getting the right data
+//HandleEmailScan to ensure we're getting the right data
 async function handleEmailScan(chatId, fileId, fileName, session) {
     session.waitingFor = null;
     bot.sendChatAction(chatId, 'upload_document');
@@ -432,7 +428,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
     }
 }
 
-// Also update handleEmailScan to log the response
+// This HandleEmailScan function is to log the response
 async function handleEmailScan(chatId, fileId, fileName, session) {
     session.waitingFor = null;
     bot.sendChatAction(chatId, 'upload_document');
@@ -475,7 +471,7 @@ async function handleEmailScan(chatId, fileId, fileName, session) {
         await bot.sendMessage(chatId, report, {
             parse_mode: 'Markdown',
             reply_markup: getBackToMenuKeyboard(),
-            disable_web_page_preview: false // Allow preview for the website link
+            disable_web_page_preview: false
         });
 
     } catch (error) {
@@ -507,7 +503,6 @@ async function handleAskAI(chatId, question, session) {
             userRole: 'premium'
         });
 
-        // Fix: Changed from response.data.answer to response.data.message
         const answer = response.data.message || "No response received";
         session.chatHistory.push({ role: 'assistant', content: answer });
 

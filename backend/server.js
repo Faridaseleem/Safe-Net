@@ -75,10 +75,10 @@ app.use((req, res, next) => {
 });
 
 // 🔒 SECURITY MIDDLEWARE: Add comprehensive security protection
-// SECURITY MEASURE 1: General security middleware (rate limiting, pattern detection)
+// SECURITY MEASURE: General security middleware (rate limiting, pattern detection)
 app.use(securityMiddleware);
 
-// SECURITY MEASURE 2: NoSQL injection protection middleware
+// SECURITY MEASURE: NoSQL injection protection middleware
 // This middleware sanitizes all request data to prevent NoSQL injection attacks
 app.use(nosqlInjectionProtection);
 

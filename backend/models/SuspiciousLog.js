@@ -1,4 +1,3 @@
-// models/SuspiciousLog.js
 const mongoose = require('mongoose');
 
 const SuspiciousLogSchema = new mongoose.Schema({
