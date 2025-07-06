@@ -21,7 +21,7 @@ const ProtectedRoute = ({
         details,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
-        ip: null, // Will be captured by backend
+        ip: null, 
         path: location.pathname,
         userId: user?.id || 'anonymous'
       }, { withCredentials: true });
@@ -32,18 +32,14 @@ const ProtectedRoute = ({
 
   useEffect(() => {
     const checkAccess = async () => {
-      // If no authentication required, allow access
       if (!requireAuth) {
         setIsChecking(false);
         return;
       }
 
-      // If still loading, wait
       if (loading) {
         return;
       }
-
-      // If not authenticated, redirect to login
       if (!user) {
         await logSuspiciousActivity('UNAUTHORIZED_ACCESS_ATTEMPT', {
           attemptedPath: location.pathname,
@@ -53,7 +49,6 @@ const ProtectedRoute = ({
         return;
       }
 
-      // If roles are specified, check if user has required role
       if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
         await logSuspiciousActivity('UNAUTHORIZED_ROLE_ACCESS', {
           attemptedPath: location.pathname,
@@ -65,7 +60,6 @@ const ProtectedRoute = ({
         return;
       }
 
-      // Log successful access if logging is enabled
       if (logAccess) {
         try {
           await axios.post('https://localhost:5000/api/log/access', {
@@ -86,7 +80,6 @@ const ProtectedRoute = ({
     checkAccess();
   }, [user, loading, location.pathname, requireAuth, allowedRoles, logAccess]);
 
-  // Show loading while checking
   if (loading || isChecking) {
     return (
       <div style={{
@@ -105,17 +98,13 @@ const ProtectedRoute = ({
     );
   }
 
-  // If not authenticated, redirect to login
   if (requireAuth && !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user doesn't have required role, redirect to home
   if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
     return <Navigate to="/home" replace />;
   }
-
-  // Allow access
   return children;
 };
 

@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import "./RootPage.css";
 import logo from "../assets/logo.png";
 import bannerImage from "../assets/root5.png";
-import icon1 from "../assets/icon1.svg"; // Multi-layered Protection
-import icon2 from "../assets/icon2.svg"; // Real-time Threat Intelligence
-import icon3 from "../assets/icon3.svg"; // Automated Response
-import icon4 from "../assets/icon4.png"; // Automated Response
+import icon1 from "../assets/icon1.svg"; 
+import icon2 from "../assets/icon2.svg"; 
+import icon3 from "../assets/icon3.svg"; 
+import icon4 from "../assets/icon4.png"; 
 
 const RootPage = () => {
   const navigate = useNavigate();

@@ -37,25 +37,19 @@ useEffect(() => {
       } catch (err) {
         console.error("❌ Failed to log suspicious activity:", err);
       }
-
-      // Optional redirect
       window.location.href = "/login";
     }
   };
 
   logSuspiciousAccess();
 }, [user]);
-  // URL detail toggles
+
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
   const [showScamalyticsDetails, setShowScamalyticsDetails] = useState(false);
   const [showHeaderDetails, setShowHeaderDetails] = useState(false);
-  
-  // Attachment detail toggles - track per attachment
   const [showAttachmentVTDetails, setShowAttachmentVTDetails] = useState({});
   const [showAttachmentHybridDetails, setShowAttachmentHybridDetails] = useState({});
-
-  // Heuristic scan toggle
   const [showHeuristicDetails, setShowHeuristicDetails] = useState(false);
   const [showUrlHeuristicDetails, setShowUrlHeuristicDetails] = useState({});
   const toggleUrlHeuristicDetails = (idx) => {
@@ -74,11 +68,7 @@ useEffect(() => {
       e.target.value = "";
       return;
     }
-
-    // Clear error if valid
     setUploadError("");
-
-    // Clear error if valid
     setUploadError("");
 
 
@@ -119,7 +109,6 @@ useEffect(() => {
         setScanResults(data);
         setFileName(file.name);
         setLoading(false);
-        // Refresh scan count after successful scan
         refreshScanCount();
       })
       .catch((err) => {
@@ -188,7 +177,6 @@ const downloadReport = async () => {
     })
     .catch((err) => {
       console.error("html2canvas error:", err);
-      // Restore on error too
       setShowVTDetails(prevVT);
       setShowIPQSDetails(prevIPQS);
       setShowScamalyticsDetails(prevScamalytics);
@@ -307,7 +295,7 @@ const downloadReport = async () => {
               )}
             </div>
 
-            {/* Final Verdict - Moved above Why? section */}
+            {/* Final Verdict */}
             <div style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>
               <h4 style={{ marginBottom: "0.5rem", color: "#F8F8F2" }}>Final Verdict:</h4>
               <p style={{ fontSize: "1.2rem", fontWeight: "600", color: "#F8F8F2" }}>
@@ -324,7 +312,7 @@ const downloadReport = async () => {
               </div>
             )}
 
-            {/* Email Header Analysis - Side by Side */}
+            {/* Email Header Analysis*/}
             {(scanResults.emailHeaderScanResult || scanResults.heuristicResult) && (
               <>
                 <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
@@ -556,7 +544,7 @@ const downloadReport = async () => {
               )}
             </div>
 
-            {/* Final Verdict - Moved above Why? section */}
+            {/* Final Verdict */}
             <div style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>
               <h4 style={{ marginBottom: "0.5rem", color: "#F8F8F2" }}>Final Verdict:</h4>
               <p style={{ fontSize: "1.2rem", fontWeight: "600", color: "#F8F8F2" }}>
@@ -573,7 +561,7 @@ const downloadReport = async () => {
               </div>
             )}
 
-            {/* Email Header Analysis - Side by Side */}
+            {/* Email Header Analysis */}
             {(scanResults.emailHeaderScanResult || scanResults.heuristicResult) && (
               <>
                 <hr style={{ margin: "15px 0", borderColor: "#4b538b" }} />
@@ -868,7 +856,7 @@ const downloadReport = async () => {
                       </p>
                     )}
 
-                    {/* ✅ Bundled Files Section */}
+                    {/* ✅ Bundled Files */}
                     {att.hybrid_analysis_results.bundled_files?.length > 0 && (
                       <div className="bundled-files">
                         <h5>🧩 Bundled Files Detected:</h5>

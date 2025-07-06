@@ -1,4 +1,3 @@
-// ChangePlan.js - Add debugging at the top
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
@@ -13,18 +12,16 @@ const ChangePlan = () => {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-  // Debug logging
+ 
   console.log("ChangePlan - Current user:", user);
   console.log("ChangePlan - User loading:", userLoading);
 
   useEffect(() => {
-    // Wait for user context to load
     if (userLoading) {
       console.log("Still loading user data...");
       return;
     }
 
-    // Check if user is logged in
     if (!user || !user.email) {
       console.log("No user found, redirecting to login");
       alert("Please login first");
@@ -35,13 +32,9 @@ const ChangePlan = () => {
       setSelectedPlan(user.role || "standard");
     }
   }, [user, userLoading, navigate]);
-
-  // Show loading state while user context is loading
   if (userLoading) {
     return <div>Loading user data...</div>;
   }
-
-  // Rest of your component code...
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan.toLowerCase());
     setMessage("");
@@ -105,7 +98,6 @@ const ChangePlan = () => {
         </p>
 
         <div className="plans-container">
-          {/* Standard Plan */}
           <div 
             className={`plan-card ${selectedPlan === "standard" ? "selected" : ""} ${currentPlan === "standard" ? "current" : ""}`}
             onClick={() => handlePlanSelect("standard")}
@@ -122,8 +114,6 @@ const ChangePlan = () => {
               <li>✗ Basic risk scoring</li>
             </ul>
           </div>
-
-          {/* Premium Plan */}
           <div 
             className={`plan-card ${selectedPlan === "premium" ? "selected" : ""} ${currentPlan === "premium" ? "current" : ""}`}
             onClick={() => handlePlanSelect("premium")}

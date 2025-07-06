@@ -1,4 +1,3 @@
-// src/components/Chatbot.js
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "./Chatbot.css";
@@ -7,23 +6,16 @@ import telegramIcon from "./telegram.png"; // Add this import
 import { useUser } from "../contexts/UserContext";
 
 const Chatbot = () => {
-  // General chatbot states.
   const [isOpen, setIsOpen] = useState(false);
   const [chatMode, setChatMode] = useState("main");
   const [selectedService, setSelectedService] = useState(null);
   const [userText, setUserText] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [result, setResult] = useState(null);
-
-  // New states for Ask AI chat functionality
   const [chatMessages, setChatMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const chatContainerRef = useRef(null);
-
-  // Telegram link state
   const [telegramLink, setTelegramLink] = useState("");
-
-  // Draggable state
   const chatbotRef = useRef(null);
   const [position, setPosition] = useState({ x: 60, y: 120 });
   const [dragging, setDragging] = useState(false);
@@ -74,18 +66,15 @@ const Chatbot = () => {
     };
   }, [dragging]);
 
-  // Load chat history from localStorage when component mounts
+  // Load chat history from localStorage
   useEffect(() => {
     const savedMessages = localStorage.getItem('cybersecurityChatHistory');
     if (savedMessages) {
       setChatMessages(JSON.parse(savedMessages));
     }
-    
-    // Fetch Telegram bot info
     fetchTelegramLink();
   }, []);
 
-  // Fetch Telegram link from backend
   const fetchTelegramLink = async () => {
     try {
       const response = await axios.get('https://localhost:5000/api/telegram/bot-info');
@@ -97,22 +86,18 @@ const Chatbot = () => {
       setTelegramLink('https://t.me/SafeNett_bot');
     }
   };
-
-  // Save chat messages to localStorage whenever they change
   useEffect(() => {
     if (chatMessages.length > 0) {
       localStorage.setItem('cybersecurityChatHistory', JSON.stringify(chatMessages));
     }
   }, [chatMessages]);
 
-  // Scroll to bottom when new messages are added
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
 
-  // Toggle the chatbot window open/close.
   const toggleChatbot = () => {
     setIsOpen((prev) => !prev);
     if (!isOpen) {
@@ -124,14 +109,11 @@ const Chatbot = () => {
     }
   };
 
-  // Handle Telegram button click
   const handleTelegramClick = () => {
     if (telegramLink) {
       window.open(telegramLink, '_blank');
     }
   };
-
-  // These are the services available in the "services" mode.
   const services = [
     { name: "Scan URL", type: "scan_url" },
     { name: "Scan Email", type: "scan_email" },
@@ -139,7 +121,6 @@ const Chatbot = () => {
     
   ];
 
-  // When a service is selected from the services mode, clear previous data.
   const handleServiceSelection = (service) => {
     console.log("Service selected:", service.type);
     setSelectedService(service);
@@ -148,7 +129,6 @@ const Chatbot = () => {
     setSelectedFile(null);
   };
 
-  // Add message to chat history
   const addMessage = (type, content) => {
     const newMessage = {
       type,
@@ -158,7 +138,6 @@ const Chatbot = () => {
     setChatMessages(prev => [...prev, newMessage]);
   };
 
-  // Handle Ask AI submission
   const handleAskAISubmit = async () => {
     if (!userText.trim()) return;
     
@@ -199,15 +178,10 @@ const Chatbot = () => {
     }
   };
 
-  // Replace your existing formatEmailScanResult function with this updated version
-
   const formatEmailScanResult = (data) => {
-    // Extract the verdict and explanation
     const finalVerdict = data.finalVerdict || '⚠️ Unable to determine';
     const explanation = data.finalVerdictExplanation || 'No detailed explanation available.';
     const headerVerdict = data.emailHeaderFinalVerdict || '';
-    
-    // Create formatted HTML result using CSS classes
     return (
       <div className="email-scan-result">
         <h3>🔍 Email Scan Complete</h3>
@@ -247,7 +221,6 @@ const Chatbot = () => {
       </div>
     );
   };
-  // The submit handler now distinguishes between Ask AI and Services.
   const handleSubmit = () => {
     if (chatMode === "askai") {
       handleAskAISubmit();
@@ -295,8 +268,6 @@ const Chatbot = () => {
         const formData = new FormData();
         formData.append("emlFile", selectedFile);
         console.log("FormData prepared with file:", selectedFile.name);
-        
-        // Show loading state
         setResult({ loading: true });
         
         axios
@@ -314,13 +285,10 @@ const Chatbot = () => {
       } 
     }
   };
-
-  // Allow submission via pressing Enter in text inputs.
   const handleTextKeyDown = (e) => {
     if (e.key === "Enter") handleSubmit();
   };
 
-  // Clear chat history
   const clearChatHistory = () => {
     if (window.confirm('Are you sure you want to clear the chat history?')) {
       setChatMessages([]);
@@ -533,14 +501,12 @@ const Chatbot = () => {
             </div>
           );
         } else if (selectedService && selectedService.type === "scan_email") {
-        // Special formatting for email scan results
         resultContent = (
           <div className="result-area">
             {formatEmailScanResult(result)}
           </div>
         );
       } else if (selectedService && selectedService.type === "scan_url") {
-      // Separate handling for Scan URL
       resultContent = (
         <div className="result-area">
           <div className="scan-url-result">
@@ -559,7 +525,6 @@ const Chatbot = () => {
         </div>
       );
     } else if (selectedService && selectedService.type === "report_url") {
-      // Already formatted nicely — keep this block as-is
       resultContent = (
         <div className="result-area">
           <div className="report-url-result">
@@ -578,7 +543,6 @@ const Chatbot = () => {
         </div>
       );
     } else {
-      // Fallback for any other service
       const reportText = JSON.stringify(result, null, 2);
       resultContent = (
         <div className="result-area">
@@ -600,8 +564,6 @@ const Chatbot = () => {
     }
 
     }
-  
-    // Compose final content based on chatMode.
     let chatbotContent;
     if (chatMode === "main") {
       chatbotContent = renderMainMenu();
@@ -613,7 +575,6 @@ const Chatbot = () => {
         : renderServiceInput();
     }
     
-    // For services mode, show results below the content
     if (chatMode === "services" && resultContent) {
       chatbotContent = (
         <div>

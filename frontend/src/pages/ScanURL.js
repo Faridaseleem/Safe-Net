@@ -27,7 +27,7 @@ const Scan = () => {
           userId: null,
           userAgent: navigator.userAgent
         }, {
-          withCredentials: true   // ✅ THIS is the missing piece
+          withCredentials: true 
         });
       } catch (err) {
         console.error("❌ Failed to log suspicious activity:", err);
@@ -43,7 +43,7 @@ const Scan = () => {
   // State to track which details are expanded
   const [showVTDetails, setShowVTDetails] = useState(false);
   const [showIPQSDetails, setShowIPQSDetails] = useState(false);
-  const [showScamalyticsDetails, setShowScamalyticsDetails] = useState(false); // Renamed to Scamalytics
+  const [showScamalyticsDetails, setShowScamalyticsDetails] = useState(false); 
   const [showHeuristicDetails, setShowHeuristicDetails] = useState(false);
   const toggleHeuristicDetails = () => setShowHeuristicDetails(!showHeuristicDetails);
 
@@ -56,7 +56,7 @@ const Scan = () => {
     // Reset expanded states when starting a new scan
     setShowVTDetails(false);
     setShowIPQSDetails(false);
-    setShowScamalyticsDetails(false); // Reset Scamalytics state
+    setShowScamalyticsDetails(false);
 
     try {
       const response = await fetch("https://localhost:5000/api/scan-url", {
@@ -95,15 +95,13 @@ const Scan = () => {
   const prevVT = showVTDetails;
   const prevIPQS = showIPQSDetails;
   const prevScamalytics = showScamalyticsDetails;
-  const prevHeuristic = showHeuristicDetails; // 👈 Heuristic
+  const prevHeuristic = showHeuristicDetails; 
 
-  // Show all details for full screenshot
+  // Show all details
   setShowVTDetails(true);
   setShowIPQSDetails(true);
   setShowScamalyticsDetails(true);
-  setShowHeuristicDetails(true); // 👈 Heuristic
-
-  // Ensure state updates are reflected in the DOM
+  setShowHeuristicDetails(true); 
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
   if (document.fonts) {
@@ -127,26 +125,23 @@ const Scan = () => {
       console.error("❌ html2canvas error:", error);
     })
     .finally(() => {
-      // Restore previous states
       setShowVTDetails(prevVT);
       setShowIPQSDetails(prevIPQS);
       setShowScamalyticsDetails(prevScamalytics);
-      setShowHeuristicDetails(prevHeuristic); // 👈 Heuristic
+      setShowHeuristicDetails(prevHeuristic); 
     });
 };
 
 
 
-  // Calculate number of successful API scans (updated to include Scamalytics)
+  // Calculate number of successful API scans
   const getSuccessfulAPIs = (result) => {
     if (!result) return 0;
     
     let count = 0;
     if (result.vt_results && !result.vt_results.error) count++;
     if (result.ipqs_results && !result.ipqs_results.error) count++;
-    if (result.scamalytics_results) count++; // Check for Scamalytics results
-    
-    // If we have successful_apis direct from backend, use that instead
+    if (result.scamalytics_results) count++;
     return result.successful_apis || count;
   };
 

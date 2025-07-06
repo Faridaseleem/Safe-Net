@@ -11,7 +11,7 @@ const AdminReportURLs = () => {
     setError(null);
     try {
       const res = await fetch("https://localhost:5000/api/admin/reported-urls", {
-        credentials: "include", // for cookie/session auth
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch reports");
       const data = await res.json();
@@ -37,7 +37,7 @@ const AdminReportURLs = () => {
         const errData = await res.json();
         throw new Error(errData.error || "Failed to update decision");
       }
-      await fetchReports(); // refresh list
+      await fetchReports(); 
     } catch (err) {
       alert(err.message);
     }

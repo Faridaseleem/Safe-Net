@@ -1,4 +1,3 @@
-// Login.js
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -12,9 +11,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { setUser } = useUser(); // Make sure we're using setUser
-
-  // Get the intended destination from location state
+  const { setUser } = useUser(); 
   const from = location.state?.from?.pathname || "/home";
 
   const handleLogin = async (e) => {
@@ -41,7 +38,6 @@ const Login = () => {
       console.log("Login response:", response.data);
 
       if (response.data.user) {
-        // Set user in context with all the data
         setUser({
           id: response.data.user.id,
           name: response.data.user.name,
@@ -53,7 +49,6 @@ const Login = () => {
         
     
         
-        // Navigate to the intended destination or default based on role
         if (response.data.user.role === 'admin') {
           navigate("/admin/reports");
         } else {

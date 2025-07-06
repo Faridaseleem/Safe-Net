@@ -1,12 +1,11 @@
-/* === Main Transparent Container === */
 .education-container {
-    max-width: 1100px; /* Slightly narrower for better content fit */
+    max-width: 1100px; 
     margin: 2rem auto;
     padding: 1.5rem 2rem;
     font-family: "Orbitron", sans-serif;
-    background-color: rgba(10, 15, 26, 0.5); /* More transparent */
+    background-color: rgba(10, 15, 26, 0.5);
     color: #e2e8f0;
-    backdrop-filter: blur(1.5px); /* Softer blur */
+    backdrop-filter: blur(1.5px);
     border-radius: 12px;
     box-shadow: 0 0 24px rgba(0, 255, 247, 0.04);
 }
@@ -44,7 +43,7 @@
     padding-left: 0.75rem;
 }
 
-/* === Video Grid === */
+/*Video Grid*/
 .video-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -80,7 +79,7 @@
     color: #a2a3b0;
 }
 
-/* === Blog & News Cards === */
+/* Blog & News Cards */
 .blog-posts {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -123,7 +122,7 @@
     color: #8f9dff;
 }
 
-/* === Tip Box with Winged Arrows === */
+/* Tip Box with Winged Arrows*/
 .tip-box {
     background: radial-gradient(circle at top left, #1e293b, #0f172a);
     padding: 1.5rem 2rem;
@@ -172,14 +171,14 @@
     color: #8f9dff;
 }
 
-/* === Animation Keyframe === */
+/* Animation Keyframe */
 @keyframes fadeIn {
     to {
         opacity: 1;
     }
 }
 
-/* === Responsive Adjustments === */
+/* Responsive Adjustments */
 @media screen and (max-width: 768px) {
     .tip-box {
         flex-direction: row;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useUser } from "../contexts/UserContext"; // your user context hook
+import { useUser } from "../contexts/UserContext";
 import "./ReportURL.css";
 
 const ReportURL = () => {
@@ -7,7 +7,7 @@ const ReportURL = () => {
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { user } = useUser(); // get logged-in user info
+  const { user } = useUser(); 
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,9 +26,9 @@ const ReportURL = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url,
-          reportedBy: user?.email || "anonymous",  // send reporter email or fallback
+          reportedBy: user?.email || "anonymous",  
         }),
-          credentials: "include" // ✅ REQUIRED to send session
+          credentials: "include" 
         });
 
       const data = await res.json();

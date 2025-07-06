@@ -27,7 +27,6 @@ const SelectPlan = () => {
     }
 
     try {
-      // Update the user's plan in the backend
       await axios.post("https://localhost:5000/api/auth/update-plan", {
         email: email,
         plan: selectedPlan.toLowerCase()

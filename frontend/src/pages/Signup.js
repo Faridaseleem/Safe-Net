@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // React Router for navigation
+import { useNavigate } from "react-router-dom"; 
 import axios from "axios";
 import "./Signup.css";
 
@@ -15,7 +15,7 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Password validation rules
+  // Password validation
   const validatePassword = (password) => {
     const errors = [];
     
@@ -44,14 +44,8 @@ const Signup = () => {
     setPassword(newPassword);
     setPasswordErrors(validatePassword(newPassword));
   };
-
-  // Check if passwords match
   const passwordsMatch = password === confirmPassword && password.length > 0;
-
-  // Check if password is valid
   const isPasswordValid = passwordErrors.length === 0 && password.length > 0;
-
-  // Check if form is valid
   const isFormValid = name.trim() && email.trim() && isPasswordValid && passwordsMatch;
 
   const handleSignup = async (e) => {
@@ -73,7 +67,7 @@ const Signup = () => {
 
     setLoading(true);
   
-    // Get selected plan from localStorage
+    // Get selected plan
     let selectedPlan = localStorage.getItem('selectedPlan');
     let role = 'standard';
     if (selectedPlan && selectedPlan === 'premium') role = 'premium';
@@ -88,7 +82,7 @@ const Signup = () => {
       });
   
       
-      navigate(`/select-plan?email=${email}`); // Pass email to select-plan
+      navigate(`/select-plan?email=${email}`); 
     } catch (err) {
       setError(err.response?.data?.message || "Signup failed. Try again.");
     } finally {

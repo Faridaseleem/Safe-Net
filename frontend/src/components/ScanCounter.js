@@ -4,29 +4,21 @@ import './ScanCounter.css';
 
 const ScanCounter = () => {
   const { user, scanCount } = useUser();
-
-  // Don't show counter for premium/admin users or if scan count is not loaded
   if (!user || !scanCount || user.role === 'premium' || user.role === 'admin') {
     return null;
   }
-
-  // Don't show if user has unlimited scans
   if (scanCount.remainingScans === -1) {
     return null;
   }
 
   const { remainingScans, totalScans, dailyLimit } = scanCount;
-  
-  // Calculate percentage for progress bar
   const percentageUsed = (totalScans / dailyLimit) * 100;
   const percentageRemaining = 100 - percentageUsed;
-
-  // Determine color based on remaining scans
   const getProgressColor = () => {
-    if (remainingScans === 0) return '#ff4757'; // Red when no scans left
-    if (remainingScans <= 2) return '#ffa502'; // Orange when 1-2 scans left
-    if (remainingScans <= 5) return '#ffb142'; // Yellow when 3-5 scans left
-    return '#2ed573'; // Green when 6+ scans left
+    if (remainingScans === 0) return '#ff4757'; // Red
+    if (remainingScans <= 2) return '#ffa502'; // Orange
+    if (remainingScans <= 5) return '#ffb142'; // Yellow
+    return '#2ed573'; // Green
   };
 
   return (

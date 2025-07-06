@@ -1,6 +1,6 @@
 .signup-wrapper {
     position: absolute;
-    top: 58%; /* Adjust this value to move it down */
+    top: 58%; 
     left: 50%;
     transform: translate(-50%, -50%);
     display: flex;
@@ -82,14 +82,14 @@
 }
 
 .login-link a {
-    color: #8f9dff; /* Updated color */
+    color: #8f9dff; 
     font-weight: bold;
     text-decoration: none;
     transition: color 0.3s ease-in-out;
 }
 
 .login-link a:hover {
-    color: #6c7bd9; /* Slightly darker shade on hover */
+    color: #6c7bd9; 
     text-decoration: underline;
 }
 

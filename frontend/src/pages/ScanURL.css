@@ -67,7 +67,7 @@ button:hover {
   animation: fadeIn 0.8s ease-in-out;
   opacity: 1 !important;
   color: #d0eaff !important;
-  filter: none !important; /* Removes unwanted effects */
+  filter: none !important;
 }
 
 .scan-result h3 {
@@ -85,7 +85,7 @@ button:hover {
   color: #d0eaff;
 }
 
-/* Final Verdict Styling */
+/* Final Verdict */
 .final-verdict {
   font-size: 1.3rem;
   font-weight: bold;
@@ -105,7 +105,6 @@ button:hover {
   justify-content: center;
 }
 
-/* Details Toggle Button Styling */
 .details-toggle {
   background: linear-gradient(90deg, #2a2f5a, #1b1f3b);
   color: #8f9dff;
@@ -169,7 +168,7 @@ button:hover {
   margin-right: 8px;
 }
 
-/* Download Report and Learn More Buttons */
+/* Download Report Buttons */
 .download-btn, .learn-more-btn {
   background: linear-gradient(45deg, #4b538b, #020918);
   color: #d0eaff;

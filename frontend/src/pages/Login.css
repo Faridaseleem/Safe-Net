@@ -1,6 +1,6 @@
 .login-wrapper {
     position: absolute;
-    top: 58%; /* Adjust this value to move it down */
+    top: 58%; 
     left: 50%;
     transform: translate(-50%, -50%);
     display: flex;

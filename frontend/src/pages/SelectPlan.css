@@ -1,12 +1,11 @@
-/* Page Wrapper */
- .select-plan-wrapper {
+.select-plan-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Center content vertically */
+    justify-content: center; 
     width: 100%;
-    min-height: 100vh; /* Ensure full viewport height */
-    margin-top: 5vh; /* Adjust for flexibility */
+    min-height: 100vh;
+    margin-top: 5vh;
 }
 
 /* Container */
@@ -24,7 +23,6 @@
 /* Title */
 .select-plan-title {
     color: #8f9dff;
-    /*text-shadow: 0px 0px 5px rgba(0, 255, 255, 0.8);*/
     margin-bottom: 10px;
 }
 
